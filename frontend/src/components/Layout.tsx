@@ -58,6 +58,7 @@ export default function Layout() {
           <Logo />
           <nav className="flex flex-wrap gap-1">
             <NavLink to="/" end className={link}>{t("nav.studio")}</NavLink>
+            <NavLink to="/marketing" className={link}>{t("nav.marketing")}</NavLink>
             <NavLink to="/history" className={link}>{t("nav.history")}</NavLink>
             <NavLink to="/usage" className={link}>{t("nav.usage")}</NavLink>
             <NavLink to="/settings" className={link}>{t("nav.settings")}</NavLink>

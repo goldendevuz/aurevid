@@ -6,6 +6,7 @@ import Layout from "./components/Layout";
 import Admin from "./pages/Admin";
 import AuthPage from "./pages/Auth";
 import History from "./pages/History";
+import Marketing from "./pages/Marketing";
 import Settings from "./pages/Settings";
 import Studio from "./pages/Studio";
 import Terms from "./pages/Terms";
@@ -34,6 +35,7 @@ export default function App() {
           <Route element={<RequireAuth><Layout /></RequireAuth>}>
             <Route index element={<Studio />} />
             <Route path="/history" element={<History />} />
+            <Route path="/marketing" element={<Marketing />} />
             <Route path="/usage" element={<UsagePage />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/admin" element={<Admin />} />

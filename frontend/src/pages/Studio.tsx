@@ -85,6 +85,7 @@ export default function Studio() {
   const [duration, setDuration] = useState<number | null>(null);
   const [startImage, setStartImage] = useState<Asset | null>(null);
   const [resolution, setResolution] = useState<"native" | "4k" | "8k">("native");
+  const [wantAspect, setWantAspect] = useState<string | null>(null);
   const [presetId, setPresetId] = useState<string>("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
@@ -143,16 +144,20 @@ export default function Studio() {
   useEffect(() => {
     if (selected || choices.length === 0) return;
     const pick =
+      (wantAspect
+        ? choices.find(({ p, m }) => p.available && m.aspect_ratios.includes(wantAspect) && (!startImage || m.accepts_image))
+        : undefined) ??
       choices.find(({ p, m }) => p.available && (!startImage || m.accepts_image)) ??
       choices.find(({ p }) => p.available) ??
       choices[0];
     setModelKey(`${pick.p.id}|${pick.m.id}`);
-  }, [choices, selected, startImage]);
+  }, [choices, selected, startImage, wantAspect]);
 
   const ratios = useMemo(() => model?.aspect_ratios ?? ["1:1"], [model]);
   useEffect(() => {
+    if (!selected) return; // wait until a model is chosen (keeps a prefilled format)
     if (!ratios.includes(aspect)) setAspect(ratios[0]);
-  }, [ratios, aspect]);
+  }, [ratios, aspect, selected]);
   useEffect(() => {
     if (model?.kind === "video" && (duration === null || !model.durations.includes(duration))) {
       setDuration(model.durations[0] ?? null);
@@ -187,11 +192,16 @@ export default function Studio() {
 
   // "Animate" pressed on the History page.
   useEffect(() => {
-    const state = location.state as { animate?: Asset } | null;
-    if (state?.animate) {
-      animate(state.animate);
-      navigate(".", { replace: true, state: null });
+    const state = location.state as { animate?: Asset; prefill?: { prompt: string; aspect: string } } | null;
+    if (!state) return;
+    if (state.animate) animate(state.animate);
+    if (state.prefill) {
+      setPrompt(state.prefill.prompt);
+      setWantAspect(state.prefill.aspect);
+      setAspect(state.prefill.aspect);
+      if (!state.animate) setModelKey(""); // re-pick a model that supports this format
     }
+    navigate(".", { replace: true, state: null });
   }, [location.state, animate, navigate]);
 
   const switchMode = (next: Mode) => {

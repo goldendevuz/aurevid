@@ -12,7 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.config import get_settings
-from app.routers import admin, assets, auth, catalog, credits, jobs, me
+from app.routers import admin, assets, auth, catalog, credits, jobs, marketing, me
 from app.security import CSRF_COOKIE, CSRF_HEADER, csrf_matches
 from app.services.presets import load_presets
 
@@ -93,6 +93,7 @@ def create_app() -> FastAPI:
         credits.router,
         admin.router,
         admin.public,
+        marketing.router,
     ):
         app.include_router(router)
 
