@@ -2,6 +2,7 @@
 """Cloudflare Workers AI adapter (FLUX.1 [schnell]). Free daily allocation on CF accounts."""
 
 import base64
+import logging
 import re
 
 import httpx
@@ -18,6 +19,25 @@ from app.providers.base import (
 )
 
 _ACCOUNT_RE = re.compile(r"^[a-f0-9]{32}$")
+_DETAIL_MAX = 160
+log = logging.getLogger(__name__)
+
+
+def _error_detail(resp: httpx.Response, secrets: tuple[str, ...] = ()) -> str:
+    """One short, sanitised message from Cloudflare's structured error (`errors[0].message`).
+
+    Never the raw body; control characters are stripped, whitespace collapsed, any credential
+    value that happens to be echoed is masked, and the result is length-capped.
+    """
+    try:
+        message = str(resp.json()["errors"][0]["message"])
+    except (ValueError, KeyError, IndexError, TypeError):
+        return ""
+    for secret in secrets:
+        if len(secret) >= 8:  # real credentials are long; short values would mangle the text
+            message = message.replace(secret, "***")
+    message = " ".join("".join(c for c in message if c.isprintable() or c.isspace()).split())
+    return message[:_DETAIL_MAX]
 
 
 class CloudflareProvider(ImageProvider):
@@ -75,8 +95,11 @@ class CloudflareProvider(ImageProvider):
             raise ProviderError("Cloudflare rejected the credentials")
         if resp.status_code >= 400:
             # 4xx = our request is wrong (retrying won't help); 5xx = transient.
+            detail = _error_detail(resp, (token, account))
+            log.warning("Cloudflare returned %s: %s", resp.status_code, detail or "(no detail)")
             raise ProviderError(
-                f"Cloudflare error ({resp.status_code})", retryable=resp.status_code >= 500
+                f"Cloudflare error ({resp.status_code})" + (f": {detail}" if detail else ""),
+                retryable=resp.status_code >= 500,
             )
         try:
             image_b64 = resp.json()["result"]["image"]

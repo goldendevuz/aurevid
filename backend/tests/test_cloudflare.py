@@ -23,11 +23,11 @@ def _req():
 def fake(monkeypatch):
     seen = []
 
-    def install(status=200):
+    def install(status=200, body=None):
         def handler(request):
             seen.append(request)
             if status != 200:
-                return httpx.Response(status, json={"errors": [{"message": "x"}]})
+                return httpx.Response(status, json=body or {"errors": [{"message": "x"}]})
             return httpx.Response(
                 200, json={"result": {"image": base64.b64encode(b"jpg").decode()}}
             )
@@ -56,3 +56,33 @@ async def test_client_errors_are_not_retried(fake):
     with pytest.raises(ProviderError) as err:
         await cloudflare.CloudflareProvider().generate(_req(), CREDS)
     assert err.value.retryable is False
+
+
+async def test_error_includes_cloudflare_message(fake):
+    install, _ = fake
+    install(
+        400, {"errors": [{"code": 5006, "message": "Additional properties '/seed' not allowed"}]}
+    )
+    with pytest.raises(ProviderError) as err:
+        await cloudflare.CloudflareProvider().generate(_req(), CREDS)
+    assert err.value.public == "Cloudflare error (400): Additional properties '/seed' not allowed"
+
+
+async def test_error_detail_is_sanitised(fake):
+    install, _ = fake
+    noisy = "bad\x00 token t   and\n account " + "a" * 32 + " " + "z" * 500
+    install(400, {"errors": [{"message": noisy}]})
+    with pytest.raises(ProviderError) as err:
+        await cloudflare.CloudflareProvider().generate(_req(), CREDS)
+    text = err.value.public
+    assert "\x00" not in text and "\n" not in text
+    assert "a" * 32 not in text  # account id masked
+    assert len(text) <= len("Cloudflare error (400): ") + 160
+
+
+async def test_error_without_detail_keeps_plain_message(fake):
+    install, _ = fake
+    install(400, {"success": False})
+    with pytest.raises(ProviderError) as err:
+        await cloudflare.CloudflareProvider().generate(_req(), CREDS)
+    assert err.value.public == "Cloudflare error (400)"
