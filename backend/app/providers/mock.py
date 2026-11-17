@@ -7,6 +7,7 @@ Never enabled in production (config validation refuses it).
 import asyncio
 import hashlib
 import io
+from pathlib import Path
 
 from PIL import Image, ImageDraw
 
@@ -19,6 +20,8 @@ from app.providers.base import (
     ProviderError,
     ProviderInfo,
 )
+
+_DEMO_VIDEO = Path(__file__).resolve().parent / "media" / "demo.mp4"
 
 
 class MockProvider(ImageProvider):
@@ -36,7 +39,19 @@ class MockProvider(ImageProvider):
                 commercial_use="yes",
                 aspect_ratios=["1:1", "16:9", "9:16", "4:3", "3:4"],
                 credit_cost=1,
-            )
+            ),
+            ModelInfo(
+                id="loop",
+                label="Amber loop (offline video)",
+                kind="video",
+                license="AGPL-3.0-or-later (our clip)",
+                commercial_use="yes",
+                aspect_ratios=["1:1", "16:9", "9:16"],
+                credit_cost=2,
+                max_count=1,
+                durations=[3],
+                accepts_image=True,
+            ),
         ],
         notes="Development only. Draws a placeholder; no AI model involved.",
     )
@@ -47,6 +62,9 @@ class MockProvider(ImageProvider):
         if "__partial__" in req.prompt and (req.seed or 0) % 2 == 1:
             raise ProviderError("Demo provider partial failure (requested)")
         await asyncio.sleep(0.2)
+        if req.kind == "video":
+            # A 3-second clip we rendered ourselves (ffmpeg "gradients" source, 320x320).
+            return GeneratedImage(_DEMO_VIDEO.read_bytes(), "video/mp4")
         digest = hashlib.sha256(f"{req.prompt}|{req.seed}".encode()).digest()
         w, h = max(64, req.width // 4), max(64, req.height // 4)
         img = Image.new("RGB", (w, h))

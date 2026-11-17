@@ -4,6 +4,14 @@
   "category": "camera",
   "description": "A three-quarter view that suggests the camera circling the subject.",
   "prompt_template": "{subject}. Three-quarter angle as if the camera is circling around it, clean separation from a softly lit background, rim light outlining the edges, sense of rotation and volume.",
-  "image_defaults": {"aspect_ratio": "1:1"},
-  "video_params": {"camera_path": "orbit_right", "speed": 0.35, "duration_s": 5, "arc_degrees": 60}
+  "video_template": "{subject}. The camera circles smoothly around the subject in a slow arc, keeping it centred while rim light slides across its edges.",
+  "image_defaults": {
+    "aspect_ratio": "1:1"
+  },
+  "video_params": {
+    "camera_path": "orbit_right",
+    "speed": 0.35,
+    "duration_s": 5,
+    "arc_degrees": 60
+  }
 }

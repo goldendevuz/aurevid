@@ -9,6 +9,7 @@ response size cap.
 import asyncio
 import ipaddress
 import socket
+from pathlib import Path
 from urllib.parse import urljoin, urlsplit, urlunsplit
 
 import httpx
@@ -73,8 +74,12 @@ async def safe_get(
     max_redirects: int = 3,
     allow_http: bool = False,
     headers: dict[str, str] | None = None,
+    dest: Path | None = None,
 ) -> tuple[bytes, str]:
-    """GET a URL safely. Returns (body, content-type header)."""
+    """GET a URL safely. Returns (body, content-type header).
+
+    With ``dest`` the body is streamed to that file instead (returned body is empty).
+    """
     current = url
     async with httpx.AsyncClient(timeout=request_timeout, follow_redirects=False) as client:
         for _ in range(max_redirects + 1):
@@ -97,10 +102,24 @@ async def safe_get(
                 declared = resp.headers.get("content-length")
                 if declared and declared.isdigit() and int(declared) > max_bytes:
                     raise UnsafeURLError("response too large")
+                ctype = resp.headers.get("content-type", "")
+                if dest is not None:
+                    written = 0
+                    try:
+                        with dest.open("wb") as f:
+                            async for chunk in resp.aiter_bytes():
+                                written += len(chunk)
+                                if written > max_bytes:
+                                    raise UnsafeURLError("response too large")
+                                f.write(chunk)
+                    except BaseException:
+                        dest.unlink(missing_ok=True)  # noqa: ASYNC240 - tiny local cleanup
+                        raise
+                    return b"", ctype
                 body = bytearray()
                 async for chunk in resp.aiter_bytes():
                     body.extend(chunk)
                     if len(body) > max_bytes:
                         raise UnsafeURLError("response too large")
-                return bytes(body), resp.headers.get("content-type", "")
+                return bytes(body), ctype
     raise UnsafeURLError("too many redirects")

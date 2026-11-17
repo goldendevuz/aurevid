@@ -55,9 +55,14 @@ export function ErrorText({ error }: { error: unknown }) {
   const { t } = useTranslation();
   if (!error) return null;
   const code = error instanceof ApiError ? error.code : "generic";
+  const retry = error instanceof ApiError ? Number(error.detail.retry_after ?? 0) : 0;
   return (
     <p role="alert" className="mt-3 text-sm text-danger">
-      {t(`errors.${code}`, { defaultValue: t("errors.generic") })}
+      {t(`errors.${code}`, {
+        ...(error instanceof ApiError ? error.detail : {}),
+        defaultValue: t("errors.generic"),
+        minutes: Math.max(1, Math.ceil(retry / 60)),
+      })}
     </p>
   );
 }

@@ -11,6 +11,7 @@ from sqlalchemy import (
     CheckConstraint,
     DateTime,
     Enum,
+    Float,
     ForeignKey,
     Integer,
     String,
@@ -103,6 +104,7 @@ class Asset(Base):
     )
     source: Mapped[str] = mapped_column(String(16))  # generated | upload
     storage_key: Mapped[str] = mapped_column(String(80), unique=True)  # random, server-chosen
+    preview_key: Mapped[str | None] = mapped_column(String(80), nullable=True)  # small WebP
     mime: Mapped[str] = mapped_column(String(32))
     width: Mapped[int] = mapped_column(Integer)
     height: Mapped[int] = mapped_column(Integer)
@@ -163,3 +165,24 @@ class WebhookEvent(Base):
     id: Mapped[str] = mapped_column(String(128), primary_key=True)
     source: Mapped[str] = mapped_column(String(32))
     received_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class ProviderQuota(Base):
+    """Learned usage limits per provider + credential scope (see services/quota.py)."""
+
+    __tablename__ = "provider_quotas"
+    __table_args__ = (UniqueConstraint("provider", "scope", name="uq_provider_quota"),)
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=new_id)
+    provider: Mapped[str] = mapped_column(String(32))
+    scope: Mapped[str] = mapped_column(String(48), index=True)  # server | anon | user:<id>
+    day: Mapped[str] = mapped_column(String(10))  # UTC date the counters belong to
+    used_today: Mapped[int] = mapped_column(Integer, default=0)
+    hits_today: Mapped[int] = mapped_column(Integer, default=0)
+    est_daily_limit: Mapped[float | None] = mapped_column(Float, nullable=True)
+    est_source: Mapped[str] = mapped_column(String(16), default="unknown")
+    observations: Mapped[int] = mapped_column(Integer, default=0)
+    consecutive_hits: Mapped[int] = mapped_column(Integer, default=0)
+    cooldown_s: Mapped[float] = mapped_column(Float, default=15.0)
+    blocked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)

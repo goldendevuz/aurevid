@@ -3,15 +3,20 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api";
 import { Card, ErrorText } from "../components/ui";
-import type { Usage } from "../types";
+import type { Provider, Usage } from "../types";
+import { QuotaLine } from "./Studio";
 
 export default function UsagePage() {
   const { t, i18n } = useTranslation();
   const [usage, setUsage] = useState<Usage | null>(null);
+  const [providers, setProviders] = useState<Provider[]>([]);
   const [error, setError] = useState<unknown>(null);
 
   useEffect(() => {
     api<Usage>("/api/credits").then(setUsage).catch(setError);
+    api<Provider[]>("/api/providers")
+      .then((p) => setProviders(p.filter((x) => x.quota && x.available)))
+      .catch(setError);
   }, []);
 
   const pct = usage ? Math.min(100, (usage.jobs_today / usage.daily_job_limit) * 100) : 0;
@@ -34,6 +39,26 @@ export default function UsagePage() {
             </p>
             <p className="mt-3 text-xs text-muted">{t("usage.note")}</p>
           </Card>
+          {providers.length > 0 && (
+            <Card>
+              <h2 className="text-sm font-semibold">{t("usage.limits")}</h2>
+              <p className="mb-3 mt-1 text-xs text-muted">{t("usage.limitsHelp")}</p>
+              <ul className="divide-y divide-line">
+                {providers.map((p) => (
+                  <li key={p.id} className="py-2 text-sm">
+                    <div className="flex items-center justify-between">
+                      <span>{p.name}</span>
+                      <span className="text-xs text-muted">
+                        {t("usage.usedToday")}: {p.quota!.used_today} · {t("usage.limit")}:{" "}
+                        {p.quota!.estimated_limit === null ? t("usage.unknown") : `≈${p.quota!.estimated_limit}`}
+                      </span>
+                    </div>
+                    <QuotaLine provider={p} />
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          )}
           <Card>
             <h2 className="mb-3 text-sm font-semibold">{t("usage.ledger")}</h2>
             {usage.ledger.length === 0 ? (

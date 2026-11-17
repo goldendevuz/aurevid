@@ -44,6 +44,13 @@ the local asset store, Redis (rate limits), and outbound calls to generation pro
 | SSRF via provider result URLs | https only, default ports, no userinfo, resolve-then-connect to a vetted public IP with SNI pinning, manual redirects re-validated, size cap | `ssrf.py`, `test_ssrf_*` |
 | Key leakage | BYOK encrypted with Fernet; write-only API; server keys only in env; never logged | `test_byok_key_encrypted_and_never_returned` |
 | Prohibited content | Prompt keyword screen (incl. minors + sexual), report button, admin block/remove | `moderation.py`, `admin.py`, `test_moderation` |
+| Animating someone else's image (IDOR) | `image_asset_id` must be the caller's own image, re-checked by the worker | `test_cannot_animate_someone_elses_image` |
+| Hostile provider video | MP4 top-level box structure, brand allowlist, size cap, served as `video/mp4` + nosniff; users cannot upload video | `test_mp4_validation` |
+| BYOK key exfiltration via provider-supplied URLs | fal queue URLs must be `https://queue.fal.run/...`; result files fetched without the key through the SSRF guard | `test_key_never_sent_to_foreign_status_url` |
+| Hammering a provider into a ban / burning shared quota | Learned cooldowns block new jobs (`429 provider_cooldown`), worker waits or refunds | `test_worker_learns_and_api_blocks_during_cooldown` |
+| Resource exhaustion / one user starving others | Per-user active-job cap, global queue cap with 503 back-pressure, round-robin claiming, CPU and per-provider lanes, worker slots, hard deadlines, janitor | `test_queue.py` |
+| Huge images/videos exhausting RAM or CPU | Pixel cap (8192²), bounded upscaler input (target/4), tile deadline, provider image size cap, videos streamed to disk (600 MB cap) | `test_upscale.py`, `test_video.py` |
+| Third-party telemetry from dependencies | `ORT_DISABLE_TELEMETRY=1` set before ONNX Runtime is imported (code + Dockerfile) | `upscaler.py` |
 | Webhook forgery/replay (future payments) | HMAC-SHA256 over timestamp+body, 5-min window, processed-event table | `webhooks.py`, `test_webhook_*` |
 | Weak production config | Settings refuse missing secrets, wildcard CORS, insecure cookies, mock provider in prod | `test_cors_wildcard_and_weak_prod_config_refused` |
 | Spoofed client IP | Only uvicorn `--proxy-headers` with `FORWARDED_ALLOW_IPS`; nginx overwrites X-Forwarded-For | `Dockerfile`, `nginx.conf` |
@@ -63,3 +70,7 @@ the local asset store, Redis (rate limits), and outbound calls to generation pro
   before accepting outside contributors with workflow changes.
 - Assets on local disk are not encrypted at rest; use an encrypted volume or R2 with SSE in prod.
 - Prompts are sent to the chosen third-party provider; this is disclosed in the Terms.
+- Videos are not re-encoded (no ffmpeg in the image), so container metadata from the provider is
+  kept. Only provider output is accepted, never user uploads.
+- Image-to-video start frames are sent to fal as data URIs: the user's image leaves our server
+  (disclosed by choosing that provider).

@@ -19,19 +19,25 @@ class Preset(BaseModel):
     category: Literal["camera", "style", "marketing"]
     description: str
     prompt_template: str
+    video_template: str | None = None  # camera-motion wording for video models
     image_defaults: dict[str, AspectRatio] = {}
     video_params: dict[str, str | float | int] = {}
 
-    @field_validator("prompt_template")
+    @field_validator("prompt_template", "video_template")
     @classmethod
-    def _has_subject(cls, v: str) -> str:
-        if v.count("{subject}") != 1:
-            raise ValueError("prompt_template must contain {subject} exactly once")
+    def _has_subject(cls, v: str | None) -> str | None:
+        if v is not None and v.count("{subject}") != 1:
+            raise ValueError("templates must contain {subject} exactly once")
         return v
 
-    def render(self, subject: str) -> str:
+    def render(self, subject: str, kind: str = "image") -> str:
+        template = (
+            self.video_template
+            if kind == "video" and self.video_template
+            else (self.prompt_template)
+        )
         # Plain replacement, not str.format: user text can never inject format fields.
-        return self.prompt_template.replace("{subject}", subject.strip())
+        return template.replace("{subject}", subject.strip())
 
 
 @lru_cache

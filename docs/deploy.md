@@ -31,6 +31,13 @@ Then make yourself admin: `python -m app.cli make-admin you@example.com`.
 The frontend and API **must share one origin** (e.g. `https://app.example.com` serving the SPA and
 proxying `/api`), because auth uses first-party cookies. The bundled nginx image does this.
 
+## Sizing for 4K/8K
+
+Local image upscaling is CPU work. Rough timings: 8 cores → 4K ≈ 30 s, 8K ≈ 100 s (measured); a 4-core free
+ARM VM is about twice as slow. Plan ≥ 1 GB RAM for the worker (an 8K square peaked at ~780 MB
+in our measurement). Keep `CPU_JOB_CONCURRENCY=1` on small machines; the queue makes
+other users wait their turn instead of overloading the server. Set `UPSCALER_ENABLED=false` to turn it off.
+
 ## Option A: one small VM (simplest, recommended)
 
 Oracle Cloud *Always Free* ARM VM, or any €4-5/month VPS (Hetzner, etc.).

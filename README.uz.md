@@ -8,6 +8,15 @@
 
 - Prompt yozasiz, modelni tanlaysiz (har birida "Bepul" yoki "Pullik" belgisi va tijoriy foydalanish holati ko'rinadi)
 - Nisbat, o'lcham va rasmlar soni (1-4)
+- Video: matndan video va **Jonlantirish** (istalgan rasmingizdan video). Video uchun bepul servis
+  topilmadi: fal.ai orqali o'z kalitingiz bilan ishlaydi (Wan 2.2 5B, 5 soniyalik klip ≈ $0.15)
+- **4K / 8K rasmlar bepul**: serveringizning o'z CPU'sida ishlaydigan AI kattalashtirish
+  (Real-ESRGAN, BSD-3). API ham, GPU ham kerak emas (8 yadroda o'lchangan: 4K ≈30 s, 8K ≈100 s, xotira ≈780 MB)
+- **4K / 8K video** (ixtiyoriy, pullik): fal.ai'da Topaz orqali, o'z kalitingiz bilan
+- Adolatli navbat: har bir foydalanuvchiga chegara, foydalanuvchilar orasida navbatma-navbat,
+  og'ir CPU ishi bir vaqtda bitta, server to'lsa 429/503 bilan rad etadi; navbatdagi o'rin va vaqt ko'rinadi
+- Limitlarni o'zi o'rganish: limiti yozilmagan servislarda ishlatilganini sanaydi, limit xatolaridan
+  o'rganadi va "bugun ≈N qoldi" ko'rsatadi
 - 3 ta original kamera preseti
 - Tarix galereyasi, sevimlilar, o'chirish, shikoyat
 - Kreditlar: boshlang'ich bepul kreditlar, kunlik limit, xato bo'lsa kredit avtomatik qaytadi

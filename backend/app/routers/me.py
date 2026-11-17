@@ -19,6 +19,7 @@ from app.schemas import (
     UserOut,
 )
 from app.security import clear_auth_cookies, verify_password
+from app.services import quota
 
 router = APIRouter(prefix="/api/me", tags=["me"])
 
@@ -130,15 +131,16 @@ async def delete_me(body: DeleteMeIn, response: Response, user: CurrentUser, ses
     if not verify_password(user.password_hash, body.password):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail={"code": "invalid_credentials"})
     keys = (
-        (await session.execute(select(Asset.storage_key).where(Asset.user_id == user.id)))
-        .scalars()
-        .all()
-    )
+        await session.execute(
+            select(Asset.storage_key, Asset.preview_key).where(Asset.user_id == user.id)
+        )
+    ).all()
     # Explicit deletes (do not rely on FK cascade, which SQLite may not enforce everywhere).
     for model in (Asset, Job, ProviderKey, CreditLedger, RefreshToken):
         await session.execute(delete(model).where(model.user_id == user.id))
+    await quota.delete_scope(session, f"user:{user.id}")
     await session.execute(delete(User).where(User.id == user.id))
     await session.commit()
-    for key in keys:
-        delete_stored(key)
+    for key, preview in keys:
+        delete_stored(key, preview)
     clear_auth_cookies(response)

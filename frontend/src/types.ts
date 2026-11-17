@@ -13,12 +13,26 @@ export interface User {
 export interface ModelInfo {
   id: string;
   label: string;
-  kind: "image" | "video";
+  kind: "image" | "video" | "upscale";
   license: string;
   commercial_use: "yes" | "no" | "unclear";
   aspect_ratios: string[];
   credit_cost: number;
   max_count: number;
+  durations: number[];
+  accepts_image: boolean;
+  requires_image: boolean;
+  upscale_targets: ("4k" | "8k")[];
+  upscale_credits: Record<string, number>;
+}
+
+export interface QuotaView {
+  used_today: number;
+  estimated_limit: number | null;
+  remaining: number | null;
+  source: "documented" | "learned" | "unknown";
+  observations: number;
+  blocked_seconds: number;
 }
 
 export interface Provider {
@@ -32,6 +46,7 @@ export interface Provider {
   notes: string;
   available: boolean;
   key_source: "server" | "user" | "none";
+  quota: QuotaView | null;
 }
 
 export interface Preset {
@@ -50,23 +65,35 @@ export interface Asset {
   height: number;
   is_favorite: boolean;
   url: string;
+  preview_url: string;
 }
 
 export type JobStatus = "queued" | "running" | "done" | "failed";
 
 export interface Job {
   id: string;
+  kind: "image" | "video";
   status: JobStatus;
   provider: string;
   model: string;
   prompt: string;
   preset_id: string | null;
-  params: { aspect_ratio: string; size: string; width: number; height: number };
+  params: {
+    aspect_ratio: string;
+    size: string;
+    width: number;
+    height: number;
+    duration?: number | null;
+    image_asset_id?: string | null;
+    upscale?: "4k" | "8k" | null;
+  };
   count: number;
   cost: number;
   error: string | null;
   created_at: string;
   assets: Asset[];
+  queue_position?: number | null;
+  eta_seconds?: number | null;
 }
 
 export interface Usage {

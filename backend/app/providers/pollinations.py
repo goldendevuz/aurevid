@@ -64,7 +64,7 @@ class PollinationsProvider(ImageProvider):
             raise ProviderError("Pollinations is unreachable", retryable=True) from exc
         if resp.status_code in (402, 429):
             # Observed 2026-11: anonymous requests get 402 once the free quota is used up.
-            raise ProviderError("Pollinations free quota reached, try again later")
+            raise ProviderError("Pollinations free quota reached, try again later", quota=True)
         if resp.status_code >= 400:
             raise ProviderError(f"Pollinations error ({resp.status_code})", retryable=True)
         if len(resp.content) > _MAX_BYTES:

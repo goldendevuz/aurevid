@@ -15,11 +15,11 @@ from app.config import get_settings
 from app.deps import CurrentUser, Session, not_found
 from app.models import Asset, Job, JobStatus, new_id
 from app.moderation import moderator
-from app.providers.base import dimensions
-from app.providers.registry import get_provider, resolve_credentials
+from app.providers.base import UPSCALE_CREDITS, dimensions
+from app.providers.registry import allowed_upscales, get_provider, resolve_credentials
 from app.ratelimit import hit
 from app.schemas import AssetOut, JobCreateIn, JobOut
-from app.services import credits
+from app.services import credits, queue, quota
 from app.services.presets import load_presets
 
 router = APIRouter(prefix="/api/jobs", tags=["jobs"])
@@ -28,6 +28,7 @@ router = APIRouter(prefix="/api/jobs", tags=["jobs"])
 def asset_out(asset: Asset) -> AssetOut:
     out = AssetOut.model_validate(asset)
     out.url = f"/api/assets/{asset.id}/file"
+    out.preview_url = f"/api/assets/{asset.id}/preview" if asset.preview_key else out.url
     return out
 
 
@@ -44,11 +45,42 @@ async def job_out(session, job: Job) -> JobOut:
     out = JobOut.model_validate(job)
     out.assets = [asset_out(a) for a in assets]
     out.params = {k: v for k, v in (job.params or {}).items() if k != "final_prompt"}
+    if job.status == JobStatus.queued:
+        out.queue_position, out.eta_seconds = await queue.position_and_eta(session, job)
     return out
 
 
 def _bad(code: str, http: int = status.HTTP_400_BAD_REQUEST) -> HTTPException:
     return HTTPException(http, detail={"code": code})
+
+
+async def check_daily_limit(session, user_id: str) -> None:
+    start_of_day = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
+    jobs_today = (
+        await session.execute(
+            select(func.count(Job.id)).where(Job.user_id == user_id, Job.created_at >= start_of_day)
+        )
+    ).scalar_one()
+    if jobs_today >= get_settings().daily_job_limit:
+        raise _bad("daily_limit_reached", status.HTTP_429_TOO_MANY_REQUESTS)
+
+
+async def enqueue(session, job: Job) -> None:
+    """Insert the job and debit its credits in one transaction, or neither."""
+    session.add(job)
+    try:
+        await session.flush()
+        if job.cost > 0:
+            await credits.apply(
+                session, job.user_id, -job.cost, "generation", f"job:{job.id}", job.id
+            )
+        await session.commit()
+    except credits.InsufficientCredits:
+        await session.rollback()
+        raise _bad("insufficient_credits", status.HTTP_402_PAYMENT_REQUIRED) from None
+    except IntegrityError:
+        await session.rollback()
+        raise _bad("duplicate_request", status.HTTP_409_CONFLICT) from None
 
 
 @router.post("", response_model=JobOut, status_code=201)
@@ -81,35 +113,67 @@ async def create_job(
         raise _bad("aspect_ratio_unsupported")
     if body.count > model.max_count:
         raise _bad("count_too_high")
+    duration = None
+    if model.kind == "video":
+        duration = body.duration or model.durations[0]
+        if duration not in model.durations:
+            raise _bad("duration_unsupported")
+    elif body.duration is not None:
+        raise _bad("duration_unsupported")
+
+    if body.upscale and body.upscale not in allowed_upscales(model):
+        raise _bad("upscale_unsupported")
+
+    if body.image_asset_id:
+        if not model.accepts_image:
+            raise _bad("image_input_unsupported")
+        source = await session.get(Asset, body.image_asset_id)
+        # Only the caller's own images can be animated (IDOR): not-yours looks like not-found.
+        if source is None or source.user_id != user.id or not source.mime.startswith("image/"):
+            raise not_found()
+    elif model.requires_image:
+        raise _bad("image_required")
+
     creds = await resolve_credentials(session, provider, user.id)
     if not provider.has_usable_credentials(creds):
         raise _bad("provider_key_required")
+    if provider.info.track_quota:
+        q = await quota.view(
+            session,
+            provider.info.id,
+            quota.scope_for(creds.source, user.id),
+            provider.info.daily_quota_prior,
+        )
+        if q.blocked_seconds > 30:
+            raise HTTPException(
+                status.HTTP_429_TOO_MANY_REQUESTS,
+                detail={"code": "provider_cooldown", "retry_after": q.blocked_seconds},
+                headers={"Retry-After": str(q.blocked_seconds)},
+            )
 
     final_prompt = body.prompt
     if body.preset_id:
         preset = load_presets().get(body.preset_id)
         if preset is None:
             raise _bad("unknown_preset")
-        final_prompt = preset.render(body.prompt)
+        final_prompt = preset.render(body.prompt, model.kind)
     if not moderator.check_prompt(final_prompt).allowed:
         raise _bad("prompt_rejected")
 
-    start_of_day = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
-    jobs_today = (
-        await session.execute(
-            select(func.count(Job.id)).where(Job.user_id == user.id, Job.created_at >= start_of_day)
-        )
-    ).scalar_one()
-    if jobs_today >= get_settings().daily_job_limit:
-        raise _bad("daily_limit_reached", status.HTTP_429_TOO_MANY_REQUESTS)
+    await check_daily_limit(session, user.id)
+    await queue.admit(session, user.id)
 
     width, height = dimensions(body.aspect_ratio, body.size)
     job_id = new_id()
-    cost = model.credit_cost * body.count
+    per_output = model.credit_cost
+    if body.upscale:
+        per_output += UPSCALE_CREDITS[model.kind][body.upscale]
+    cost = per_output * body.count
     job = Job(
         id=job_id,
         user_id=user.id,
         client_request_id=idempotency_key,
+        kind=model.kind,
         provider=provider.info.id,
         model=model.id,
         prompt=body.prompt,
@@ -122,22 +186,13 @@ async def create_job(
             "width": width,
             "height": height,
             "seed": body.seed,
+            "duration": duration,
+            "image_asset_id": body.image_asset_id,
+            "upscale": body.upscale,
             "final_prompt": final_prompt,
         },
     )
-    session.add(job)
-    try:
-        await session.flush()
-        if cost > 0:
-            # Debit and job insert commit together, or not at all.
-            await credits.apply(session, user.id, -cost, "generation", f"job:{job_id}", job_id)
-        await session.commit()
-    except credits.InsufficientCredits:
-        await session.rollback()
-        raise _bad("insufficient_credits", status.HTTP_402_PAYMENT_REQUIRED) from None
-    except IntegrityError:
-        await session.rollback()
-        raise _bad("duplicate_request", status.HTTP_409_CONFLICT) from None
+    await enqueue(session, job)
     return await job_out(session, job)
 
 

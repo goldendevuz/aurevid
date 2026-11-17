@@ -5,6 +5,7 @@ export class ApiError extends Error {
   constructor(
     public code: string,
     public status: number,
+    public detail: Record<string, unknown> = {},
   ) {
     super(code);
   }
@@ -69,13 +70,15 @@ export async function api<T>(path: string, opts: RequestOptions = {}): Promise<T
   }
   if (!res.ok) {
     let code = "generic";
+    let detail: Record<string, unknown> = {};
     try {
       const data = await res.json();
       code = data?.detail?.code ?? code;
+      if (data?.detail && typeof data.detail === "object") detail = data.detail;
     } catch {
       /* non-JSON error body */
     }
-    throw new ApiError(code, res.status);
+    throw new ApiError(code, res.status, detail);
   }
   if (res.status === 204) return undefined as T;
   return (await res.json()) as T;

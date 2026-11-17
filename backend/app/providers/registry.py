@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import get_settings
 from app.crypto import CryptoUnavailable, byok_available, decrypt_secret
 from app.models import ProviderKey
-from app.providers.base import Credentials, ImageProvider
+from app.providers.base import Credentials, ImageProvider, ModelInfo
 from app.providers.cloudflare import CloudflareProvider
 from app.providers.fal import FalProvider
 from app.providers.mock import MockProvider
@@ -26,6 +26,17 @@ def enabled_providers() -> dict[str, ImageProvider]:
     if s.mock_provider_enabled:
         providers.append(MockProvider())
     return {p.info.id: p for p in providers}
+
+
+def allowed_upscales(model: ModelInfo) -> list[str]:
+    """4K/8K targets: images use the free local upscaler, videos their provider's own."""
+    if model.kind == "image":
+        from app import upscaler
+
+        return ["4k", "8k"] if upscaler.available() else []
+    if model.kind == "video" and not get_settings().fal_video_upscale_enabled:
+        return []
+    return list(model.upscale_targets)
 
 
 def get_provider(provider_id: str) -> ImageProvider | None:
