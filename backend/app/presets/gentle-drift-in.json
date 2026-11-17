@@ -1,0 +1,9 @@
+{
+  "id": "gentle-drift-in",
+  "name": "Gentle Drift In",
+  "category": "camera",
+  "description": "A calm forward glide toward the subject, with soft depth around it.",
+  "prompt_template": "{subject}. Composed for a slow forward camera glide: subject centred at mid-distance, layered depth with a softly blurred foreground edge, gentle directional light, calm cinematic mood.",
+  "image_defaults": {"aspect_ratio": "16:9"},
+  "video_params": {"camera_path": "forward_glide", "speed": 0.25, "duration_s": 5, "ease": "in_out"}
+}

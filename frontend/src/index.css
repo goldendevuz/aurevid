@@ -1,0 +1,23 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+@import "tailwindcss";
+
+/* Design direction "Darkroom Amber": warm charcoal surfaces so generated images carry the
+   colour, one amber accent, system fonts only (no font licensing or third-party requests). */
+@theme {
+  --color-bg: #121110;
+  --color-surface: #1c1a18;
+  --color-raised: #26231f;
+  --color-line: #3a352f;
+  --color-ink: #f3efe8;
+  --color-muted: #a39b8f;
+  --color-amber: #f0a73a;
+  --color-amber-ink: #1a1206;
+  --color-ok: #6fcf97;
+  --color-danger: #ef6f5e;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+  --radius-card: 12px;
+}
+
+html, body { background: var(--color-bg); color: var(--color-ink); }
+body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+:focus-visible { outline: 2px solid var(--color-amber); outline-offset: 2px; }

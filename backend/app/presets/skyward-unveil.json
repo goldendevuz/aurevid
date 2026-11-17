@@ -1,0 +1,9 @@
+{
+  "id": "skyward-unveil",
+  "name": "Skyward Unveil",
+  "category": "camera",
+  "description": "A high overhead view that opens up to reveal the whole scene.",
+  "prompt_template": "{subject}. Seen from high above, wide overhead framing that reveals the full surroundings, strong graphic shapes and long shadows, crisp detail, airy open composition.",
+  "image_defaults": {"aspect_ratio": "9:16"},
+  "video_params": {"camera_path": "rise_and_tilt_down", "speed": 0.3, "duration_s": 6}
+}

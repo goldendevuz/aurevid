@@ -1,0 +1,60 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# One command:  docker compose up --build   ->  http://localhost:8080
+# Secrets go in .env (copy .env.example). Without .env it runs in local dev mode.
+
+x-backend-env: &backend-env
+  APP_ENV: ${APP_ENV:-dev}
+  DATABASE_URL: ${DATABASE_URL:-sqlite+aiosqlite:////app/data/aurevid.db}
+  ASSET_DIR: /app/data/assets
+  RATE_LIMIT_STORAGE: redis://redis:6379/0
+  RUN_WORKER_IN_API: "false"
+  COOKIE_SECURE: ${COOKIE_SECURE:-false}
+  CORS_ORIGINS: ${CORS_ORIGINS:-["http://localhost:8080"]}
+  MOCK_PROVIDER_ENABLED: ${MOCK_PROVIDER_ENABLED:-true}
+
+services:
+  redis:
+    image: redis:7.4-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    restart: unless-stopped
+
+  api:
+    build: ./backend
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      <<: *backend-env
+      FORWARDED_ALLOW_IPS: "*"   # only the web container can reach the API (no published port)
+    volumes:
+      - aurevid-data:/app/data
+    depends_on: [redis]
+    restart: unless-stopped
+
+  worker:
+    build: ./backend
+    command: ["python", "-m", "app.worker"]
+    env_file:
+      - path: .env
+        required: false
+    environment: *backend-env
+    volumes:
+      - aurevid-data:/app/data
+    depends_on:
+      api:
+        condition: service_healthy   # api runs the migrations first
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ./frontend
+      args:
+        VITE_TURNSTILE_SITE_KEY: ${VITE_TURNSTILE_SITE_KEY:-}
+        VITE_SOURCE_URL: ${VITE_SOURCE_URL:-}
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on: [api]
+    restart: unless-stopped
+
+volumes:
+  aurevid-data:
