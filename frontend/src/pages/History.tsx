@@ -53,7 +53,7 @@ export default function History() {
       {jobs.length === 0 ? (
         <EmptyState icon={<Icon name="history" size={22} />} title={t("history.empty")} />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid items-start gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {jobs.map((j) => (
             <JobCard
               key={j.id}

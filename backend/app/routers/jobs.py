@@ -47,6 +47,8 @@ async def job_out(session, job: Job) -> JobOut:
     out.params = {k: v for k, v in (job.params or {}).items() if k != "final_prompt"}
     if job.status == JobStatus.queued:
         out.queue_position, out.eta_seconds = await queue.position_and_eta(session, job)
+    elif job.status == JobStatus.running:
+        out.typical_seconds = await queue.typical_run_seconds(session, job)
     return out
 
 

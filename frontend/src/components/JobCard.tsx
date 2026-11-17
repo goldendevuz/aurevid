@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api";
 import type { Asset, Job } from "../types";
@@ -54,6 +54,21 @@ function ReportForm({ asset, onClose }: { asset: Asset; onClose: () => void }) {
   );
 }
 
+/** Whole seconds since `since`, ticking once a second while `active`. */
+function useElapsed(since: string | null | undefined, active: boolean): number | null {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!active) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [active]);
+  if (!active || !since) return null;
+  const start = Date.parse(since);
+  return Number.isNaN(start) ? null : Math.max(0, Math.floor((now - start) / 1000));
+}
+
+const clock = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+
 function ActionButton({
   icon,
   label,
@@ -105,6 +120,10 @@ export default function JobCard({
   const pending = job.status === "queued" || job.status === "running";
   const ratio = job.params.width && job.params.height ? job.params.width / job.params.height : 1;
   const isVideo = job.kind === "video";
+  const elapsed = useElapsed(job.started_at, job.status === "running");
+  const typical = job.typical_seconds ?? null;
+  const slow = elapsed !== null && typical !== null && elapsed > typical * 1.5;
+  const human = (s: number) => (s < 90 ? t("studio.seconds", { count: s }) : t("job.minutes", { count: Math.round(s / 60) }));
 
   const toggleFavorite = async (asset: Asset) => {
     const updated = await api<Asset>(`/api/assets/${asset.id}/favorite`, {
@@ -233,6 +252,24 @@ export default function JobCard({
             </>
           )}
         </p>
+        {elapsed !== null && (
+          <div className="mt-3" role="status">
+            <div className="flex items-center justify-between gap-2 text-[11px] tabular-nums">
+              <span className="font-medium text-ink">{t("job.elapsed", { time: clock(elapsed) })}</span>
+              {typical !== null && <span className="text-muted">{t("job.usually", { time: human(typical) })}</span>}
+            </div>
+            <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-raised">
+              <div
+                className={`h-full rounded-full transition-[width] duration-1000 ease-linear ${slow ? "animate-pulse" : ""}`}
+                style={{
+                  width: `${typical ? Math.min(95, Math.max(4, (elapsed / typical) * 100)) : 30}%`,
+                  background: "var(--aurora)",
+                }}
+              />
+            </div>
+            {slow && <p className="mt-2 text-[11px] text-muted">{t("job.slow")}</p>}
+          </div>
+        )}
         {job.status === "queued" && job.queue_position ? (
           <p className="mt-2 text-[11px] font-medium text-accent">
             {t("job.queuePosition", {

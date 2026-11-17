@@ -95,3 +95,64 @@ async def test_claim_respects_cpu_cap_across_workers(alice):
         running.status = JobStatus.running
         await s.commit()
     assert await claim_next() is None  # the only queued job is CPU-class and the lane is busy
+
+
+async def _finished(user_id, seconds, *, model="m", upscale=None, kind="video", provider="fal"):
+    start = datetime(2026, 11, 17, 9, 0, tzinfo=UTC)
+    async with db.session_factory()() as session:
+        session.add(
+            Job(
+                id=f"d{seconds}-{upscale}-{model}", user_id=user_id, provider=provider, model=model,
+                kind=kind, prompt="p", count=1, cost=1, params={"upscale": upscale},
+                status=JobStatus.done, created_at=start, started_at=start,
+                finished_at=start + timedelta(seconds=seconds),
+            )
+        )  # fmt: skip
+        await session.commit()
+
+
+async def test_typical_run_seconds_uses_median_and_ignores_outliers():
+    _, user = await make_user("median@example.com")
+    for secs in (100, 110, 120, 130, 4000):  # one stuck job must not skew it
+        await _finished(user["id"], secs)
+    async with db.session_factory()() as session:
+        assert await queue.typical_run_seconds(session, _job("r", "A", 0, "fal", "video")) == 120
+
+
+async def test_typical_run_seconds_separates_upscaled_and_models():
+    _, user = await make_user("separate@example.com")
+    await _finished(user["id"], 100)
+    await _finished(user["id"], 900, upscale="4k")
+    await _finished(user["id"], 30, model="other")
+    async with db.session_factory()() as session:
+        plain = _job("r1", "A", 0, "fal", "video")
+        scaled = _job("r2", "A", 0, "fal", "video", upscale="4k")
+        assert await queue.typical_run_seconds(session, plain) == 100
+        assert await queue.typical_run_seconds(session, scaled) == 900
+
+
+async def test_typical_run_seconds_fallbacks_without_history():
+    async with db.session_factory()() as session:
+        video = _job("r1", "A", 0, "fal", "video")
+        scaled = _job("r2", "A", 0, "fal", "video", upscale="8k")
+        assert await queue.typical_run_seconds(session, video) == queue.DEFAULT_SECONDS["video"]
+        assert (
+            await queue.typical_run_seconds(session, scaled) == queue.DEFAULT_UPSCALED_VIDEO_SECONDS
+        )
+
+
+async def test_running_job_exposes_started_at_and_typical_seconds():
+    client, user = await make_user("running@example.com")
+    now = datetime.now(UTC)
+    async with db.session_factory()() as session:
+        session.add(
+            Job(
+                id="run1", user_id=user["id"], provider="fal", model="m", kind="video",
+                prompt="p", count=1, cost=1, params={}, status=JobStatus.running,
+                created_at=now, started_at=now,
+            )
+        )  # fmt: skip
+        await session.commit()
+    body = (await client.get("/api/jobs/run1")).json()
+    assert body["started_at"] and body["typical_seconds"] == queue.DEFAULT_SECONDS["video"]
+    assert body["queue_position"] is None

@@ -128,10 +128,12 @@ class JobOut(BaseModel):
     cost: int
     error: str | None
     created_at: UTCDateTime
+    started_at: UTCDateTime | None = None
     finished_at: UTCDateTime | None
     assets: list[AssetOut] = []
     queue_position: int | None = None  # 1-based, queued jobs only
     eta_seconds: int | None = None  # rough estimate from recent job durations
+    typical_seconds: int | None = None  # running jobs: median run time of similar finished jobs
 
 
 class FavoriteIn(_In):

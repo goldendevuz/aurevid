@@ -93,7 +93,7 @@
     "eyebrow": "Ko'p modelli rasm va video studiyasi",
     "heroLead": "Tasvirlab bering.",
     "heroAccent": "Natijani ko'ring.",
-    "heroSub": "Modelni tanlang, prompt yozing va bir necha soniyada rasm yoki qisqa video oling. Bepul tariflar mavjud, ko'proq imkoniyat uchun o'z kalitingizni ulang.",
+    "heroSub": "Modelni tanlang va prompt yozing: rasm soniyalarda, video esa bir necha daqiqada tayyor bo'ladi. Bepul tariflar mavjud, ko'proq imkoniyat uchun o'z kalitingizni ulang.",
     "composer": "Yaratish",
     "mode": "Natija turi",
     "tryThese": "Shulardan birini sinab ko'ring",
@@ -113,7 +113,8 @@
     "noModelsInFilter": "Bu filtrga mos model yo'q.",
     "upToImages": "{{count}} tagacha rasm",
     "acceptsImage": "rasm kiritish",
-    "perImage": "{{count}} kredit"
+    "perImage": "{{count}} kredit",
+    "videoWait": "Video bir necha daqiqa oladi, provayder band bo'lsa ko'proq. Sahifadan chiqib ketishingiz mumkin: yaratish davom etadi va natija Tarix bo'limida paydo bo'ladi."
   },
   "job": {
     "queued": "Navbatda",
@@ -132,7 +133,11 @@
     "queuePosition": "Navbatda: {{position}}-o'rin · taxminan {{minutes}} daqiqa",
     "upscaleTo": "{{target}} ga ko'tarish",
     "download": "Yuklab olish",
-    "upscaleQueued": "Kattalashtirish boshlandi. Natija Studiyada chiqadi."
+    "upscaleQueued": "Kattalashtirish boshlandi. Natija Studiyada chiqadi.",
+    "elapsed": "{{time}} o'tdi",
+    "usually": "odatda taxminan {{time}}",
+    "minutes": "{{count}} daq",
+    "slow": "Odatdagidan uzoqroq davom etyapti. Sahifadan chiqib ketishingiz mumkin: jarayon davom etadi va natija Tarix bo'limida ko'rinadi."
   },
   "history": {
     "title": "Tarix",
