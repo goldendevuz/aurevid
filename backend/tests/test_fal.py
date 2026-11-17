@@ -164,3 +164,20 @@ async def test_video_upscale_chain_to_4k_and_8k(patched, monkeypatch, tmp_path, 
     assert seen[len(factors) * 3].url.host == "queue.fal.run"
     assert downloads[-1] == f"https://v3.fal.media/step{len(factors) + 1}.mp4"
     assert out.path is not None and out.path.read_bytes() == b"MP4BYTES"
+
+
+async def test_empty_balance_message(monkeypatch):
+    def handler(request):
+        return httpx.Response(403, json={"detail": "User is locked. Reason: Exhausted balance."})
+
+    transport = httpx.MockTransport(handler)
+    monkeypatch.setattr(
+        fal, "_http", lambda timeout: httpx.AsyncClient(transport=transport, timeout=timeout)
+    )
+    req = _req()
+    req.kind = "image"
+    req.model = "fal-ai/flux/schnell"
+    req.aspect_ratio = "1:1"
+    with pytest.raises(ProviderError) as err:
+        await fal.FalProvider().generate(req, KEY)
+    assert "balance" in err.value.public and "fal.ai/dashboard/billing" in err.value.public

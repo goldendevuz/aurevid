@@ -62,8 +62,14 @@ def _fal_queue_url(url: object) -> str:
     return url
 
 
+BILLING_URL = "https://fal.ai/dashboard/billing"
+
+
 def _check(resp: httpx.Response) -> None:
-    if resp.status_code in (401, 403):
+    if resp.status_code in (401, 402, 403):
+        detail = resp.text[:500].lower()  # inspected only, never shown to users verbatim
+        if resp.status_code == 402 or "balance" in detail or "locked" in detail:
+            raise ProviderError(f"Your fal.ai balance is empty. Top up at {BILLING_URL}")
         raise ProviderError("fal.ai rejected the key")
     if resp.status_code == 429:
         raise ProviderError("fal.ai rate limit reached", quota=True)

@@ -38,6 +38,19 @@ ARM VM is about twice as slow. Plan ≥ 1 GB RAM for the worker (an 8K square pe
 in our measurement). Keep `CPU_JOB_CONCURRENCY=1` on small machines; the queue makes
 other users wait their turn instead of overloading the server. Set `UPSCALER_ENABLED=false` to turn it off.
 
+## Option 0: shared home/VPS host with Cloudflare Tunnel (used for the first deployment)
+
+```bash
+git clone https://github.com/goldendevuz/aurevid.git ~/projects/aurevid && cd ~/projects/aurevid
+cp .env.example .env   # set prod values + TUNNEL_TOKEN (Zero Trust → Networks → Tunnels)
+docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile tunnel up -d --build
+docker compose exec api python -m app.cli make-admin you@example.com
+```
+
+In the tunnel's *Public Hostname* set the service to `http://web:8080`. No port is opened on
+the host, and `docker-compose.prod.yml` caps CPU/RAM so upscaling cannot starve other services.
+Update: `git pull && docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile tunnel up -d --build`.
+
 ## Option A: one small VM (simplest, recommended)
 
 Oracle Cloud *Always Free* ARM VM, or any €4-5/month VPS (Hetzner, etc.).
