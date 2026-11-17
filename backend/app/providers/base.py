@@ -99,7 +99,10 @@ GeneratedImage = GeneratedMedia  # backwards-compatible name
 
 
 class ProviderError(Exception):
-    """`public` is safe to show to the user; never include keys or raw upstream bodies."""
+    """`public` is safe to show to the user; never include keys or raw upstream bodies.
+
+    A single short, sanitised upstream message field is fine (see cloudflare._error_detail).
+    """
 
     def __init__(self, public: str, *, retryable: bool = False, quota: bool = False):
         super().__init__(public)
