@@ -43,6 +43,14 @@ services:
     depends_on:
       api:
         condition: service_healthy   # api runs the migrations first
+    # The image's HEALTHCHECK probes the API port, which the worker doesn't serve; check for a
+    # fresh worker heartbeat instead (see backend/app/healthcheck.py).
+    healthcheck:
+      test: ["CMD", "python", "-m", "app.healthcheck"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
     restart: unless-stopped
 
   web:
