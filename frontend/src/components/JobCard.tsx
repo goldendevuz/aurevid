@@ -166,7 +166,6 @@ export default function JobCard({
                     src={a.url}
                     controls
                     loop
-                    muted
                     playsInline
                     preload="metadata"
                     aria-label={job.prompt}

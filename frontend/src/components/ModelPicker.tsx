@@ -160,6 +160,7 @@ export default function ModelPicker({
                       <li className="flex items-center gap-1"><Icon name="clock" size={12} />{[...m.durations].sort((a, b) => a - b).map((d) => `${d}s`).join(" / ")}</li>
                     )
                   )}
+                  {m.has_audio && <li className="flex items-center gap-1 font-medium text-accent"><Icon name="sound" size={12} />{t("studio.withAudio")}</li>}
                   {m.accepts_image && <li className="flex items-center gap-1"><Icon name="image" size={12} />{t("studio.acceptsImage")}</li>}
                   {m.upscale_targets.length > 0 && (
                     <li className="flex items-center gap-1"><Icon name="expand" size={12} />{m.upscale_targets.map((x) => x.toUpperCase()).join(" / ")}</li>

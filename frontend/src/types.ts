@@ -22,6 +22,7 @@ export interface ModelInfo {
   durations: number[];
   accepts_image: boolean;
   requires_image: boolean;
+  has_audio?: boolean;
   upscale_targets: ("4k" | "8k")[];
   upscale_credits: Record<string, number>;
 }

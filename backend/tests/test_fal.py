@@ -181,3 +181,45 @@ async def test_empty_balance_message(monkeypatch):
     with pytest.raises(ProviderError) as err:
         await fal.FalProvider().generate(req, KEY)
     assert "balance" in err.value.public and "fal.ai/dashboard/billing" in err.value.public
+
+
+async def test_kling_text_to_video_requests_audio_with_documented_fields(patched):
+    install, seen, _ = patched
+    install()
+    await fal.FalProvider().generate(_req(fal.KLING_T2V), KEY)
+    assert seen[0].url == f"https://queue.fal.run/{fal.KLING_T2V}"
+    body = json.loads(seen[0].content)
+    assert body == {
+        "prompt": "waves",
+        "duration": "5",  # fal wants the string "5" or "10"
+        "aspect_ratio": "9:16",
+        "generate_audio": True,
+        "enable_safety_checker": True,
+    }  # no seed / frames / resolution: not in the schema
+
+
+async def test_kling_image_to_video_sends_start_image_and_audio(patched):
+    install, seen, _ = patched
+    install()
+    await fal.FalProvider().generate(_req(fal.KLING_I2V, image=b"\xff\xd8jpeg"), KEY)
+    body = json.loads(seen[0].content)
+    assert (
+        body["start_image_url"]
+        == "data:image/jpeg;base64," + base64.b64encode(b"\xff\xd8jpeg").decode()
+    )
+    assert body["generate_audio"] is True and "aspect_ratio" not in body
+    with pytest.raises(ProviderError):
+        await fal.FalProvider().generate(_req(fal.KLING_I2V), KEY)
+
+
+def test_kling_models_are_listed_with_audio_and_no_upscale():
+    models = {m.id: m for m in fal.FalProvider.info.models}
+    for mid in (fal.KLING_T2V, fal.KLING_I2V):
+        m = models[mid]
+        assert m.has_audio and m.kind == "video" and m.durations == [5, 10]
+        assert m.upscale_targets == [] and m.commercial_use == "unclear"
+    assert models[fal.KLING_I2V].requires_image and not models[fal.KLING_T2V].accepts_image
+    assert not models[fal.T2V].has_audio  # Wan stays silent
+    req = _req(fal.KLING_T2V)
+    req.upscale = "4k"
+    assert fal.FalProvider().upscale_passes(req) == []

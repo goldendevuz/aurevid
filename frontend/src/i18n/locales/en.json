@@ -114,7 +114,8 @@
     "upToImages": "up to {{count}} images",
     "acceptsImage": "image input",
     "perImage": "{{count}} credits",
-    "videoWait": "Videos take a few minutes, sometimes longer when the provider is busy. You can leave this page: it keeps generating and the result appears in History."
+    "videoWait": "Videos take a few minutes, sometimes longer when the provider is busy. You can leave this page: it keeps generating and the result appears in History.",
+    "withAudio": "with sound"
   },
   "job": {
     "queued": "Queued",
