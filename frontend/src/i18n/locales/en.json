@@ -93,7 +93,7 @@
     "eyebrow": "Images and video from many models, one studio",
     "heroLead": "Describe it.",
     "heroAccent": "Watch it appear.",
-    "heroSub": "Pick a model, write a prompt and get images or short videos in seconds. Free tiers included, bring your own keys for more.",
+    "heroSub": "Pick a model and write a prompt: images take seconds, videos a few minutes. Free tiers included, bring your own keys for more.",
     "composer": "Create",
     "mode": "Output type",
     "tryThese": "Try one of these",
@@ -113,7 +113,8 @@
     "noModelsInFilter": "No models match this filter.",
     "upToImages": "up to {{count}} images",
     "acceptsImage": "image input",
-    "perImage": "{{count}} credits"
+    "perImage": "{{count}} credits",
+    "videoWait": "Videos take a few minutes, sometimes longer when the provider is busy. You can leave this page: it keeps generating and the result appears in History."
   },
   "job": {
     "queued": "Queued",
@@ -132,7 +133,11 @@
     "queuePosition": "In queue: #{{position}} · about {{minutes}} min",
     "upscaleTo": "Upscale {{target}}",
     "download": "Download",
-    "upscaleQueued": "Upscale started. You'll find it in the Studio."
+    "upscaleQueued": "Upscale started. You'll find it in the Studio.",
+    "elapsed": "{{time}} elapsed",
+    "usually": "usually about {{time}}",
+    "minutes": "{{count}} min",
+    "slow": "Taking longer than usual. You can leave this page: it keeps running and the result shows up in History."
   },
   "history": {
     "title": "History",

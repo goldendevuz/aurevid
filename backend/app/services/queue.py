@@ -16,6 +16,7 @@ heavy CPU work (local AI upscaling) never runs more than ``cpu_job_concurrency``
 
 from collections import Counter
 from collections.abc import Iterable, Sequence
+from statistics import median
 
 from fastapi import HTTPException, status
 from sqlalchemy import func, select
@@ -132,6 +133,40 @@ async def average_seconds(session: AsyncSession, job: Job) -> float:
     if not spans:
         return float(DEFAULT_SECONDS[_kind_key(job)])
     return sum(spans) / len(spans)
+
+
+# Fallback for video that is also upscaled (several extra Topaz passes on fal).
+DEFAULT_UPSCALED_VIDEO_SECONDS = 420
+
+
+async def typical_run_seconds(session: AsyncSession, job: Job) -> int:
+    """Median run time of recent finished jobs like this one (same provider, model, kind and
+    whether it is upscaled): what the UI shows as "usually about ...". Median, not mean, so one
+    stuck job does not skew it."""
+    upscaled = bool((job.params or {}).get("upscale"))
+    rows = await session.execute(
+        select(Job.started_at, Job.finished_at, Job.params)
+        .where(
+            Job.provider == job.provider,
+            Job.model == job.model,
+            Job.kind == job.kind,
+            Job.status == JobStatus.done,
+            Job.started_at.is_not(None),
+            Job.finished_at.is_not(None),
+        )
+        .order_by(Job.finished_at.desc())
+        .limit(40)
+    )
+    spans = [
+        (as_utc(f) - as_utc(st)).total_seconds()
+        for st, f, params in rows.all()
+        if bool((params or {}).get("upscale")) == upscaled and as_utc(f) >= as_utc(st)
+    ]
+    if spans:
+        return max(1, int(median(spans[:20])))
+    if upscaled and job.kind == "video":
+        return DEFAULT_UPSCALED_VIDEO_SECONDS
+    return DEFAULT_SECONDS[_kind_key(job)]
 
 
 async def position_and_eta(session: AsyncSession, job: Job) -> tuple[int, int]:

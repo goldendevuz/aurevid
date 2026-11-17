@@ -415,6 +415,7 @@ export default function Studio() {
               </div>
             )}
           </div>
+          {isVideo && <p className="px-2 pt-2 text-[11px] text-muted">{t("studio.videoWait")}</p>}
           {isVideo && !startImage && <p className="px-2 pt-2 text-[11px] text-muted">{t("studio.startImageHint")}</p>}
           {needsImage && <p className="px-2 pt-2 text-[11px] text-danger">{t("studio.needsImage")}</p>}
           {resolution !== "native" && (
@@ -490,7 +491,7 @@ export default function Studio() {
         {jobs.length === 0 ? (
           <EmptyState icon={<Icon name="sparkle" size={22} />} title={t("studio.empty")} hint={t("studio.emptyHint")} />
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          <div className="grid items-start gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {jobs.map((j) => (
               <JobCard
                 key={j.id}

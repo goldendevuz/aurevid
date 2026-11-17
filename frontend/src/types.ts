@@ -93,9 +93,11 @@ export interface Job {
   cost: number;
   error: string | null;
   created_at: string;
+  started_at?: string | null;
   assets: Asset[];
   queue_position?: number | null;
   eta_seconds?: number | null;
+  typical_seconds?: number | null;
 }
 
 export interface Usage {
