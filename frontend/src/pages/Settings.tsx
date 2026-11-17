@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { useAuth } from "../auth";
 import { LanguageSelect } from "../components/Layout";
-import { Badge, Button, Card, ErrorText, inputClass, Label } from "../components/ui";
+import { Badge, Button, Card, ErrorText, inputClass, Label, PageHeader } from "../components/ui";
 import type { Provider, ProviderKeyStatus } from "../types";
 
 function KeyForm({ provider, status, onSaved }: { provider: Provider; status?: ProviderKeyStatus; onSaved: () => void }) {
@@ -32,7 +32,7 @@ function KeyForm({ provider, status, onSaved }: { provider: Provider; status?: P
   };
 
   return (
-    <form onSubmit={save} className="rounded-lg border border-line p-4">
+    <form onSubmit={save} className="rounded-2xl border border-line bg-raised/30 p-4">
       <div className="mb-3 flex items-center justify-between">
         <p className="text-sm font-semibold">
           {provider.name}{" "}
@@ -50,7 +50,7 @@ function KeyForm({ provider, status, onSaved }: { provider: Provider; status?: P
       </p>
       <div className="mb-3 flex flex-wrap gap-3 text-xs">
         {provider.key_url && (
-          <a href={provider.key_url} target="_blank" rel="noopener noreferrer" className="font-semibold text-amber hover:underline">
+          <a href={provider.key_url} target="_blank" rel="noopener noreferrer" className="font-semibold text-accent hover:underline">
             🔑 {t("settings.getKey")} ↗
           </a>
         )}
@@ -133,7 +133,7 @@ export default function Settings() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
-      <h1 className="text-xl font-semibold tracking-tight">{t("settings.title")}</h1>
+      <PageHeader title={t("settings.title")} />
       <Card>
         <Label>{t("settings.language")}</Label>
         <LanguageSelect />

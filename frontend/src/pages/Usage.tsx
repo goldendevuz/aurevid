@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api";
-import { Card, ErrorText } from "../components/ui";
+import { Card, ErrorText, PageHeader } from "../components/ui";
 import type { Provider, Usage } from "../types";
 import { QuotaLine } from "./Studio";
 
@@ -24,15 +24,15 @@ export default function UsagePage() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-4">
-      <h1 className="text-xl font-semibold tracking-tight">{t("usage.title")}</h1>
+      <PageHeader title={t("usage.title")} />
       <ErrorText error={error} />
       {usage && (
         <>
           <Card>
-            <p className="text-xs uppercase tracking-wide text-muted">{t("usage.balance")}</p>
-            <p className="mt-1 text-4xl font-semibold text-amber">{usage.balance}</p>
+            <p className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted">{t("usage.balance")}</p>
+            <p className="aurora-text mt-1 text-6xl font-semibold tabular-nums tracking-tight">{usage.balance}</p>
             <div className="mt-4 h-2 overflow-hidden rounded-full bg-raised">
-              <div className="h-full bg-amber" style={{ width: `${pct}%` }} />
+              <div className="h-full rounded-full" style={{ width: `${pct}%`, background: "var(--aurora)" }} />
             </div>
             <p className="mt-2 text-xs text-muted">
               {t("usage.today", { used: usage.jobs_today, limit: usage.daily_job_limit })}

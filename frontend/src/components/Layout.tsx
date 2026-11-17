@@ -6,17 +6,33 @@ import { api } from "../api";
 import { useAuth } from "../auth";
 import { LANGUAGES } from "../i18n";
 import type { Locale, User } from "../types";
+import { Icon, type IconName } from "./icons";
 
 const SOURCE_URL = import.meta.env.VITE_SOURCE_URL as string | undefined;
 
+export function LogoMark({ size = 26 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden>
+      <defs>
+        <linearGradient id="av-g" x1="4" y1="28" x2="28" y2="4" gradientUnits="userSpaceOnUse">
+          <stop offset="0" stopColor="#6ff2cc" />
+          <stop offset="0.55" stopColor="#9a8cff" />
+          <stop offset="1" stopColor="#ff86c1" />
+        </linearGradient>
+      </defs>
+      <rect width="32" height="32" rx="9" fill="#0d0f16" />
+      <rect x="0.5" y="0.5" width="31" height="31" rx="8.5" fill="none" stroke="#fff" strokeOpacity="0.1" />
+      <path d="M16 6.5 7.5 25.5h4l1.8-4.4h5.4l1.8 4.4h4L16 6.5Zm0 7.2 1.9 4.7h-3.8l1.9-4.7Z" fill="url(#av-g)" />
+      <circle cx="24.6" cy="8.4" r="2.4" fill="url(#av-g)" />
+    </svg>
+  );
+}
+
 export function Logo() {
   return (
-    <Link to="/" className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-      <svg width="22" height="22" viewBox="0 0 32 32" aria-hidden>
-        <path d="M16 6 7 26h4.2l1.9-4.6h5.8l1.9 4.6H25L16 6Zm0 7.4 2 5H14l2-5Z" fill="#f0a73a" />
-        <circle cx="24.5" cy="8.5" r="2.5" fill="#f0a73a" />
-      </svg>
-      aurevid
+    <Link to="/" className="flex items-center gap-2.5 text-lg font-semibold tracking-tight">
+      <LogoMark />
+      <span className="hidden sm:inline">aurevid</span>
     </Link>
   );
 }
@@ -33,7 +49,7 @@ export function LanguageSelect() {
       aria-label={t("nav.language")}
       value={i18n.language}
       onChange={(e) => void change(e.target.value as Locale)}
-      className="rounded-md border border-line bg-bg px-2 py-1 text-xs text-ink"
+      className="rounded-lg border border-line bg-bg/70 px-2 py-1.5 text-xs text-ink transition hover:border-white/20"
     >
       {LANGUAGES.map((l) => (
         <option key={l.code} value={l.code}>
@@ -44,29 +60,54 @@ export function LanguageSelect() {
   );
 }
 
+interface NavItem {
+  to: string;
+  label: string;
+  icon: IconName;
+  end?: boolean;
+}
+
 export default function Layout() {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const items: NavItem[] = [
+    { to: "/", label: t("nav.studio"), icon: "sparkle", end: true },
+    { to: "/marketing", label: t("nav.marketing"), icon: "megaphone" },
+    { to: "/history", label: t("nav.history"), icon: "history" },
+    { to: "/usage", label: t("nav.usage"), icon: "coins" },
+    { to: "/settings", label: t("nav.settings"), icon: "settings" },
+    ...(user?.is_admin ? [{ to: "/admin", label: t("nav.admin"), icon: "shield" as IconName }] : []),
+  ];
   const link = ({ isActive }: { isActive: boolean }) =>
-    `rounded-md px-3 py-1.5 text-sm ${isActive ? "bg-raised text-ink" : "text-muted hover:text-ink"}`;
+    `flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm font-medium transition ${
+      isActive ? "bg-white/[0.08] text-ink" : "text-muted hover:bg-white/[0.04] hover:text-ink"
+    }`;
+  const tab = ({ isActive }: { isActive: boolean }) =>
+    `flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl py-1.5 text-[10px] font-medium ${
+      isActive ? "text-accent" : "text-muted"
+    }`;
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="border-b border-line bg-surface/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-3">
+      <header className="sticky top-0 z-30 border-b border-white/[0.06] bg-bg/70 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6">
           <Logo />
-          <nav className="flex flex-wrap gap-1">
-            <NavLink to="/" end className={link}>{t("nav.studio")}</NavLink>
-            <NavLink to="/marketing" className={link}>{t("nav.marketing")}</NavLink>
-            <NavLink to="/history" className={link}>{t("nav.history")}</NavLink>
-            <NavLink to="/usage" className={link}>{t("nav.usage")}</NavLink>
-            <NavLink to="/settings" className={link}>{t("nav.settings")}</NavLink>
-            {user?.is_admin && <NavLink to="/admin" className={link}>⚙ {t("nav.admin")}</NavLink>}
+          <nav aria-label="Main" className="ml-4 hidden gap-1 md:flex">
+            {items.map((i) => (
+              <NavLink key={i.to} to={i.to} end={i.end} className={link}>
+                <Icon name={i.icon} size={16} />
+                {i.label}
+              </NavLink>
+            ))}
           </nav>
-          <div className="ml-auto flex items-center gap-3">
+          <div className="ml-auto flex items-center gap-2 sm:gap-3">
             {user && (
-              <Link to="/usage" className="rounded-full bg-amber/15 px-3 py-1 text-xs font-semibold text-amber">
+              <Link
+                to="/usage"
+                className="flex items-center gap-1.5 whitespace-nowrap rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-ink transition hover:border-accent/50"
+              >
+                <Icon name="bolt" size={14} className="text-accent" />
                 {t("nav.credits", { count: user.credit_balance })}
               </Link>
             )}
@@ -76,26 +117,39 @@ export default function Layout() {
                 await logout();
                 navigate("/login");
               }}
-              className="text-xs text-muted hover:text-ink"
+              className="grid h-8 w-8 place-items-center rounded-lg text-muted transition hover:bg-white/[0.06] hover:text-ink"
+              aria-label={t("nav.logout")}
+              title={t("nav.logout")}
             >
-              {t("nav.logout")}
+              <Icon name="logout" size={17} />
             </button>
           </div>
         </div>
       </header>
       <Announcements />
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6">
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 pb-8 pt-6 sm:px-6 md:pt-8">
         <Outlet />
       </main>
-      <Footer />
+      <Footer clearTabBar />
+      <nav
+        aria-label="Main"
+        className="fixed inset-x-0 bottom-0 z-30 flex gap-1 border-t border-white/[0.08] bg-bg/90 px-2 pb-[max(0.4rem,env(safe-area-inset-bottom))] pt-1.5 backdrop-blur-xl md:hidden"
+      >
+        {items.map((i) => (
+          <NavLink key={i.to} to={i.to} end={i.end} className={tab}>
+            <Icon name={i.icon} size={20} />
+            <span className="max-w-full truncate">{i.label}</span>
+          </NavLink>
+        ))}
+      </nav>
     </div>
   );
 }
 
-export function Footer() {
+export function Footer({ clearTabBar = false }: { clearTabBar?: boolean }) {
   const { t } = useTranslation();
   return (
-    <footer className="border-t border-line py-4 text-center text-xs text-muted">
+    <footer className={`border-t border-white/[0.06] pt-5 text-center text-xs text-muted ${clearTabBar ? "pb-24 md:pb-5" : "pb-5"}`}>
       <Link to="/terms" className="hover:text-ink">{t("nav.terms")}</Link>
       <span className="mx-2">·</span>
       {SOURCE_URL ? (
@@ -139,7 +193,7 @@ function Announcements() {
       /* ignore */
     }
   };
-  const tone = { info: "border-series-2/50 bg-series-2/10", warning: "border-amber/50 bg-amber/10", success: "border-ok/50 bg-ok/10" };
+  const tone = { info: "border-series-2/40 bg-series-2/10", warning: "border-accent-3/40 bg-accent-3/10", success: "border-ok/40 bg-ok/10" };
   return (
     <>
       {items
@@ -148,7 +202,7 @@ function Announcements() {
           const text = (i18n.language === "uz" && a.text_uz) || (i18n.language === "ru" && a.text_ru) || a.text_en;
           return (
             <div key={a.id} role="status" className={`border-b px-4 py-2 text-sm text-ink ${tone[a.level]}`}>
-              <div className="mx-auto flex max-w-6xl items-start justify-between gap-3">
+              <div className="mx-auto flex max-w-7xl items-start justify-between gap-3">
                 <p>{a.level === "warning" ? "⚠ " : a.level === "success" ? "✓ " : "ℹ "}{text}</p>
                 <button onClick={() => hide(a.id)} aria-label="×" className="text-muted hover:text-ink">✕</button>
               </div>

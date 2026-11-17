@@ -29,7 +29,7 @@ function CopyButton({ text }: { text: string }) {
   return (
     <button
       type="button"
-      className="text-[11px] text-muted hover:text-amber"
+      className="text-[11px] text-muted hover:text-accent"
       onClick={async () => {
         try {
           await navigator.clipboard.writeText(text);
@@ -110,7 +110,7 @@ export default function Marketing() {
   return (
     <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
       <Card className="h-fit lg:sticky lg:top-6">
-        <h1 className="text-lg font-semibold tracking-tight">{t("marketing.title")}</h1>
+        <h1 className="text-xl font-semibold tracking-tight">{t("marketing.title")}</h1>
         <p className="mt-1 text-xs text-muted">{t("marketing.subtitle")}</p>
         <form onSubmit={generate} className="mt-4 space-y-3">
           <div>
@@ -152,7 +152,7 @@ export default function Marketing() {
           <div>
             <Label>{t("marketing.photo")}</Label>
             {photo ? (
-              <div className="flex items-center gap-3 rounded-lg border border-line bg-bg p-2">
+              <div className="flex items-center gap-3 rounded-xl border border-line bg-bg/60 p-2">
                 <img src={photo.preview_url || photo.url} alt="" className="h-14 w-14 rounded object-cover" />
                 <span className="flex-1 text-[11px] text-muted">{t("marketing.photoHint")}</span>
                 <button type="button" onClick={() => setPhoto(null)} className="text-xs text-muted hover:text-ink">✕</button>
@@ -183,7 +183,7 @@ export default function Marketing() {
           <>
             <div className="flex flex-wrap items-center gap-2 text-xs">
               <Badge tone={result.source === "ai" ? "ok" : "muted"}>{result.source === "ai" ? t("marketing.sourceAi") : t("marketing.sourceTemplates")}</Badge>
-              {result.note === "ai_failed" && <span className="text-amber">{t("marketing.aiFailed")}</span>}
+              {result.note === "ai_failed" && <span className="text-accent">{t("marketing.aiFailed")}</span>}
               {result.palette.map((c) => (
                 <span key={c.hex} className="inline-flex items-center gap-1 rounded-full border border-line px-2 py-0.5 text-muted" title={`${c.hex} · ${c.share}%`}>
                   <span className="inline-block h-3 w-3 rounded-full border border-line" style={{ background: c.hex }} />

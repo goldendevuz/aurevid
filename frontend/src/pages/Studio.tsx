@@ -4,8 +4,10 @@ import { useTranslation } from "react-i18next";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { useAuth } from "../auth";
+import { Icon } from "../components/icons";
 import JobCard from "../components/JobCard";
-import { Badge, Button, Card, ErrorText, inputClass, Label } from "../components/ui";
+import ModelPicker, { ModelSwatch } from "../components/ModelPicker";
+import { Badge, Button, EmptyState, ErrorText, Segmented } from "../components/ui";
 import type { Asset, Job, ModelInfo, Preset, Provider } from "../types";
 
 const MAX_PROMPT = 1000;
@@ -50,16 +52,16 @@ export function QuotaLine({ provider }: { provider: Provider }) {
   if (!q) return null;
   if (q.blocked_seconds > 0) {
     return (
-      <p className="mt-1.5 text-[11px] text-danger">
+      <p className="text-[11px] text-danger">
         {t("studio.quotaBlocked", { minutes: Math.max(1, Math.ceil(q.blocked_seconds / 60)) })}
       </p>
     );
   }
   if (q.estimated_limit === null) {
-    return <p className="mt-1.5 text-[11px] text-muted">{t("studio.quotaUnknown", { used: q.used_today })}</p>;
+    return <p className="text-[11px] text-muted">{t("studio.quotaUnknown", { used: q.used_today })}</p>;
   }
   return (
-    <p className="mt-1.5 text-[11px] text-muted">
+    <p className="text-[11px] text-muted">
       {t("studio.quotaLeft", { remaining: q.remaining, limit: q.estimated_limit })}{" "}
       <span className="opacity-70">
         ({q.source === "learned" ? t("studio.quota_learned", { count: q.observations }) : t("studio.quota_documented")})
@@ -87,6 +89,8 @@ export default function Studio() {
   const [resolution, setResolution] = useState<"native" | "4k" | "8k">("native");
   const [wantAspect, setWantAspect] = useState<string | null>(null);
   const [presetId, setPresetId] = useState<string>("");
+  const [picking, setPicking] = useState(false);
+  const closePicker = useCallback(() => setPicking(false), []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const watchers = useRef(new Map<string, () => void>());
@@ -253,225 +257,240 @@ export default function Studio() {
   const extra = resolution === "native" ? 0 : (model?.upscale_credits[resolution] ?? 0);
   const cost = ((model?.credit_cost ?? 1) + extra) * (isVideo ? 1 : count);
   const needsImage = Boolean(model?.requires_image && !startImage);
-  const tab = (active: boolean) =>
-    `flex-1 rounded-md px-3 py-1.5 text-sm font-medium ${active ? "bg-amber text-amber-ink" : "text-muted hover:text-ink"}`;
+  const chip =
+    "flex items-center gap-1.5 rounded-xl border border-line bg-bg/60 px-3 py-2 text-xs font-medium text-ink transition hover:border-white/20 focus-within:border-accent-2";
+  const selectChip = "cursor-pointer appearance-none bg-transparent pr-1 text-xs font-medium text-ink focus:outline-none [&>option]:bg-surface";
+  const examples = (isVideo ? (["v1", "v2", "v3"] as const) : (["i1", "i2", "i3", "i4"] as const)).map((k) => t(`studio.example_${k}`));
+  const canGenerate = !(busy || prompt.trim().length < 3 || !provider?.available || needsImage);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
-      <Card className="h-fit lg:sticky lg:top-6">
-        <div className="mb-4 flex gap-1 rounded-lg border border-line bg-bg p-1" role="tablist">
-          <button role="tab" aria-selected={!isVideo} className={tab(!isVideo)} onClick={() => switchMode("image")}>
-            {t("studio.mode_image")}
-          </button>
-          <button role="tab" aria-selected={isVideo} className={tab(isVideo)} onClick={() => switchMode("video")}>
-            ▶ {t("studio.mode_video")}
-          </button>
+    <div>
+      <section className="mx-auto max-w-4xl pb-8 pt-2 text-center sm:pt-6">
+        <p className="mx-auto mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-medium text-muted">
+          <Icon name="sparkle" size={13} className="text-accent" />
+          {t("studio.eyebrow")}
+        </p>
+        <h1 className="text-4xl font-semibold leading-[1.05] tracking-tight sm:text-6xl">
+          <span className="block">{t("studio.heroLead")}</span>
+          <span className="aurora-text block pb-1">{t("studio.heroAccent")}</span>
+        </h1>
+        <p className="mx-auto mt-4 max-w-xl text-sm text-muted sm:text-base">{t("studio.heroSub")}</p>
+      </section>
+
+      <section className="mx-auto max-w-4xl" aria-label={t("studio.composer")}>
+        <div className="mb-3 flex justify-center">
+          <Segmented
+            label={t("studio.mode")}
+            value={mode}
+            onChange={switchMode}
+            options={[
+              { value: "image", label: <span className="flex items-center gap-1.5"><Icon name="image" size={15} />{t("studio.mode_image")}</span> },
+              { value: "video", label: <span className="flex items-center gap-1.5"><Icon name="video" size={15} />{t("studio.mode_video")}</span> },
+            ]}
+          />
         </div>
 
-        {isVideo && startImage && (
-          <div className="mb-4 flex items-center gap-3 rounded-lg border border-line bg-bg p-2">
-            <img src={startImage.preview_url || startImage.url} alt="" className="h-14 w-14 rounded-md object-cover" />
-            <div className="flex-1 text-xs">
-              <p className="font-semibold">{t("studio.startImage")}</p>
-              {model && !model.accepts_image && <p className="text-danger">{t("errors.image_input_unsupported")}</p>}
+        <div className="glass ring-aurora rounded-[24px] p-3 sm:p-4">
+          {isVideo && startImage && (
+            <div className="mb-3 flex items-center gap-3 rounded-2xl border border-line bg-bg/60 p-2">
+              <img src={startImage.preview_url || startImage.url} alt="" className="h-14 w-14 rounded-xl object-cover" />
+              <div className="flex-1 text-xs">
+                <p className="font-semibold">{t("studio.startImage")}</p>
+                {model && !model.accepts_image && <p className="text-danger">{t("errors.image_input_unsupported")}</p>}
+              </div>
+              <button onClick={() => setStartImage(null)} className="rounded-lg px-2 py-1 text-xs text-muted hover:bg-white/[0.06] hover:text-ink">
+                {t("studio.removeStartImage")}
+              </button>
             </div>
-            <button onClick={() => setStartImage(null)} className="text-xs text-muted hover:text-ink">
-              {t("studio.removeStartImage")}
-            </button>
-          </div>
-        )}
-
-        <Label htmlFor="prompt">{isVideo ? t("studio.videoPromptLabel") : t("studio.promptLabel")}</Label>
-        <textarea
-          id="prompt"
-          rows={5}
-          maxLength={MAX_PROMPT}
-          value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          placeholder={isVideo ? t("studio.videoPromptPlaceholder") : t("studio.promptPlaceholder")}
-          className={`${inputClass} resize-y`}
-        />
-        <p className="mt-1 text-right text-[11px] text-muted">
-          {t("studio.chars", { count: prompt.length, max: MAX_PROMPT })}
-        </p>
-
-        <div className="mt-4">
-          <Label htmlFor="model">{t("studio.model")}</Label>
-          {choices.length === 0 ? (
-            <p className="text-xs text-muted">
-              {t("studio.noVideoModels")}{" "}
-              <Link to="/settings" className="underline hover:text-ink">{t("nav.settings")}</Link>
-            </p>
-          ) : (
-            <select id="model" value={modelKey} onChange={(e) => setModelKey(e.target.value)} className={inputClass}>
-              {providers.map((p) => {
-                const ms = p.models.filter((m) => m.kind === mode);
-                if (ms.length === 0) return null;
-                return (
-                  <optgroup key={p.id} label={`${p.name} · ${p.tier === "free" ? t("studio.free") : t("studio.paid")}`}>
-                    {ms.map((m) => (
-                      <option key={m.id} value={`${p.id}|${m.id}`} disabled={!p.available}>
-                        {m.label}
-                        {!p.available ? ` (${t("studio.needsKey")})` : ""}
-                      </option>
-                    ))}
-                  </optgroup>
-                );
-              })}
-            </select>
           )}
-          {provider && model && (
-            <>
-              <div className="mt-2 flex flex-wrap gap-1.5">
+
+          <label htmlFor="prompt" className="sr-only">{isVideo ? t("studio.videoPromptLabel") : t("studio.promptLabel")}</label>
+          <textarea
+            id="prompt"
+            rows={3}
+            maxLength={MAX_PROMPT}
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            placeholder={isVideo ? t("studio.videoPromptPlaceholder") : t("studio.promptPlaceholder")}
+            className="block w-full resize-y rounded-2xl bg-transparent px-3 py-2 text-base leading-relaxed text-ink placeholder:text-muted/60 focus:outline-none sm:text-lg"
+          />
+
+          <div className="flex flex-wrap items-end justify-between gap-3 px-1 pt-2">
+           <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+            {choices.length === 0 ? (
+              <p className="text-xs text-muted">
+                {t("studio.noVideoModels")}{" "}
+                <Link to="/settings" className="underline hover:text-ink">{t("nav.settings")}</Link>
+              </p>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setPicking(true)}
+                aria-haspopup="dialog"
+                aria-label={`${t("studio.model")}: ${model?.label ?? ""}`}
+                className={`${chip} max-w-full`}
+              >
+                <ModelSwatch seed={modelKey || "none"} size={20} />
+                <span className="truncate">{model?.label ?? t("studio.model")}</span>
+                <Icon name="chevron" size={14} className="text-muted" />
+              </button>
+            )}
+
+            <label className={chip}>
+              <Icon name="ratio" size={15} className="text-muted" />
+              <span className="sr-only">{t("studio.aspect")}</span>
+              <select value={aspect} onChange={(e) => setAspect(e.target.value)} className={selectChip}>
+                {["1:1", "16:9", "9:16", "4:3", "3:4"].map((r) => (
+                  <option key={r} value={r} disabled={!ratios.includes(r)}>{r}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className={chip}>
+              <Icon name="expand" size={15} className="text-muted" />
+              <span className="sr-only">{t("studio.size")}</span>
+              <select value={size} onChange={(e) => setSize(e.target.value as typeof size)} className={selectChip}>
+                {SIZES.map((x) => (
+                  <option key={x} value={x}>{t(`studio.size_${x}`)}</option>
+                ))}
+              </select>
+            </label>
+
+            {isVideo ? (
+              <label className={chip}>
+                <Icon name="clock" size={15} className="text-muted" />
+                <span className="sr-only">{t("studio.duration")}</span>
+                <select value={duration ?? ""} onChange={(e) => setDuration(Number(e.target.value))} className={selectChip}>
+                  {[...(model?.durations ?? [])].sort((a, b) => a - b).map((d) => (
+                    <option key={d} value={d}>{t("studio.seconds", { count: d })}</option>
+                  ))}
+                </select>
+              </label>
+            ) : (
+              <label className={chip}>
+                <Icon name="layers" size={15} className="text-muted" />
+                <span className="sr-only">{t("studio.count")}</span>
+                <select value={count} onChange={(e) => setCount(Number(e.target.value))} className={selectChip}>
+                  {[1, 2, 3, 4].slice(0, model?.max_count ?? 4).map((n) => (
+                    <option key={n} value={n}>{n}×</option>
+                  ))}
+                </select>
+              </label>
+            )}
+
+            {model && model.upscale_targets.length > 0 && (
+              <label className={chip}>
+                <Icon name="wand" size={15} className="text-muted" />
+                <span className="sr-only">{t("studio.resolution")}</span>
+                <select value={resolution} onChange={(e) => setResolution(e.target.value as typeof resolution)} className={selectChip}>
+                  {(["native", ...model.upscale_targets] as const).map((r) => (
+                    <option key={r} value={r}>
+                      {t(`studio.res_${r}`)}
+                      {r !== "native" ? ` (${t("studio.resCost", { count: model.upscale_credits[r] ?? 0 })})` : ""}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+
+           </div>
+           <Button className="w-full min-w-32 py-2.5 sm:w-auto" disabled={!canGenerate} onClick={() => void submit()}>
+             <Icon name="sparkle" size={17} />
+             {busy ? t("studio.generating") : t("studio.generate")}
+           </Button>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-2 pt-3 text-[11px] text-muted">
+            <p>
+              {t("studio.cost", { count: cost })} · <span className="tabular-nums">{t("studio.chars", { count: prompt.length, max: MAX_PROMPT })}</span>
+            </p>
+            {provider && model && (
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                 <Badge tone={provider.tier === "free" ? "free" : "paid"}>
                   {provider.tier === "free" ? t("studio.free") : t("studio.paid")}
                 </Badge>
                 {provider.key_source === "user" && <Badge tone="muted">{t("studio.byok")}</Badge>}
-                <Badge tone={model.commercial_use === "yes" ? "ok" : "muted"}>
-                  {t(`studio.commercial_${model.commercial_use}`)}
-                </Badge>
+                <Badge tone={model.commercial_use === "yes" ? "ok" : "muted"}>{t(`studio.commercial_${model.commercial_use}`)}</Badge>
+                <QuotaLine provider={provider} />
               </div>
-              <QuotaLine provider={provider} />
-            </>
+            )}
+          </div>
+          {isVideo && !startImage && <p className="px-2 pt-2 text-[11px] text-muted">{t("studio.startImageHint")}</p>}
+          {needsImage && <p className="px-2 pt-2 text-[11px] text-danger">{t("studio.needsImage")}</p>}
+          {resolution !== "native" && (
+            <p className="px-2 pt-2 text-[11px] text-muted">{isVideo ? t("studio.resHintVideo") : t("studio.resHintImage")}</p>
           )}
           {choices.some(({ p }) => !p.available) && (
-            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted">
+            <div className="flex flex-wrap gap-x-3 gap-y-1 px-2 pt-2 text-[11px] text-muted">
               <Link to="/settings" className="underline hover:text-ink">{t("studio.needsKey")}</Link>
-              {[...new Map(choices.filter(({ p }) => !p.available && p.key_url).map(({ p }) => [p.id, p])).values()].map(
-                (p) => (
-                  <a key={p.id} href={p.key_url} target="_blank" rel="noopener noreferrer" className="text-amber hover:underline">
-                    🔑 {p.name}: {t("settings.getKey")} ↗
-                  </a>
-                ),
-              )}
-            </div>
-          )}
-        </div>
-
-        <div className="mt-4">
-          <Label>{t("studio.preset")}</Label>
-          <div className="flex flex-wrap gap-1.5">
-            {[{ id: "" }, ...presets].map((p) => (
-              <button
-                key={p.id || "none"}
-                type="button"
-                onClick={() => choosePreset(p.id)}
-                title={p.id ? t(`presets.${p.id}.desc`, { defaultValue: "" }) : undefined}
-                className={`rounded-full border px-3 py-1 text-xs ${
-                  presetId === p.id ? "border-amber bg-amber/15 text-amber" : "border-line text-muted hover:text-ink"
-                }`}
-              >
-                {p.id ? t(`presets.${p.id}.name`, { defaultValue: p.id }) : t("studio.noPreset")}
-              </button>
-            ))}
-          </div>
-          <p className="mt-1.5 text-[11px] text-muted">{t("studio.presetHint")}</p>
-        </div>
-
-        <div className="mt-4">
-          <Label>{t("studio.aspect")}</Label>
-          <div className="flex flex-wrap gap-1.5">
-            {["1:1", "16:9", "9:16", "4:3", "3:4"].map((r) => (
-              <button
-                key={r}
-                type="button"
-                disabled={!ratios.includes(r)}
-                onClick={() => setAspect(r)}
-                className={`rounded-md border px-2.5 py-1 text-xs disabled:opacity-30 ${
-                  aspect === r ? "border-amber text-amber" : "border-line text-muted hover:text-ink"
-                }`}
-              >
-                {r}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          <div>
-            <Label htmlFor="size">{t("studio.size")}</Label>
-            <select id="size" value={size} onChange={(e) => setSize(e.target.value as typeof size)} className={inputClass}>
-              {SIZES.map((s) => (
-                <option key={s} value={s}>{t(`studio.size_${s}`)}</option>
+              {[...new Map(choices.filter(({ p }) => !p.available && p.key_url).map(({ p }) => [p.id, p])).values()].map((p) => (
+                <a key={p.id} href={p.key_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-accent hover:underline">
+                  <Icon name="key" size={12} />
+                  {p.name}: {t("settings.getKey")} ↗
+                </a>
               ))}
-            </select>
-          </div>
-          {isVideo ? (
-            <div>
-              <Label htmlFor="duration">{t("studio.duration")}</Label>
-              <select
-                id="duration"
-                value={duration ?? ""}
-                onChange={(e) => setDuration(Number(e.target.value))}
-                className={inputClass}
-              >
-                {[...(model?.durations ?? [])].sort((a, b) => a - b).map((d) => (
-                  <option key={d} value={d}>{t("studio.seconds", { count: d })}</option>
-                ))}
-              </select>
-            </div>
-          ) : (
-            <div>
-              <Label htmlFor="count">{t("studio.count")}</Label>
-              <select id="count" value={count} onChange={(e) => setCount(Number(e.target.value))} className={inputClass}>
-                {[1, 2, 3, 4].slice(0, model?.max_count ?? 4).map((n) => (
-                  <option key={n} value={n}>{n}</option>
-                ))}
-              </select>
             </div>
           )}
+          <ErrorText error={error} />
         </div>
 
-        {model && model.upscale_targets.length > 0 && (
+        {presets.length > 0 && (
           <div className="mt-4">
-            <Label>{t("studio.resolution")}</Label>
-            <div className="flex gap-1.5">
-              {(["native", ...model.upscale_targets] as const).map((r) => (
+            <p className="mb-2 flex items-center justify-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.08em] text-muted">
+              <Icon name="camera" size={13} />
+              {t("studio.preset")}
+            </p>
+            <div className="flex flex-wrap justify-center gap-2">
+              {[{ id: "" }, ...presets].map((p) => (
                 <button
-                  key={r}
+                  key={p.id || "none"}
                   type="button"
-                  onClick={() => setResolution(r)}
-                  className={`flex-1 rounded-md border px-2.5 py-1.5 text-xs ${
-                    resolution === r ? "border-amber bg-amber/15 text-amber" : "border-line text-muted hover:text-ink"
+                  aria-pressed={presetId === p.id}
+                  onClick={() => choosePreset(p.id)}
+                  title={p.id ? t(`presets.${p.id}.desc`, { defaultValue: "" }) : undefined}
+                  className={`rounded-full border px-3.5 py-1.5 text-xs font-medium transition ${
+                    presetId === p.id ? "border-accent-2/70 bg-accent-2/15 text-ink" : "border-line text-muted hover:border-white/20 hover:text-ink"
                   }`}
                 >
-                  {t(`studio.res_${r}`)}
-                  {r !== "native" && (
-                    <span className="block text-[10px] opacity-70">
-                      {t("studio.resCost", { count: model.upscale_credits[r] ?? 0 })}
-                    </span>
-                  )}
+                  {p.id ? t(`presets.${p.id}.name`, { defaultValue: p.id }) : t("studio.noPreset")}
                 </button>
               ))}
             </div>
-            {resolution !== "native" && (
-              <p className="mt-1.5 text-[11px] text-muted">
-                {isVideo ? t("studio.resHintVideo") : t("studio.resHintImage")}
-              </p>
-            )}
+            <p className="mt-2 text-center text-[11px] text-muted">{t("studio.presetHint")}</p>
           </div>
         )}
 
-        {isVideo && !startImage && <p className="mt-3 text-[11px] text-muted">{t("studio.startImageHint")}</p>}
-        {needsImage && <p className="mt-2 text-[11px] text-danger">{t("studio.needsImage")}</p>}
+        {prompt.trim() === "" && (
+          <div className="mt-6">
+            <p className="mb-2 text-center text-[11px] font-medium uppercase tracking-[0.08em] text-muted">{t("studio.tryThese")}</p>
+            <div className="flex flex-wrap justify-center gap-2">
+              {examples.map((ex) => (
+                <button
+                  key={ex}
+                  type="button"
+                  onClick={() => setPrompt(ex)}
+                  className="max-w-full truncate rounded-xl border border-line bg-raised/30 px-3 py-2 text-left text-xs text-muted transition hover:border-accent-2/50 hover:text-ink"
+                >
+                  {ex}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </section>
 
-        <Button
-          className="mt-5 w-full"
-          disabled={busy || prompt.trim().length < 3 || !provider?.available || needsImage}
-          onClick={() => void submit()}
-        >
-          {busy ? t("studio.generating") : t("studio.generate")}
-        </Button>
-        <p className="mt-1.5 text-center text-[11px] text-muted">{t("studio.cost", { count: cost })}</p>
-        <ErrorText error={error} />
-      </Card>
-
-      <div>
-        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted">{t("studio.recent")}</h2>
+      <section className="mt-14" aria-labelledby="recent-title">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 id="recent-title" className="text-lg font-semibold tracking-tight">{t("studio.recent")}</h2>
+          <Link to="/history" className="inline-flex items-center gap-1 text-xs font-medium text-muted transition hover:text-ink">
+            {t("nav.history")}
+            <Icon name="arrow" size={13} />
+          </Link>
+        </div>
         {jobs.length === 0 ? (
-          <Card className="text-center text-sm text-muted">{t("studio.empty")}</Card>
+          <EmptyState icon={<Icon name="sparkle" size={22} />} title={t("studio.empty")} hint={t("studio.emptyHint")} />
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             {jobs.map((j) => (
               <JobCard
                 key={j.id}
@@ -484,7 +503,11 @@ export default function Studio() {
             ))}
           </div>
         )}
-      </div>
+      </section>
+
+      {picking && (
+        <ModelPicker choices={choices} value={modelKey} mode={mode} onSelect={setModelKey} onClose={closePicker} />
+      )}
     </div>
   );
 }

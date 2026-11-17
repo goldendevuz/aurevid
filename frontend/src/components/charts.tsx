@@ -172,7 +172,7 @@ export function Heatmap({ rows, columnLabel }: { rows: { cohort: string; size: n
                   <td
                     key={i}
                     title={v === null ? "" : `${r.cohort} · ${columnLabel(i)}: ${v}%`}
-                    className={`h-7 min-w-11 rounded text-center ${strength > 0.55 ? "text-amber-ink" : "text-ink"}`}
+                    className={`h-7 min-w-11 rounded text-center ${strength > 0.55 ? "text-accent-ink" : "text-ink"}`}
                     style={{ background: v === null ? "transparent" : `rgba(201,133,0,${strength.toFixed(2)})` }}
                   >
                     {v === null ? "" : `${Math.round(v)}%`}

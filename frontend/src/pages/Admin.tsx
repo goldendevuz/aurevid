@@ -60,7 +60,7 @@ function Section({ title, children, actions }: { title: string; children: ReactN
 
 function Select({ value, onChange, options, label }: { value: string; onChange: (v: string) => void; options: [string, string][]; label: string }) {
   return (
-    <select aria-label={label} value={value} onChange={(e) => onChange(e.target.value)} className="rounded-md border border-line bg-bg px-2 py-1.5 text-xs text-ink">
+    <select aria-label={label} value={value} onChange={(e) => onChange(e.target.value)} className="rounded-lg border border-line bg-bg/70 px-2 py-1.5 text-xs text-ink">
       {options.map(([v, l]) => (
         <option key={v} value={v}>{l}</option>
       ))}
@@ -183,7 +183,7 @@ function UserDetail({ id, onChanged, onClose }: { id: string; onChanged: () => v
   if (!data) return null;
   const u = data.user;
   return (
-    <Card className="border-amber/40">
+    <Card className="border-accent/40">
       <div className="flex items-start justify-between gap-2">
         <div>
           <p className="font-semibold">{u.email}</p>
@@ -259,11 +259,11 @@ function Users() {
         title={t("admin.tab_users")}
         actions={
           <>
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("admin.search")} className="rounded-md border border-line bg-bg px-2 py-1.5 text-xs" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("admin.search")} className="rounded-lg border border-line bg-bg/70 px-2 py-1.5 text-xs" />
             <Select label="filter" value={filter} onChange={setFilter} options={["all", "customers", "internal", "blocked", "admins"].map((v) => [v, t(`admin.f_${v}`)])} />
             <Select label="activity" value={activity} onChange={setActivity} options={["all", "activated", "unactivated", "tried_failed"].map((v) => [v, t(`admin.a_${v}`)])} />
             <Select label="sort" value={sort} onChange={setSort} options={["newest", "oldest", "balance_desc", "balance_asc", "jobs_desc", "last_active"].map((v) => [v, t(`admin.s_${v}`)])} />
-            <a className="text-xs text-amber hover:underline" href={`/api/admin/export/users.csv?${qs({ filter, activity })}`} download>⬇ CSV</a>
+            <a className="text-xs text-accent hover:underline" href={`/api/admin/export/users.csv?${qs({ filter, activity })}`} download>⬇ CSV</a>
           </>
         }
       >
@@ -324,11 +324,11 @@ function Jobs({ internal }: { internal: boolean }) {
         title={t("admin.tab_jobs")}
         actions={
           <>
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("admin.searchJobs")} className="rounded-md border border-line bg-bg px-2 py-1.5 text-xs" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("admin.searchJobs")} className="rounded-lg border border-line bg-bg/70 px-2 py-1.5 text-xs" />
             <Select label="status" value={status} onChange={setStatus} options={[["", t("admin.f_all")], ...["queued", "running", "done", "failed"].map((v) => [v, t(`admin.status_${v}`)] as [string, string])]} />
             <Select label="kind" value={kind} onChange={setKind} options={[["", t("admin.f_all")], ["image", "image"], ["video", "video"], ["upscale", "upscale"]]} />
             <Select label="range" value={range} onChange={setRange} options={["today", "7d", "30d", "90d", "all"].map((v) => [v, t(`admin.r_${v}`)])} />
-            <a className="text-xs text-amber hover:underline" href={`/api/admin/export/jobs.csv?${qs({ range: range === "today" ? "7d" : range, include_internal: internal })}`} download>⬇ CSV</a>
+            <a className="text-xs text-accent hover:underline" href={`/api/admin/export/jobs.csv?${qs({ range: range === "today" ? "7d" : range, include_internal: internal })}`} download>⬇ CSV</a>
           </>
         }
       >
@@ -666,19 +666,19 @@ export default function Admin() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-semibold tracking-tight">{t("admin.title")}</h1>
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t("admin.title")}</h1>
         <label className="flex items-center gap-2 text-xs text-muted" title={t("admin.internalHint")}>
           <input type="checkbox" checked={internal} onChange={(e) => setInternal(e.target.checked)} /> {t("admin.includeInternal")}
         </label>
       </div>
-      <nav className="flex flex-wrap gap-1 border-b border-line pb-2" role="tablist">
+      <nav className="flex gap-1 overflow-x-auto border-b border-white/[0.08] pb-2" role="tablist">
         {TABS.map((k) => (
           <button
             key={k}
             role="tab"
             aria-selected={tab === k}
             onClick={() => setParams({ tab: k })}
-            className={`rounded-md px-3 py-1.5 text-sm ${tab === k ? "bg-amber text-amber-ink font-semibold" : "text-muted hover:text-ink"}`}
+            className={`whitespace-nowrap rounded-xl px-3 py-1.5 text-sm font-medium transition ${tab === k ? "bg-white/[0.09] text-ink shadow-[inset_0_-2px_0_var(--color-accent)]" : "text-muted hover:text-ink"}`}
           >
             {t(`admin.tab_${k}`)}
           </button>
