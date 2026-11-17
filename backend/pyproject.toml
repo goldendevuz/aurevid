@@ -41,6 +41,8 @@ ignore = ["S101", "B008"]
 "tests/*" = ["S104", "S105", "S106", "S107", "ASYNC240"]
 "app/moderation.py" = ["E501"]
 "alembic/versions/*" = ["E501"]
+"app/services/marketing.py" = ["E501"]  # template copy is data
+"tests/test_marketing.py" = ["E501"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
