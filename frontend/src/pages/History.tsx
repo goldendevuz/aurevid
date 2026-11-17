@@ -4,7 +4,8 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api";
 import JobCard from "../components/JobCard";
-import { Button, Card, ErrorText } from "../components/ui";
+import { Icon } from "../components/icons";
+import { Button, EmptyState, ErrorText, PageHeader, Segmented } from "../components/ui";
 import type { Job } from "../types";
 
 const PAGE = 20;
@@ -32,21 +33,27 @@ export default function History() {
     load().catch(setError);
   }, [load]);
 
-  const tab = (active: boolean) =>
-    `rounded-md px-3 py-1.5 text-sm ${active ? "bg-raised text-ink" : "text-muted hover:text-ink"}`;
-
   return (
     <div>
-      <div className="mb-4 flex items-center gap-2">
-        <h1 className="mr-4 text-xl font-semibold tracking-tight">{t("history.title")}</h1>
-        <button className={tab(!favorites)} onClick={() => setFavorites(false)}>{t("history.all")}</button>
-        <button className={tab(favorites)} onClick={() => setFavorites(true)}>{t("history.favorites")}</button>
-      </div>
+      <PageHeader
+        title={t("history.title")}
+        actions={
+          <Segmented
+            label={t("history.title")}
+            value={favorites ? "fav" : "all"}
+            onChange={(v) => setFavorites(v === "fav")}
+            options={[
+              { value: "all", label: t("history.all") },
+              { value: "fav", label: <span className="flex items-center gap-1.5"><Icon name="star" size={14} />{t("history.favorites")}</span> },
+            ]}
+          />
+        }
+      />
       <ErrorText error={error} />
       {jobs.length === 0 ? (
-        <Card className="text-center text-sm text-muted">{t("history.empty")}</Card>
+        <EmptyState icon={<Icon name="history" size={22} />} title={t("history.empty")} />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {jobs.map((j) => (
             <JobCard
               key={j.id}
