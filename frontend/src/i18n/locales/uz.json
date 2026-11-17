@@ -141,7 +141,10 @@
     "elapsed": "{{time}} o'tdi",
     "usually": "odatda taxminan {{time}}",
     "minutes": "{{count}} daq",
-    "slow": "Odatdagidan uzoqroq davom etyapti. Sahifadan chiqib ketishingiz mumkin: jarayon davom etadi va natija Tarix bo'limida ko'rinadi."
+    "slow": "Odatdagidan uzoqroq davom etyapti. Sahifadan chiqib ketishingiz mumkin: jarayon davom etadi va natija Tarix bo'limida ko'rinadi.",
+    "details": "Yaratish tafsilotlari",
+    "showMore": "To'liq promptni ko'rsatish",
+    "showLess": "Qisqartirish"
   },
   "history": {
     "title": "Tarix",

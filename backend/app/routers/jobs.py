@@ -45,6 +45,12 @@ async def job_out(session, job: Job) -> JobOut:
     out = JobOut.model_validate(job)
     out.assets = [asset_out(a) for a in assets]
     out.params = {k: v for k, v in (job.params or {}).items() if k != "final_prompt"}
+    provider = get_provider(job.provider)
+    model = provider.model(job.model) if provider else None
+    if provider:
+        out.provider_name = provider.info.name
+    if model:
+        out.model_label, out.has_audio = model.label, model.has_audio
     if job.status == JobStatus.queued:
         out.queue_position, out.eta_seconds = await queue.position_and_eta(session, job)
     elif job.status == JobStatus.running:

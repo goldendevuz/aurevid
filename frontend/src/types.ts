@@ -99,6 +99,9 @@ export interface Job {
   queue_position?: number | null;
   eta_seconds?: number | null;
   typical_seconds?: number | null;
+  model_label?: string | null;
+  provider_name?: string | null;
+  has_audio?: boolean;
 }
 
 export interface Usage {
