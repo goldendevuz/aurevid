@@ -59,9 +59,9 @@ class CloudflareProvider(ImageProvider):
         if not _ACCOUNT_RE.match(account) or not token:
             raise ProviderError("Cloudflare credentials are missing or invalid")
         url = f"https://api.cloudflare.com/client/v4/accounts/{account}/ai/run/{req.model}"
+        # The FLUX schnell schema on Workers AI accepts only prompt + steps (verified live
+        # 2026-11-17: sending "seed" returns 400 "Additional properties '/seed' not allowed").
         body: dict = {"prompt": req.prompt, "steps": 4}
-        if req.seed is not None:
-            body["seed"] = req.seed
         try:
             async with httpx.AsyncClient(timeout=90) as client:
                 resp = await client.post(
@@ -74,7 +74,10 @@ class CloudflareProvider(ImageProvider):
         if resp.status_code in (401, 403):
             raise ProviderError("Cloudflare rejected the credentials")
         if resp.status_code >= 400:
-            raise ProviderError(f"Cloudflare error ({resp.status_code})", retryable=True)
+            # 4xx = our request is wrong (retrying won't help); 5xx = transient.
+            raise ProviderError(
+                f"Cloudflare error ({resp.status_code})", retryable=resp.status_code >= 500
+            )
         try:
             image_b64 = resp.json()["result"]["image"]
             return GeneratedImage(base64.b64decode(image_b64, validate=True), "image/jpeg")

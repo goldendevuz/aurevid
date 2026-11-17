@@ -1,0 +1,44 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Production overlay for a shared host behind a Cloudflare Tunnel (no ports opened):
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml --profile tunnel up -d --build
+# .env must set APP_ENV=prod, COOKIE_SECURE=true, MOCK_PROVIDER_ENABLED=false, CORS_ORIGINS,
+# JWT_SECRET, BYOK_ENCRYPTION_KEY and TUNNEL_TOKEN (see docs/deploy.md).
+
+services:
+  web:
+    ports: !reset []          # reachable only through the tunnel
+    deploy:
+      resources:
+        limits: { cpus: "0.5", memory: 128m }
+
+  api:
+    deploy:
+      resources:
+        limits: { cpus: "1.0", memory: 768m }
+
+  worker:
+    environment:
+      UPSCALER_THREADS: ${UPSCALER_THREADS:-2}
+      WORKER_SLOTS: ${WORKER_SLOTS:-3}
+    deploy:
+      resources:
+        # Hard cap so 4K/8K upscaling never starves other services on the host.
+        limits: { cpus: "2.0", memory: 2g }
+
+  redis:
+    deploy:
+      resources:
+        limits: { cpus: "0.25", memory: 128m }
+
+  cloudflared:
+    profiles: ["tunnel"]
+    image: cloudflare/cloudflared:2026.10.3
+    # http2: home connections often drop QUIC (UDP).
+    command: tunnel --no-autoupdate --protocol http2 run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:-}   # required when the "tunnel" profile is on
+    depends_on: [web]
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits: { cpus: "0.25", memory: 128m }
