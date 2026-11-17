@@ -8,6 +8,8 @@ Re-run after changing dependencies. Review any license that is not permissive.
 > licence. We use certifi unmodified as a transitive dependency of httpx, which MPL-2.0 permits and
 > which is compatible with AGPL-3.0. If you modify certifi's files, publish those modifications.
 > Fonts: none bundled (system font stack). Icons/logo: drawn for this project.
+> Bundled model: Real-ESRGAN realesr-general-x4v3 weights (BSD-3-Clause, (c) 2021 Xintao Wang),
+> notice in backend/app/upscale/LICENSE-Real-ESRGAN. Demo clip: our own render (AGPL).
 
 ## Backend (Python)
 
@@ -29,6 +31,7 @@ Re-run after changing dependencies. Review any license that is not permissive.
 | dnspython | 2.9.2 | ISC |
 | email-validator | 2.4.0 | Unlicense |
 | fastapi | 0.163.1 | MIT |
+| flatbuffers | 25.12.19 | Apache 2.0 |
 | greenlet | 3.5.6 | MIT AND PSF-2.0 |
 | h11 | 0.16.0 | MIT |
 | httpcore | 1.0.9 | BSD-3-Clause |
@@ -38,9 +41,12 @@ Re-run after changing dependencies. Review any license that is not permissive.
 | limits | 5.8.0 | MIT |
 | Mako | 1.4.3 | MIT |
 | MarkupSafe | 3.0.4 | BSD-3-Clause |
+| numpy | 2.5.5 | BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0 |
+| onnxruntime | 1.32.0 | MIT License |
 | opentelemetry-api | 1.45.2 | Apache-2.0 |
 | packaging | 26.3 | Apache-2.0 OR BSD-2-Clause |
 | pillow | 13.0.0 | MIT-CMU |
+| protobuf | 7.36.2 | 3-Clause BSD License |
 | pycparser | 3.12 | BSD-3-Clause |
 | pydantic | 2.14.3 | MIT |
 | pydantic-settings | 2.16.3 | MIT |

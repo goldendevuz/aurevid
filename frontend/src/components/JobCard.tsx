@@ -57,10 +57,14 @@ export default function JobCard({
   job,
   onChange,
   onReuse,
+  onAnimate,
+  onUpscale,
 }: {
   job: Job;
   onChange: (job: Job) => void;
   onReuse?: (prompt: string) => void;
+  onAnimate?: (asset: Asset) => void;
+  onUpscale?: (asset: Asset, target: "4k" | "8k") => void;
 }) {
   const { t } = useTranslation();
   const [reporting, setReporting] = useState<string | null>(null);
@@ -81,13 +85,27 @@ export default function JobCard({
   return (
     <article className="rounded-[var(--radius-card)] border border-line bg-surface p-3">
       <div className="mb-2 flex items-start justify-between gap-3">
-        <p className="line-clamp-2 text-sm text-ink">{job.prompt}</p>
+        <p className="line-clamp-2 text-sm text-ink">
+          {job.provider === "local" && job.params.upscale
+            ? `⤢ ${t("job.upscaleTo", { target: job.params.upscale.toUpperCase() })}`
+            : job.prompt}
+        </p>
         <Badge tone={tone}>{t(`job.${job.status}`)}</Badge>
       </div>
       <p className="mb-2 text-[11px] text-muted">
-        {job.provider} · {job.params.aspect_ratio} · {job.count}×
+        {job.kind === "video" ? "▶ " : ""}
+        {job.provider} · {job.params.aspect_ratio} ·{" "}
+        {job.kind === "video" ? t("studio.seconds", { count: job.params.duration ?? 0 }) : `${job.count}×`}
         {job.preset_id ? ` · ${t(`presets.${job.preset_id}.name`, { defaultValue: job.preset_id })}` : ""}
       </p>
+      {job.status === "queued" && job.queue_position ? (
+        <p className="mb-2 text-[11px] text-amber">
+          {t("job.queuePosition", {
+            position: job.queue_position,
+            minutes: Math.max(1, Math.ceil((job.eta_seconds ?? 0) / 60)),
+          })}
+        </p>
+      ) : null}
       {(job.status === "queued" || job.status === "running") && (
         <div className="grid grid-cols-2 gap-2">
           {Array.from({ length: job.count }).map((_, i) => (
@@ -102,20 +120,56 @@ export default function JobCard({
       )}
       {job.status === "done" && job.error && <p className="mb-2 text-xs text-amber">{t("job.partial")}</p>}
       {job.assets.length > 0 && (
-        <div className="grid grid-cols-2 gap-2">
+        <div className={`grid gap-2 ${job.kind === "video" ? "grid-cols-1" : "grid-cols-2"}`}>
           {job.assets.map((a) => (
             <figure key={a.id} className="group relative">
-              <a href={a.url} target="_blank" rel="noopener" title={t("job.open")}>
-                <img
+              {a.mime.startsWith("video/") ? (
+                <video
                   src={a.url}
-                  alt={job.prompt}
-                  loading="lazy"
-                  width={a.width}
-                  height={a.height}
+                  controls
+                  loop
+                  muted
+                  playsInline
+                  preload="metadata"
+                  aria-label={job.prompt}
                   className="h-auto w-full rounded-lg bg-raised"
                 />
-              </a>
+              ) : (
+                <a href={a.url} target="_blank" rel="noopener" title={t("job.open")}>
+                  <img
+                    src={a.preview_url || a.url}
+                    alt={job.prompt}
+                    loading="lazy"
+                    width={a.width}
+                    height={a.height}
+                    className="h-auto w-full rounded-lg bg-raised"
+                  />
+                </a>
+              )}
               <figcaption className="mt-1 flex flex-wrap gap-2 text-[11px] text-muted">
+                <span className="rounded bg-raised px-1.5 text-ink/80">
+                  {a.width}×{a.height}
+                  {Math.max(a.width, a.height) >= 7680 ? " · 8K" : Math.max(a.width, a.height) >= 3840 ? " · 4K" : ""}
+                </span>
+                {a.mime.startsWith("video/") && (
+                  <a href={a.url} download className="hover:text-ink">
+                    ⬇ {t("job.download")}
+                  </a>
+                )}
+                {onUpscale &&
+                  a.mime.startsWith("image/") &&
+                  (["4k", "8k"] as const)
+                    .filter((target) => Math.max(a.width, a.height) < (target === "4k" ? 3840 : 7680))
+                    .map((target) => (
+                      <button key={target} onClick={() => onUpscale(a, target)} className="hover:text-amber">
+                        ⤢ {t("job.upscaleTo", { target: target.toUpperCase() })}
+                      </button>
+                    ))}
+                {onAnimate && a.mime.startsWith("image/") && (
+                  <button onClick={() => onAnimate(a)} className="font-semibold text-amber hover:brightness-110">
+                    ▶ {t("job.animate")}
+                  </button>
+                )}
                 <button onClick={() => void toggleFavorite(a)} className="hover:text-amber">
                   {a.is_favorite ? `★ ${t("job.unfavorite")}` : `☆ ${t("job.favorite")}`}
                 </button>

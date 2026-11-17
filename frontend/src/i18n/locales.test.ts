@@ -35,7 +35,9 @@ describe("locales", () => {
       "unknown_model", "unknown_preset", "aspect_ratio_unsupported", "count_too_high",
       "validation_error", "captcha_required", "captcha_failed", "account_blocked", "invalid_image",
       "file_too_large", "byok_disabled", "bad_fields", "not_found", "not_authenticated",
-      "invalid_session", "duplicate_request",
+      "invalid_session", "duplicate_request", "duration_unsupported", "image_input_unsupported",
+      "image_required", "provider_cooldown", "upscale_unsupported", "upscaler_disabled",
+      "already_that_large", "too_many_active_jobs", "queue_full",
     ];
     for (const c of codes) expect(Object.keys(en.errors)).toContain(c);
   });

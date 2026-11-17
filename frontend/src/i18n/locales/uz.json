@@ -54,7 +54,30 @@
     "cost": "Narxi: {{count}} kredit",
     "recent": "So'nggi natijalar",
     "empty": "Yaratgan rasmlaringiz shu yerda chiqadi.",
-    "presetHint": "Presetlar promptga kompozitsiya va kamera ko'rsatmalarini qo'shadi."
+    "presetHint": "Presetlar promptga kompozitsiya va kamera ko'rsatmalarini qo'shadi.",
+    "mode_image": "Rasm",
+    "mode_video": "Video",
+    "videoPromptPlaceholder": "Quyosh botayotganda toshloq sohilga sekin urilayotgan to'lqinlar…",
+    "duration": "Davomiyligi",
+    "seconds": "{{count}} s",
+    "startImage": "Boshlang'ich rasm",
+    "startImageHint": "Rasmlaringizdan birini jonlantiring: istalgan natijada “Jonlantirish” ni bosing.",
+    "removeStartImage": "Olib tashlash",
+    "needsImage": "Bu model uchun boshlang'ich rasm kerak.",
+    "noVideoModels": "Video model mavjud emas. Video uchun pullik provayder kaliti kerak (Sozlamalar).",
+    "quotaLeft": "Bugun ≈{{remaining}} / {{limit}} qoldi",
+    "quota_documented": "provayder hujjatidan taxmin",
+    "quota_learned": "{{count}} ta limit xatosidan o'rganildi",
+    "quotaUnknown": "Kunlik limit noma'lum: foydalanishdan o'rganilmoqda (bugun {{used}} ta)",
+    "quotaBlocked": "Provayder limiti tufayli ~{{minutes}} daqiqa to'xtatildi",
+    "videoPromptLabel": "Videoni tasvirlab bering",
+    "resolution": "Yakuniy o'lcham",
+    "res_native": "Asl",
+    "res_4k": "4K",
+    "res_8k": "8K",
+    "resHintImage": "4K/8K: serverimizda bepul AI kattalashtirish (Real-ESRGAN). 4K uchun ≈30 soniya, 8K uchun ≈2 daqiqagacha qo'shiladi.",
+    "resHintVideo": "4K/8K: fal.ai'da Topaz kattalashtirish (pullik, o'z kalitingiz). 8K fayllar katta, har brauzerda ochilmasligi mumkin: yuklab oling.",
+    "resCost": "+{{count}} kredit"
   },
   "job": {
     "queued": "Navbatda",
@@ -68,7 +91,12 @@
     "open": "To'liq o'lchamda ochish",
     "copyPrompt": "Promptni qayta ishlatish",
     "refunded": "Chiqmagan rasmlar uchun kreditlar qaytarildi.",
-    "partial": "Ba'zi rasmlar yaratilmadi; ular uchun kreditlar qaytarildi."
+    "partial": "Ba'zi rasmlar yaratilmadi; ular uchun kreditlar qaytarildi.",
+    "animate": "Jonlantirish",
+    "queuePosition": "Navbatda: {{position}}-o'rin · taxminan {{minutes}} daqiqa",
+    "upscaleTo": "{{target}} ga ko'tarish",
+    "download": "Yuklab olish",
+    "upscaleQueued": "Kattalashtirish boshlandi. Natija Studiyada chiqadi."
   },
   "history": {
     "title": "Tarix",
@@ -87,7 +115,12 @@
     "reason_signup_bonus": "Xush kelibsiz bonusi",
     "reason_generation": "Generatsiya",
     "reason_refund": "Qaytarildi",
-    "reason_admin_grant": "Qo'llab-quvvatlash qo'shdi"
+    "reason_admin_grant": "Qo'llab-quvvatlash qo'shdi",
+    "limits": "Provayder limitlari (taxminiy)",
+    "limitsHelp": "Bepul servislar aniq limitlarni kamdan-kam e'lon qiladi. Aurevid ishlatilganini sanaydi va limit xatolaridan o'rganadi, shuning uchun bu raqamlar vaqt o'tishi bilan aniqlashadi.",
+    "usedToday": "Bugun ishlatildi",
+    "limit": "Kunlik limit",
+    "unknown": "noma'lum"
   },
   "settings": {
     "title": "Sozlamalar",
@@ -178,6 +211,15 @@
     "not_found": "Topilmadi.",
     "not_authenticated": "Iltimos, tizimga kiring.",
     "invalid_session": "Iltimos, qayta kiring.",
-    "duplicate_request": "Bu so'rov allaqachon yuborilgan."
+    "duplicate_request": "Bu so'rov allaqachon yuborilgan.",
+    "duration_unsupported": "Bu model bunday davomiylikni qo'llab-quvvatlamaydi.",
+    "image_input_unsupported": "Bu model rasmdan boshlay olmaydi.",
+    "image_required": "Bu model uchun boshlang'ich rasm kerak.",
+    "provider_cooldown": "Bu provayder limitiga yetildi. Taxminan {{minutes}} daqiqadan keyin urining yoki boshqa model tanlang.",
+    "upscale_unsupported": "Bu model 4K/8K chiqara olmaydi.",
+    "upscaler_disabled": "Bu serverda kattalashtirish o'chirilgan.",
+    "already_that_large": "Bu rasm allaqachon shu o'lchamda.",
+    "too_many_active_jobs": "Sizda allaqachon {{limit}} ta jarayon bor. Bittasi tugashini kuting.",
+    "queue_full": "Server hozir band. Taxminan {{minutes}} daqiqadan keyin urining."
   }
 }

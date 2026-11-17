@@ -35,7 +35,11 @@ class Settings(BaseSettings):
     # --- product limits ---
     max_prompt_chars: int = 1000
     max_upload_bytes: int = 8 * 1024 * 1024
-    max_image_pixels: int = 4096 * 4096
+    max_image_pixels: int = 8192 * 8192  # room for 8K outputs
+    max_provider_image_bytes: int = (
+        80 * 1024 * 1024
+    )  # provider output (users stay at max_upload_bytes)
+    max_video_bytes: int = 600 * 1024 * 1024  # 8K clips; streamed to disk, never held in memory
     daily_job_limit: int = 30
     signup_credits: int = 50
 
@@ -44,12 +48,24 @@ class Settings(BaseSettings):
     pollinations_base_url: str = "https://image.pollinations.ai"
     cloudflare_enabled: bool = True
     fal_enabled: bool = False
+    # 4K/8K video via Topaz on fal: output terms not stated on fal's model page -> opt-in.
+    fal_video_upscale_enabled: bool = False
     mock_provider_enabled: bool = False
+    upscaler_enabled: bool = True  # local Real-ESRGAN (CPU) for 4K/8K images
+    upscaler_timeout_seconds: int = 300  # hard stop per image (checked between tiles)
+    upscaler_threads: int = 0  # 0 = all cores but one (keeps the API responsive)
 
     # --- worker ---
     run_worker_in_api: bool = True
+    # --- queue / resource control ---
+    worker_slots: int = 3  # jobs one worker process runs at the same time
+    cpu_job_concurrency: int = 1  # heavy local CPU jobs (AI upscaling) at once, across workers
+    provider_concurrency: int = 2  # in-flight jobs per provider, across workers
+    max_active_jobs_per_user: int = 3  # queued + running
+    max_queue_length: int = 200  # all users; beyond this new jobs are refused (back-pressure)
     worker_poll_seconds: float = 1.0
     job_timeout_seconds: int = 180
+    video_timeout_seconds: int = 600
 
     @field_validator("cors_origins")
     @classmethod

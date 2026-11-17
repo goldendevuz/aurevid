@@ -7,7 +7,7 @@ from typing import Annotated, Literal
 from pydantic import AfterValidator, BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 from app.config import get_settings
-from app.providers.base import AspectRatio, SizeName
+from app.providers.base import AspectRatio, SizeName, UpscaleTarget
 from app.security import as_utc
 
 # SQLite returns naive datetimes; always emit explicit UTC so clients never guess the zone.
@@ -86,6 +86,9 @@ class JobCreateIn(_In):
     count: int = Field(default=1, ge=1, le=4)
     preset_id: str | None = Field(default=None, max_length=64)
     seed: int | None = Field(default=None, ge=0, le=2**31 - 1)
+    duration: int | None = Field(default=None, ge=1, le=20)  # video seconds
+    image_asset_id: str | None = Field(default=None, max_length=32)  # image-to-video start frame
+    upscale: UpscaleTarget | None = None  # final resolution: 4K or 8K
 
     @field_validator("prompt")
     @classmethod
@@ -108,11 +111,13 @@ class AssetOut(BaseModel):
     is_favorite: bool
     created_at: UTCDateTime
     url: str = ""
+    preview_url: str = ""
 
 
 class JobOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     id: str
+    kind: str
     status: str
     provider: str
     model: str
@@ -125,10 +130,16 @@ class JobOut(BaseModel):
     created_at: UTCDateTime
     finished_at: UTCDateTime | None
     assets: list[AssetOut] = []
+    queue_position: int | None = None  # 1-based, queued jobs only
+    eta_seconds: int | None = None  # rough estimate from recent job durations
 
 
 class FavoriteIn(_In):
     favorite: bool
+
+
+class UpscaleIn(_In):
+    target: UpscaleTarget
 
 
 class ReportIn(_In):

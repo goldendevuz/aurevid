@@ -25,8 +25,11 @@ rests on the owner's brief, not on the reference product's features.
 | # | Requirement | Source | Status |
 |---|---|---|---|
 | 2.1 | One prompt box; user picks a generation model from a list of providers | user | done |
-| 2.2 | Image first, video later | user | image done; video API-ready (`kind`) |
+| 2.2 | Image first, video later | user | done: image + video (text-to-video) |
+| 2.2a | Video settings: length (model-specific seconds), aspect ratio, size → resolution | assumption | done |
 | 2.3 | Settings: aspect ratio, size, number of outputs | user | done (5 ratios, 3 sizes, 1-4) |
+| 2.3a | Sharp output up to 4K-8K for images and videos | user | images: done (free local AI upscaler); video: done via Topaz on fal, opt-in, paid |
+| 2.3b | Large images get a small gallery preview; full file on open; videos downloadable | assumption | done |
 | 2.4 | Each model shows clearly whether it is free or paid, and whether it needs a key | user | done |
 | 2.5 | Each model shows its commercial-use status (yes / no / unclear) | assumption | done |
 | 2.6 | Results appear in a history gallery; items can be favourited | user | done |
@@ -48,7 +51,7 @@ rests on the owner's brief, not on the reference product's features.
 | # | Requirement | Source | Status |
 |---|---|---|---|
 | 4.1 | Marketing helper: product image or text → short ad prompt set for 9:16 and 1:1 | user | not built; upload endpoint ready |
-| 4.2 | Image-to-video as an optional provider adapter | user | not built; interface ready |
+| 4.2 | Image-to-video as an optional provider adapter ("Animate" on any own image) | user | done (fal Wan 2.2 I2V; demo) |
 | 4.3 | Payments (Payme/Click), Telegram bot, desktop (Tauri), PWA, browser extension | user | not built; one API for all clients |
 | 4.4 | Voice generation | observed (page title only) | unknown, out of scope |
 
@@ -64,6 +67,8 @@ rests on the owner's brief, not on the reference product's features.
 | 5.6 | Daily generation limit per user (default 30 jobs) and rate limits | user | done |
 | 5.7 | Bring-your-own-key, stored encrypted on the server, never returned | user | done |
 | 5.8 | Export my data; delete my account | user | done |
+| 5.10 | Job queue that protects the server: per-user active-job limit, global queue cap with back-pressure, round-robin fairness between users, one heavy CPU job at a time, per-provider concurrency caps, hard deadlines, queue position + ETA shown | user | done |
+| 5.9 | For services without documented limits, count usage and learn the limit from quota errors so the estimate approaches the real value; show "≈N left today" and pause during learned cooldowns | user | done |
 
 ## 6. Safety and content
 
@@ -80,6 +85,6 @@ rests on the owner's brief, not on the reference product's features.
 |---|---|---|---|---|
 | Cloudflare Workers AI, FLUX.1 schnell | free (daily allocation) | server or BYOK | on | user |
 | Pollinations | free (anonymous) | none | **off**, terms unclear | user (fallback) / assumption (off) |
-| fal.ai | paid | BYOK only | off | user |
+| fal.ai (FLUX image, Wan 2.2 video + image-to-video) | paid | BYOK only | off | user |
 | Replicate | paid | BYOK | not built | user |
 | Offline demo | free | none | dev only | assumption |

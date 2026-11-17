@@ -54,7 +54,30 @@
     "cost": "Costs {{count}} credits",
     "recent": "Recent results",
     "empty": "Your generations will appear here.",
-    "presetHint": "Presets add composition and camera cues to your prompt."
+    "presetHint": "Presets add composition and camera cues to your prompt.",
+    "mode_image": "Image",
+    "mode_video": "Video",
+    "videoPromptPlaceholder": "Slow waves rolling onto a pebble beach at sunset…",
+    "duration": "Length",
+    "seconds": "{{count}} s",
+    "startImage": "Start image",
+    "startImageHint": "Animate one of your images: use “Animate” on any result.",
+    "removeStartImage": "Remove",
+    "needsImage": "This model needs a start image.",
+    "noVideoModels": "No video model is available. Video needs a paid provider key (Settings).",
+    "quotaLeft": "≈{{remaining}} of {{limit}} left today",
+    "quota_documented": "estimate from provider docs",
+    "quota_learned": "learned from {{count}} limit hits",
+    "quotaUnknown": "Daily limit unknown: learning from use ({{used}} used today)",
+    "quotaBlocked": "Paused by the provider's limit for ~{{minutes}} min",
+    "videoPromptLabel": "Describe the video",
+    "resolution": "Final resolution",
+    "res_native": "Native",
+    "res_4k": "4K",
+    "res_8k": "8K",
+    "resHintImage": "4K/8K: free AI upscaling on our server (Real-ESRGAN). Adds about 30 s (4K) to 2 min (8K).",
+    "resHintVideo": "4K/8K: Topaz upscaling on fal.ai (paid, your key). 8K files are large and may not play in every browser: download them.",
+    "resCost": "+{{count}} credits"
   },
   "job": {
     "queued": "Queued",
@@ -68,7 +91,12 @@
     "open": "Open full size",
     "copyPrompt": "Reuse prompt",
     "refunded": "Credits for failed images were refunded.",
-    "partial": "Some images could not be generated; their credits were refunded."
+    "partial": "Some images could not be generated; their credits were refunded.",
+    "animate": "Animate",
+    "queuePosition": "In queue: #{{position}} · about {{minutes}} min",
+    "upscaleTo": "Upscale {{target}}",
+    "download": "Download",
+    "upscaleQueued": "Upscale started. You'll find it in the Studio."
   },
   "history": {
     "title": "History",
@@ -87,7 +115,12 @@
     "reason_signup_bonus": "Welcome bonus",
     "reason_generation": "Generation",
     "reason_refund": "Refund",
-    "reason_admin_grant": "Added by support"
+    "reason_admin_grant": "Added by support",
+    "limits": "Provider limits (estimated)",
+    "limitsHelp": "Free services rarely publish exact limits. Aurevid counts what you use and learns from limit errors, so these numbers get more accurate over time.",
+    "usedToday": "Used today",
+    "limit": "Daily limit",
+    "unknown": "unknown"
   },
   "settings": {
     "title": "Settings",
@@ -178,6 +211,15 @@
     "not_found": "Not found.",
     "not_authenticated": "Please log in.",
     "invalid_session": "Please log in again.",
-    "duplicate_request": "This request was already sent."
+    "duplicate_request": "This request was already sent.",
+    "duration_unsupported": "This model does not support that length.",
+    "image_input_unsupported": "This model cannot start from an image.",
+    "image_required": "This model needs a start image.",
+    "provider_cooldown": "This provider's limit was reached. Try again in about {{minutes}} min or pick another model.",
+    "upscale_unsupported": "This model cannot output 4K/8K.",
+    "upscaler_disabled": "Upscaling is turned off on this server.",
+    "already_that_large": "This image is already at that resolution.",
+    "too_many_active_jobs": "You already have {{limit}} jobs in progress. Wait for one to finish.",
+    "queue_full": "The server is busy right now. Try again in about {{minutes}} min."
   }
 }

@@ -11,13 +11,21 @@ Uzbek, Russian.
 
 ![Studio (Uzbek interface)](docs/img/studio-uz.png)
 
-> Status: **MVP / beta.** Image generation works end to end. Video, the marketing helper, payments and
-> other clients are planned, and the API is shaped for them.
+> Status: **MVP / beta.** Image and video generation work end to end. The marketing helper, payments
+> and other clients are planned, and the API is shaped for them.
 
 ## Features
 
 - Prompt studio: model picker, aspect ratio (1:1, 16:9, 9:16, 4:3, 3:4), size, 1-4 images
-- 3 original camera presets (Gentle Drift In, Halo Orbit, Skyward Unveil), stored as JSON templates
+- Video: text-to-video and **Animate** (image-to-video from any of your images), MP4 player in the gallery
+- 3 original camera presets (Gentle Drift In, Halo Orbit, Skyward Unveil) with image and camera-motion wording
+- **4K / 8K images for free**: a local AI upscaler (Real-ESRGAN, BSD-3) runs on your own server's
+  CPU, no API or GPU needed (measured on 8 cores: ~30 s for 4K, ~100 s for 8K, peak ~780 MB RAM). "Upscale 4K/8K" on any image.
+- **4K / 8K video** (opt-in, paid): Topaz upscaling on fal.ai with the user's own key
+- Fair job queue: per-user limits, round-robin between users, one heavy CPU job at a time,
+  per-provider concurrency caps, back-pressure (429/503 + Retry-After), queue position and ETA
+- Self-learning provider limits: counts usage per provider/key and learns undocumented limits from
+  quota errors ("≈N left today", automatic pause during the learned cooldown)
 - Async job queue (works on SQLite, no Redis needed) with live status over Server-Sent Events
 - History, favourites, delete, report
 - Credits: append-only ledger, starter credits, daily limits, automatic refunds on failure
@@ -30,9 +38,13 @@ Uzbek, Russian.
 | Provider | Free? | Needs | Enabled by default |
 |---|---|---|---|
 | Cloudflare Workers AI (FLUX.1 schnell, Apache-2.0) | Yes, daily free allocation | Cloudflare account ID + API token (server-wide or per user) | Yes |
-| fal.ai (FLUX.1 schnell) | **Paid** (user's own key) | fal.ai key | No |
+| fal.ai (FLUX.1 schnell image; Wan 2.2 video and image-to-video, Apache-2.0) | **Paid** (user's own key) | fal.ai key | No |
 | Pollinations | Yes, anonymous | nothing | **No**: its terms could not be verified, see [MODEL_LICENSES.md](MODEL_LICENSES.md) |
-| Offline demo | Yes | nothing | Dev only |
+| Offline demo (image + short video clip) | Yes | nothing | Dev only |
+
+> **Video has no free provider.** We found no hosted video API with a verifiable free tier (see
+> MODEL_LICENSES.md). Video uses fal.ai with each user's own key (about $0.15 per 5 s clip for
+> Wan 2.2 5B at the time of writing); development uses the offline demo clip.
 
 ## Quick start (Docker, one command)
 

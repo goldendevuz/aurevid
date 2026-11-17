@@ -68,13 +68,13 @@ async def remove_asset(asset_id: str, _: AdminUser, session: Session) -> None:
     asset = await session.get(Asset, asset_id)
     if asset is None:
         raise not_found()
-    key = asset.storage_key
+    keys = (asset.storage_key, asset.preview_key)
     await session.execute(
         update(Report).where(Report.asset_id == asset_id).values(status="actioned")
     )
     await session.delete(asset)
     await session.commit()
-    delete_stored(key)
+    delete_stored(*keys)
 
 
 @router.post("/users/{user_id}/credits")

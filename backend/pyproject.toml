@@ -14,6 +14,8 @@ dependencies = [
     "fastapi==0.163.1",
     "httpx==0.28.1",
     "limits==5.8.0",
+    "numpy==2.5.5",
+    "onnxruntime==1.32.0",
     "pillow==13.0.0",
     "pydantic==2.14.3",
     "pydantic-settings==2.16.3",

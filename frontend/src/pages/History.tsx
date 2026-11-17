@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import { api } from "../api";
 import JobCard from "../components/JobCard";
 import { Button, Card, ErrorText } from "../components/ui";
@@ -10,6 +11,7 @@ const PAGE = 20;
 
 export default function History() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const [favorites, setFavorites] = useState(false);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [more, setMore] = useState(false);
@@ -46,7 +48,20 @@ export default function History() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {jobs.map((j) => (
-            <JobCard key={j.id} job={j} onChange={(u) => setJobs((p) => p.map((x) => (x.id === u.id ? u : x)))} />
+            <JobCard
+              key={j.id}
+              job={j}
+              onChange={(u) => setJobs((p) => p.map((x) => (x.id === u.id ? u : x)))}
+              onAnimate={(asset) => navigate("/", { state: { animate: asset } })}
+              onUpscale={async (asset, target) => {
+                try {
+                  await api(`/api/assets/${asset.id}/upscale`, { method: "POST", body: { target } });
+                  navigate("/");
+                } catch (err) {
+                  setError(err);
+                }
+              }}
+            />
           ))}
         </div>
       )}
