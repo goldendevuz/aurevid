@@ -73,7 +73,7 @@
     "duration": "Length",
     "seconds": "{{count}} s",
     "startImage": "Start image",
-    "startImageHint": "Animate one of your images: use “Animate” on any result.",
+    "startImageHint": "Upload an image above, or press “Animate” on any result.",
     "removeStartImage": "Remove",
     "needsImage": "This model needs a start image.",
     "noVideoModels": "No video model is available. Video needs a paid provider key (Settings).",
@@ -118,7 +118,10 @@
     "withAudio": "with sound",
     "audioHint": "Sound: describe it in the prompt (music, noise, speech in quotes). A vague prompt gives a nearly silent track.",
     "audioExample": "A man says clearly: welcome, friends! Rain pours on a tin roof, guitar and crowd chatter.",
-    "audioInsert": "Insert an example"
+    "audioInsert": "Insert an example",
+    "uploadStart": "Upload a start image",
+    "uploadHint": "PNG, JPEG or WEBP. Click or drop a file here.",
+    "uploading": "Uploading…"
   },
   "job": {
     "queued": "Queued",

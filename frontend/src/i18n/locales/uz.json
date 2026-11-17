@@ -73,7 +73,7 @@
     "duration": "Davomiyligi",
     "seconds": "{{count}} s",
     "startImage": "Boshlang'ich rasm",
-    "startImageHint": "Rasmlaringizdan birini jonlantiring: istalgan natijada “Jonlantirish” ni bosing.",
+    "startImageHint": "Yuqorida rasm yuklang yoki istalgan natijada «Jonlantirish» tugmasini bosing.",
     "removeStartImage": "Olib tashlash",
     "needsImage": "Bu model uchun boshlang'ich rasm kerak.",
     "noVideoModels": "Video model mavjud emas. Video uchun pullik provayder kaliti kerak (Sozlamalar).",
@@ -118,7 +118,10 @@
     "withAudio": "ovoz bilan",
     "audioHint": "Ovoz: promptda tasvirlang (musiqa, shovqin, tirnoq ichida gap). Noaniq prompt deyarli jimjit ovoz beradi.",
     "audioExample": "Odam aniq aytadi: welcome, friends! Tunuka tomga yomg'ir yog'adi, gitara va olomon shovqini.",
-    "audioInsert": "Namuna qo'shish"
+    "audioInsert": "Namuna qo'shish",
+    "uploadStart": "Boshlang'ich rasm yuklash",
+    "uploadHint": "PNG, JPEG yoki WEBP. Bosing yoki faylni shu yerga tashlang.",
+    "uploading": "Yuklanmoqda…"
   },
   "job": {
     "queued": "Navbatda",

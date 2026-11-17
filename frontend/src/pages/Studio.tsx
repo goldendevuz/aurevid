@@ -90,6 +90,8 @@ export default function Studio() {
   const [wantAspect, setWantAspect] = useState<string | null>(null);
   const [presetId, setPresetId] = useState<string>("");
   const [picking, setPicking] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [dragging, setDragging] = useState(false);
   const closePicker = useCallback(() => setPicking(false), []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
@@ -208,6 +210,23 @@ export default function Studio() {
     navigate(".", { replace: true, state: null });
   }, [location.state, animate, navigate]);
 
+  const uploadStart = async (file: File) => {
+    setError(null);
+    setUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      const asset = await api<Asset>("/api/assets/upload", { method: "POST", form: fd });
+      setStartImage(asset);
+      // Keep the chosen model if it can take a start image; otherwise re-pick one that can.
+      if (!model?.accepts_image) setModelKey("");
+    } catch (err) {
+      setError(err);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const switchMode = (next: Mode) => {
     setMode(next);
     setModelKey("");
@@ -302,6 +321,46 @@ export default function Studio() {
                 {t("studio.removeStartImage")}
               </button>
             </div>
+          )}
+
+          {isVideo && !startImage && (
+            <label
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragging(true);
+              }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragging(false);
+                const file = e.dataTransfer.files?.[0];
+                if (file) void uploadStart(file);
+              }}
+              className={`mb-3 flex cursor-pointer items-center gap-3 rounded-2xl border border-dashed px-4 py-3 text-left transition focus-within:border-accent-2 ${
+                dragging || model?.requires_image ? "border-accent-2/70 bg-accent-2/10" : "border-line hover:border-white/25"
+              }`}
+            >
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-raised text-accent">
+                <Icon name="image" size={20} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-medium text-ink">
+                  {uploading ? t("studio.uploading") : t("studio.uploadStart")}
+                </span>
+                <span className="block text-[11px] text-muted">{t("studio.uploadHint")}</span>
+              </span>
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                disabled={uploading}
+                className="sr-only"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  e.target.value = ""; // allow choosing the same file again
+                  if (file) void uploadStart(file);
+                }}
+              />
+            </label>
           )}
 
           <label htmlFor="prompt" className="sr-only">{isVideo ? t("studio.videoPromptLabel") : t("studio.promptLabel")}</label>
