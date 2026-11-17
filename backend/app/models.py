@@ -48,6 +48,8 @@ class User(Base):
     locale: Mapped[str] = mapped_column(String(8), default="en")
     is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
     is_blocked: Mapped[bool] = mapped_column(Boolean, default=False)
+    # Team/test accounts: excluded from admin analytics by default.
+    is_internal: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
     # Cached balance; the ledger is the source of truth and both change in one transaction.
     credit_balance: Mapped[int] = mapped_column(Integer, default=0)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
@@ -186,3 +188,67 @@ class ProviderQuota(Base):
     cooldown_s: Mapped[float] = mapped_column(Float, default=15.0)
     blocked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class UserActivity(Base):
+    """One row per user per active day (UTC+5 calendar day). Feeds retention and cohorts."""
+
+    __tablename__ = "user_activity"
+    __table_args__ = (UniqueConstraint("user_id", "day", name="uq_user_activity_day"),)
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=new_id)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    day: Mapped[str] = mapped_column(String(10), index=True)  # YYYY-MM-DD, Asia/Tashkent
+
+
+class ModerationEvent(Base):
+    """A prompt refused by moderation. Category only: the prompt text is not stored."""
+
+    __tablename__ = "moderation_events"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=new_id)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    category: Mapped[str] = mapped_column(String(32))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, index=True
+    )
+
+
+class WorkerHeartbeat(Base):
+    __tablename__ = "worker_heartbeats"
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True)  # host:pid
+    slots: Mapped[int] = mapped_column(Integer)
+    busy: Mapped[int] = mapped_column(Integer, default=0)
+    seen_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class Announcement(Base):
+    """In-app banner shown to every signed-in user (admin "broadcast")."""
+
+    __tablename__ = "announcements"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=new_id)
+    level: Mapped[str] = mapped_column(String(16), default="info")  # info | warning | success
+    text_en: Mapped[str] = mapped_column(String(500))
+    text_uz: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    text_ru: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    active: Mapped[bool] = mapped_column(Boolean, default=True)
+    ends_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_by: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+
+class AdminAudit(Base):
+    """Append-only record of admin actions (ids and small details only, no secrets)."""
+
+    __tablename__ = "admin_audit"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=new_id)
+    admin_id: Mapped[str | None] = mapped_column(String(32), index=True)
+    action: Mapped[str] = mapped_column(String(48))
+    target: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    details: Mapped[dict] = mapped_column(JSON, default=dict)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, index=True
+    )

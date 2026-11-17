@@ -118,6 +118,7 @@ class FalProvider(ImageProvider):
         ],
         notes="Paid: billed to your own fal.ai account via your key. 4K/8K video uses Topaz "
         "upscaling on fal (about $0.08 per output second per pass above 1080p).",
+        key_url="https://fal.ai/dashboard/keys",
     )
 
     def has_usable_credentials(self, creds: Credentials) -> bool:

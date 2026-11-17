@@ -42,14 +42,16 @@ class Settings(BaseSettings):
     max_video_bytes: int = 600 * 1024 * 1024  # 8K clips; streamed to disk, never held in memory
     daily_job_limit: int = 30
     signup_credits: int = 50
+    analytics_utc_offset_hours: int = 5  # Asia/Tashkent; used for "today", daily charts, cohorts
 
     # --- providers ---
     pollinations_enabled: bool = False  # terms unverified (MODEL_LICENSES.md); opt-in only
     pollinations_base_url: str = "https://image.pollinations.ai"
     cloudflare_enabled: bool = True
-    fal_enabled: bool = False
-    # 4K/8K video via Topaz on fal: output terms not stated on fal's model page -> opt-in.
-    fal_video_upscale_enabled: bool = False
+    # fal.ai (video, image-to-video, 4K/8K video). On by default (owner decision 2026-11-17);
+    # it only runs with each user's own key, so the server never pays.
+    fal_enabled: bool = True
+    fal_video_upscale_enabled: bool = True
     mock_provider_enabled: bool = False
     upscaler_enabled: bool = True  # local Real-ESRGAN (CPU) for 4K/8K images
     upscaler_timeout_seconds: int = 300  # hard stop per image (checked between tiles)

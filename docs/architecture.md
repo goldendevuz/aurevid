@@ -108,3 +108,23 @@ Adapters flag provider-side limits with `ProviderError(..., quota=True)`. Paid p
 Caps are computed from the `running` rows in the database, so they hold across several worker
 processes; a claim that races past a cap is put back in the queue. Each queued job reports its
 fair-order position and an ETA from the average duration of recent jobs of the same kind.
+
+## Admin panel (`/admin`, `routers/admin.py`, `services/analytics.py`)
+
+Admins are made with `python -m app.cli make-admin <email>` (never by email in config: sign-up
+does not verify email ownership yet). Non-admins get 404 on every admin route.
+
+| Tab | What it shows / does |
+|---|---|
+| Overview | KPI tiles (today vs yesterday, this vs last month), 30-day and 12-month charts, queue, storage, recent sign-ups and failures; auto-refresh |
+| Users | search, filters (customers / team-test / blocked / admins; activated / never tried / tried-and-failed), sorting, paging; detail card with credits add/deduct (idempotent), block, team/test flag, admin flag, recent jobs and ledger |
+| Jobs | filters (status, type, provider, period, email/id), cancel queued (refund), free retry of failed, top errors |
+| Analytics | funnel (registered → tried → result → 2+ results → power user), retention (daily active new vs returning, active-day buckets, streaks), weekly/monthly cohort heatmap, time to first job |
+| Moderation | user reports with preview, remove file, block owner, dismiss; rejected-prompt categories per user (prompt text is never stored) |
+| System | DB, Redis, disk, worker heartbeats, queue, failure rate, upscaler, BYOK, providers, config warnings; learned provider limits with cooldown reset |
+| Announcements | in-app banners in en/uz/ru with optional end time |
+| Audit log | every admin action (who, what, target, when), stored in `admin_audit` |
+
+Team/test accounts (`users.is_internal`) are excluded from analytics by default. Activity is one
+row per user per Asia/Tashkent day (`user_activity`), written at most once per day per process.
+CSV exports neutralise spreadsheet formulas (CSV injection).

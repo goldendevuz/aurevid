@@ -61,6 +61,8 @@ class ProviderInfo(BaseModel):
     notes: str = ""
     # Documented (or derived) daily output limit per credential, used as the learner's prior.
     daily_quota_prior: int | None = None
+    key_url: str = ""  # where a user creates the key this provider needs
+    key_guide_url: str = ""  # step-by-step guide
     track_quota: bool = True  # paid providers bill per use; no learning needed
 
 

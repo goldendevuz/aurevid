@@ -9,7 +9,16 @@ from sqlalchemy import delete, select
 from app.crypto import byok_available, encrypt_secret
 from app.deps import CurrentUser, Session, not_found
 from app.images import delete_stored
-from app.models import Asset, CreditLedger, Job, ProviderKey, RefreshToken, User
+from app.models import (
+    Asset,
+    CreditLedger,
+    Job,
+    ModerationEvent,
+    ProviderKey,
+    RefreshToken,
+    User,
+    UserActivity,
+)
 from app.providers.registry import enabled_providers
 from app.schemas import (
     DeleteMeIn,
@@ -136,7 +145,9 @@ async def delete_me(body: DeleteMeIn, response: Response, user: CurrentUser, ses
         )
     ).all()
     # Explicit deletes (do not rely on FK cascade, which SQLite may not enforce everywhere).
-    for model in (Asset, Job, ProviderKey, CreditLedger, RefreshToken):
+    for model in (
+        Asset, Job, ProviderKey, CreditLedger, RefreshToken, UserActivity, ModerationEvent,
+    ):  # fmt: skip
         await session.execute(delete(model).where(model.user_id == user.id))
     await quota.delete_scope(session, f"user:{user.id}")
     await session.execute(delete(User).where(User.id == user.id))

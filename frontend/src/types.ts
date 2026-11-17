@@ -46,6 +46,8 @@ export interface Provider {
   notes: string;
   available: boolean;
   key_source: "server" | "user" | "none";
+  key_url: string;
+  key_guide_url: string;
   quota: QuotaView | null;
 }
 

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { api } from "../api";
@@ -60,6 +61,7 @@ export default function Layout() {
             <NavLink to="/history" className={link}>{t("nav.history")}</NavLink>
             <NavLink to="/usage" className={link}>{t("nav.usage")}</NavLink>
             <NavLink to="/settings" className={link}>{t("nav.settings")}</NavLink>
+            {user?.is_admin && <NavLink to="/admin" className={link}>⚙ {t("nav.admin")}</NavLink>}
           </nav>
           <div className="ml-auto flex items-center gap-3">
             {user && (
@@ -80,6 +82,7 @@ export default function Layout() {
           </div>
         </div>
       </header>
+      <Announcements />
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-6">
         <Outlet />
       </main>
@@ -102,5 +105,55 @@ export function Footer() {
         <span>AGPL-3.0</span>
       )}
     </footer>
+  );
+}
+
+interface Banner {
+  id: string;
+  level: "info" | "warning" | "success";
+  text_en: string;
+  text_uz: string | null;
+  text_ru: string | null;
+}
+
+function Announcements() {
+  const { i18n } = useTranslation();
+  const [items, setItems] = useState<Banner[]>([]);
+  const [hidden, setHidden] = useState<string[]>(() => {
+    try {
+      return JSON.parse(localStorage.getItem("aurevid.hiddenBanners") ?? "[]");
+    } catch {
+      return [];
+    }
+  });
+  useEffect(() => {
+    api<Banner[]>("/api/announcements").then(setItems).catch(() => setItems([]));
+  }, []);
+  const hide = (id: string) => {
+    const next = [...hidden, id];
+    setHidden(next);
+    try {
+      localStorage.setItem("aurevid.hiddenBanners", JSON.stringify(next.slice(-50)));
+    } catch {
+      /* ignore */
+    }
+  };
+  const tone = { info: "border-series-2/50 bg-series-2/10", warning: "border-amber/50 bg-amber/10", success: "border-ok/50 bg-ok/10" };
+  return (
+    <>
+      {items
+        .filter((a) => !hidden.includes(a.id))
+        .map((a) => {
+          const text = (i18n.language === "uz" && a.text_uz) || (i18n.language === "ru" && a.text_ru) || a.text_en;
+          return (
+            <div key={a.id} role="status" className={`border-b px-4 py-2 text-sm text-ink ${tone[a.level]}`}>
+              <div className="mx-auto flex max-w-6xl items-start justify-between gap-3">
+                <p>{a.level === "warning" ? "⚠ " : a.level === "success" ? "✓ " : "ℹ "}{text}</p>
+                <button onClick={() => hide(a.id)} aria-label="×" className="text-muted hover:text-ink">✕</button>
+              </div>
+            </div>
+          );
+        })}
+    </>
   );
 }

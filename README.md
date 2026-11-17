@@ -24,6 +24,10 @@ Uzbek, Russian.
 - **4K / 8K video** (opt-in, paid): Topaz upscaling on fal.ai with the user's own key
 - Fair job queue: per-user limits, round-robin between users, one heavy CPU job at a time,
   per-provider concurrency caps, back-pressure (429/503 + Retry-After), queue position and ETA
+- **Admin panel** (`/admin`): overview with trends (Tashkent time), users (search, filters,
+  credits, block, team/test flag), jobs (filters, cancel, free retry, top errors), activation
+  funnel, retention, cohort heatmap, moderation (reports + rejected-prompt categories), system
+  health, learned provider limits, in-app announcements, persistent audit log, CSV export
 - Self-learning provider limits: counts usage per provider/key and learns undocumented limits from
   quota errors ("≈N left today", automatic pause during the learned cooldown)
 - Async job queue (works on SQLite, no Redis needed) with live status over Server-Sent Events

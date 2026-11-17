@@ -115,12 +115,14 @@ def test_deadline_stops_long_runs(monkeypatch):
         upscaler.ai_x4(_photo(64, 64), deadline=0.0)
 
 
-def test_video_upscale_is_opt_in():
-    from app.config import get_settings
+def test_video_upscale_on_by_default_and_switchable():
+    from app.config import Settings, get_settings
     from app.providers.fal import FalProvider
     from app.providers.registry import allowed_upscales
 
+    assert Settings.model_fields["fal_video_upscale_enabled"].default is True
+    assert Settings.model_fields["fal_enabled"].default is True
     t2v = FalProvider().model("fal-ai/wan/v2.2-5b/text-to-video")
-    assert allowed_upscales(t2v) == []  # FAL_VIDEO_UPSCALE_ENABLED defaults to false
-    get_settings().fal_video_upscale_enabled = True
     assert allowed_upscales(t2v) == ["4k", "8k"]
+    get_settings().fal_video_upscale_enabled = False
+    assert allowed_upscales(t2v) == []
