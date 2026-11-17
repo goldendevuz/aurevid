@@ -141,7 +141,10 @@
     "elapsed": "{{time}} elapsed",
     "usually": "usually about {{time}}",
     "minutes": "{{count}} min",
-    "slow": "Taking longer than usual. You can leave this page: it keeps running and the result shows up in History."
+    "slow": "Taking longer than usual. You can leave this page: it keeps running and the result shows up in History.",
+    "details": "Generation details",
+    "showMore": "Show full prompt",
+    "showLess": "Show less"
   },
   "history": {
     "title": "History",

@@ -134,6 +134,9 @@ class JobOut(BaseModel):
     queue_position: int | None = None  # 1-based, queued jobs only
     eta_seconds: int | None = None  # rough estimate from recent job durations
     typical_seconds: int | None = None  # running jobs: median run time of similar finished jobs
+    model_label: str | None = None  # human-readable model name (None for unknown/disabled ones)
+    provider_name: str | None = None
+    has_audio: bool = False
 
 
 class FavoriteIn(_In):

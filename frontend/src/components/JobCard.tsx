@@ -116,6 +116,7 @@ export default function JobCard({
 }) {
   const { t } = useTranslation();
   const [reporting, setReporting] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState(false);
   const tone = job.status === "done" ? "ok" : job.status === "failed" ? "danger" : "muted";
   const pending = job.status === "queued" || job.status === "running";
   const ratio = job.params.width && job.params.height ? job.params.width / job.params.height : 1;
@@ -238,19 +239,51 @@ export default function JobCard({
       )}
       <div className="px-4 pb-4 pt-3">
         <div className="flex items-start justify-between gap-3">
-          <p className="line-clamp-2 text-sm leading-snug text-ink">{title}</p>
+          <p className={`text-sm leading-snug text-ink ${expanded ? "whitespace-pre-wrap break-words" : "line-clamp-2"}`}>{title}</p>
           <Badge tone={tone}>{t(`job.${job.status}`)}</Badge>
         </div>
-        <p className="mt-1.5 flex flex-wrap items-center gap-x-1.5 text-[11px] text-muted">
-          <Icon name={isVideo ? "video" : "image"} size={12} />
-          <span>{job.provider}</span>·<span>{job.params.aspect_ratio}</span>·
-          <span>{isVideo ? t("studio.seconds", { count: job.params.duration ?? 0 }) : `${job.count}×`}</span>
-          {job.preset_id && (
-            <>
-              ·<span>{t(`presets.${job.preset_id}.name`, { defaultValue: job.preset_id })}</span>
-            </>
+        {title.length > 90 && (
+          <button
+            type="button"
+            onClick={() => setExpanded(!expanded)}
+            aria-expanded={expanded}
+            className="mt-1 text-[11px] font-medium text-muted transition hover:text-accent"
+          >
+            {expanded ? t("job.showLess") : t("job.showMore")}
+          </button>
+        )}
+        <ul className="mt-2.5 flex flex-wrap gap-1.5 text-[11px] text-muted" aria-label={t("job.details")}>
+          <li className="flex items-center gap-1 rounded-md bg-raised px-1.5 py-0.5 font-medium text-ink/90" title={job.provider_name ?? job.provider}>
+            <Icon name={isVideo ? "video" : "image"} size={12} />
+            {job.model_label ?? job.model.split("/").pop()}
+          </li>
+          {job.provider_name && <li className="rounded-md bg-raised px-1.5 py-0.5">{job.provider_name}</li>}
+          <li className="rounded-md bg-raised px-1.5 py-0.5">{job.params.aspect_ratio}</li>
+          {job.params.size && !isUpscaleJob && (
+            <li className="rounded-md bg-raised px-1.5 py-0.5">{t(`studio.size_${job.params.size}`, { defaultValue: job.params.size })}</li>
           )}
-        </p>
+          {isVideo ? (
+            <li className="rounded-md bg-raised px-1.5 py-0.5">{t("studio.seconds", { count: job.params.duration ?? 0 })}</li>
+          ) : (
+            <li className="rounded-md bg-raised px-1.5 py-0.5">{job.count}×</li>
+          )}
+          {job.params.upscale && !isUpscaleJob && (
+            <li className="rounded-md bg-raised px-1.5 py-0.5 font-semibold text-accent">{job.params.upscale.toUpperCase()}</li>
+          )}
+          {job.has_audio && (
+            <li className="flex items-center gap-1 rounded-md bg-raised px-1.5 py-0.5 text-accent">
+              <Icon name="sound" size={12} />
+              {t("studio.withAudio")}
+            </li>
+          )}
+          {job.preset_id && (
+            <li className="flex items-center gap-1 rounded-md bg-raised px-1.5 py-0.5">
+              <Icon name="camera" size={12} />
+              {t(`presets.${job.preset_id}.name`, { defaultValue: job.preset_id })}
+            </li>
+          )}
+          <li className="rounded-md bg-raised px-1.5 py-0.5 tabular-nums">{new Date(job.created_at).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}</li>
+        </ul>
         {elapsed !== null && (
           <div className="mt-3" role="status">
             <div className="flex items-center justify-between gap-2 text-[11px] tabular-nums">

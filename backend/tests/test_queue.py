@@ -156,3 +156,26 @@ async def test_running_job_exposes_started_at_and_typical_seconds():
     body = (await client.get("/api/jobs/run1")).json()
     assert body["started_at"] and body["typical_seconds"] == queue.DEFAULT_SECONDS["video"]
     assert body["queue_position"] is None
+
+
+async def test_job_exposes_model_label_and_audio_flag():
+    client, user = await make_user("labels@example.com")
+    now = datetime.now(UTC)
+    async with db.session_factory()() as session:
+        session.add_all(
+            [
+                Job(
+                    id="lab1", user_id=user["id"], provider="demo", model="gradient", kind="image",
+                    prompt="p", count=1, cost=1, params={}, status=JobStatus.done, created_at=now,
+                ),
+                Job(
+                    id="lab2", user_id=user["id"], provider="gone", model="x", kind="image",
+                    prompt="p", count=1, cost=1, params={}, status=JobStatus.done, created_at=now,
+                ),
+            ]
+        )  # fmt: skip
+        await session.commit()
+    known = (await client.get("/api/jobs/lab1")).json()
+    assert known["model_label"] and known["provider_name"] and known["has_audio"] is False
+    unknown = (await client.get("/api/jobs/lab2")).json()  # provider no longer enabled
+    assert unknown["model_label"] is None and unknown["provider_name"] is None
