@@ -92,6 +92,7 @@ def create_app() -> FastAPI:
         assets.router,
         credits.router,
         admin.router,
+        admin.public,
     ):
         app.include_router(router)
 

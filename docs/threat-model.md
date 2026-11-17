@@ -51,6 +51,9 @@ the local asset store, Redis (rate limits), and outbound calls to generation pro
 | Resource exhaustion / one user starving others | Per-user active-job cap, global queue cap with 503 back-pressure, round-robin claiming, CPU and per-provider lanes, worker slots, hard deadlines, janitor | `test_queue.py` |
 | Huge images/videos exhausting RAM or CPU | Pixel cap (8192²), bounded upscaler input (target/4), tile deadline, provider image size cap, videos streamed to disk (600 MB cap) | `test_upscale.py`, `test_video.py` |
 | Third-party telemetry from dependencies | `ORT_DISABLE_TELEMETRY=1` set before ONNX Runtime is imported (code + Dockerfile) | `upscaler.py` |
+| Admin takeover / silent abuse of admin powers | Admins only via CLI (no email-based auto-admin while emails are unverified); 404 for non-admins; cannot block/demote self; every action in a persistent audit log | `test_admin.py` |
+| CSV injection in admin exports | Cells starting with = + - @ tab CR are prefixed with ' | `test_csv_export_neutralises_formulas` |
+| Over-collection in moderation logs | Only the category of a rejected prompt is stored, never the text | `test_moderation_events_store_category_not_prompt` |
 | Webhook forgery/replay (future payments) | HMAC-SHA256 over timestamp+body, 5-min window, processed-event table | `webhooks.py`, `test_webhook_*` |
 | Weak production config | Settings refuse missing secrets, wildcard CORS, insecure cookies, mock provider in prod | `test_cors_wildcard_and_weak_prod_config_refused` |
 | Spoofed client IP | Only uvicorn `--proxy-headers` with `FORWARDED_ALLOW_IPS`; nginx overwrites X-Forwarded-For | `Dockerfile`, `nginx.conf` |

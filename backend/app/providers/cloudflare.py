@@ -41,6 +41,8 @@ class CloudflareProvider(ImageProvider):
         notes="Free daily allocation on your Cloudflare account; output is 1024x1024.",
         # 10,000 Neurons/day; ~58 Neurons per 1024px 4-step image (third-party estimate).
         daily_quota_prior=170,
+        key_url="https://dash.cloudflare.com/profile/api-tokens",
+        key_guide_url="https://developers.cloudflare.com/workers-ai/get-started/rest-api/",
     )
 
     def server_credentials(self) -> Credentials:

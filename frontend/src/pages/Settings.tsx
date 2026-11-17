@@ -44,7 +44,22 @@ function KeyForm({ provider, status, onSaved }: { provider: Provider; status?: P
           {status?.configured ? t("settings.keyConfigured") : t("settings.keyNotSet")}
         </Badge>
       </div>
-      <p className="mb-3 text-[11px] text-muted">{provider.notes}</p>
+      <p className="mb-2 text-[11px] text-muted">{provider.notes}</p>
+      <p className="mb-2 text-[11px] text-ink/80">
+        {t(`settings.steps_${provider.id}`, { defaultValue: "" })}
+      </p>
+      <div className="mb-3 flex flex-wrap gap-3 text-xs">
+        {provider.key_url && (
+          <a href={provider.key_url} target="_blank" rel="noopener noreferrer" className="font-semibold text-amber hover:underline">
+            🔑 {t("settings.getKey")} ↗
+          </a>
+        )}
+        {provider.key_guide_url && (
+          <a href={provider.key_guide_url} target="_blank" rel="noopener noreferrer" className="text-muted hover:text-ink hover:underline">
+            {t("settings.guide")} ↗
+          </a>
+        )}
+      </div>
       <div className="space-y-2">
         {provider.byok_fields.map((f) => (
           <div key={f}>

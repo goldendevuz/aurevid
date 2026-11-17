@@ -8,7 +8,9 @@ process the same job. Run standalone with `python -m app.worker`, or inside the 
 
 import asyncio
 import logging
+import os
 import secrets
+import socket
 from datetime import UTC, datetime, timedelta
 
 from sqlalchemy import select, update
@@ -27,7 +29,7 @@ from app.images import (
     store_video_file,
     tmp_dir,
 )
-from app.models import Asset, Job, JobStatus
+from app.models import Asset, Job, JobStatus, WorkerHeartbeat
 from app.providers.base import GenerationRequest, ProviderError
 from app.providers.registry import get_provider, resolve_credentials
 from app.services import credits, queue, quota
@@ -320,10 +322,15 @@ async def recover_stale() -> None:
 
 
 async def run_once() -> bool:
+    global _busy
     job = await claim_next()
     if job is None:
         return False
-    await process(job)
+    _busy += 1
+    try:
+        await process(job)
+    finally:
+        _busy -= 1
     return True
 
 
@@ -347,12 +354,33 @@ async def _janitor(stop: asyncio.Event | None) -> None:
             log.exception("stale job recovery failed")
 
 
+_busy = 0
+
+
+async def _heartbeat(stop: asyncio.Event | None, slots: int) -> None:
+    """Lets the admin panel see live workers and how busy they are."""
+    worker_id = f"{socket.gethostname()}:{os.getpid()}"[:64]
+    while not (stop and stop.is_set()):
+        try:
+            async with db.session_factory()() as session:
+                row = await session.get(WorkerHeartbeat, worker_id)
+                if row is None:
+                    row = WorkerHeartbeat(id=worker_id, slots=slots)
+                    session.add(row)
+                row.busy, row.seen_at = _busy, datetime.now(UTC)
+                await session.commit()
+        except Exception:  # noqa: BLE001
+            log.exception("heartbeat failed")
+        await asyncio.sleep(15)
+
+
 async def run_forever(stop: asyncio.Event | None = None) -> None:
     """Run `worker_slots` jobs concurrently; caps in services/queue.py keep heavy work in check."""
     await recover_stale()
     s = get_settings()
     tasks = [asyncio.create_task(_slot(stop, s.worker_poll_seconds)) for _ in range(s.worker_slots)]
     tasks.append(asyncio.create_task(_janitor(stop)))
+    tasks.append(asyncio.create_task(_heartbeat(stop, s.worker_slots)))
     try:
         await asyncio.gather(*tasks)
     finally:

@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider, useAuth } from "./auth";
 import Layout from "./components/Layout";
+import Admin from "./pages/Admin";
 import AuthPage from "./pages/Auth";
 import History from "./pages/History";
 import Settings from "./pages/Settings";
@@ -35,6 +36,7 @@ export default function App() {
             <Route path="/history" element={<History />} />
             <Route path="/usage" element={<UsagePage />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/admin" element={<Admin />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

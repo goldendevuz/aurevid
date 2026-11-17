@@ -13,7 +13,7 @@ from sqlalchemy.exc import IntegrityError
 from app import db
 from app.config import get_settings
 from app.deps import CurrentUser, Session, not_found
-from app.models import Asset, Job, JobStatus, new_id
+from app.models import Asset, Job, JobStatus, ModerationEvent, new_id
 from app.moderation import moderator
 from app.providers.base import UPSCALE_CREDITS, dimensions
 from app.providers.registry import allowed_upscales, get_provider, resolve_credentials
@@ -52,6 +52,12 @@ async def job_out(session, job: Job) -> JobOut:
 
 def _bad(code: str, http: int = status.HTTP_400_BAD_REQUEST) -> HTTPException:
     return HTTPException(http, detail={"code": code})
+
+
+async def _log_rejection(session, user_id: str, category: str | None) -> None:
+    """Record the category only (never the prompt) so admins can spot repeat abuse."""
+    session.add(ModerationEvent(user_id=user_id, category=category or "other"))
+    await session.commit()
 
 
 async def check_daily_limit(session, user_id: str) -> None:
@@ -103,6 +109,7 @@ async def create_job(
 
     verdict = moderator.check_prompt(body.prompt)
     if not verdict.allowed:
+        await _log_rejection(session, user.id, verdict.category)
         raise _bad("prompt_rejected")
 
     provider = get_provider(body.provider)
@@ -157,7 +164,9 @@ async def create_job(
         if preset is None:
             raise _bad("unknown_preset")
         final_prompt = preset.render(body.prompt, model.kind)
-    if not moderator.check_prompt(final_prompt).allowed:
+    preset_verdict = moderator.check_prompt(final_prompt)
+    if not preset_verdict.allowed:
+        await _log_rejection(session, user.id, preset_verdict.category)
         raise _bad("prompt_rejected")
 
     await check_daily_limit(session, user.id)

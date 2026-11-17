@@ -16,6 +16,10 @@
   --color-danger: #ef6f5e;
   --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
   --radius-card: 12px;
+  /* Chart series, validated on the dark surface (#1c1a18): lightness band, CVD dE 27.4,
+     normal-vision dE 30.7, contrast >= 3:1. Brand amber #f0a73a is too light for marks. */
+  --color-series-1: #c98500;
+  --color-series-2: #3987e5;
 }
 
 html, body { background: var(--color-bg); color: var(--color-ink); }

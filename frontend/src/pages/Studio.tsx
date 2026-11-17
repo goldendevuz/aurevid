@@ -325,9 +325,16 @@ export default function Studio() {
             </>
           )}
           {choices.some(({ p }) => !p.available) && (
-            <p className="mt-2 text-[11px] text-muted">
+            <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted">
               <Link to="/settings" className="underline hover:text-ink">{t("studio.needsKey")}</Link>
-            </p>
+              {[...new Map(choices.filter(({ p }) => !p.available && p.key_url).map(({ p }) => [p.id, p])).values()].map(
+                (p) => (
+                  <a key={p.id} href={p.key_url} target="_blank" rel="noopener noreferrer" className="text-amber hover:underline">
+                    🔑 {p.name}: {t("settings.getKey")} ↗
+                  </a>
+                ),
+              )}
+            </div>
           )}
         </div>
 

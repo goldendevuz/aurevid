@@ -15,6 +15,8 @@
 - **4K / 8K video** (ixtiyoriy, pullik): fal.ai'da Topaz orqali, o'z kalitingiz bilan
 - Adolatli navbat: har bir foydalanuvchiga chegara, foydalanuvchilar orasida navbatma-navbat,
   og'ir CPU ishi bir vaqtda bitta, server to'lsa 429/503 bilan rad etadi; navbatdagi o'rin va vaqt ko'rinadi
+- **Admin panel** (`/admin`): trendlar, foydalanuvchilar, joblar, voronka, retention,
+  kogortalar, moderatsiya, tizim holati, provayder limitlari, e'lonlar, audit jurnali, CSV eksport
 - Limitlarni o'zi o'rganish: limiti yozilmagan servislarda ishlatilganini sanaydi, limit xatolaridan
   o'rganadi va "bugun ≈N qoldi" ko'rsatadi
 - 3 ta original kamera preseti
