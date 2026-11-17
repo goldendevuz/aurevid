@@ -114,7 +114,8 @@
     "upToImages": "{{count}} tagacha rasm",
     "acceptsImage": "rasm kiritish",
     "perImage": "{{count}} kredit",
-    "videoWait": "Video bir necha daqiqa oladi, provayder band bo'lsa ko'proq. Sahifadan chiqib ketishingiz mumkin: yaratish davom etadi va natija Tarix bo'limida paydo bo'ladi."
+    "videoWait": "Video bir necha daqiqa oladi, provayder band bo'lsa ko'proq. Sahifadan chiqib ketishingiz mumkin: yaratish davom etadi va natija Tarix bo'limida paydo bo'ladi.",
+    "withAudio": "ovoz bilan"
   },
   "job": {
     "queued": "Navbatda",

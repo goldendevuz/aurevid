@@ -40,6 +40,14 @@ TOPAZ_MODEL = "Proteus"  # Topaz's general-purpose model (fal default)
 UPSCALE_SHORT_SIDE = {"4k": 2160, "8k": 4320}
 T2V = "fal-ai/wan/v2.2-5b/text-to-video"
 I2V = "fal-ai/wan/v2.2-a14b/image-to-video"
+# Kling 2.6 Pro generates native audio (speech, effects, ambience). Schema from fal's model
+# pages (2026-11-17): duration is the string "5" or "10"; text-to-video takes aspect_ratio,
+# image-to-video takes start_image_url and follows the image's aspect ratio; neither takes
+# seed, frame counts or a resolution. 4K/8K Topaz upscaling is not offered for these (whether
+# Topaz keeps the audio track is unverified).
+KLING_T2V = "fal-ai/kling-video/v2.6/pro/text-to-video"
+KLING_I2V = "fal-ai/kling-video/v2.6/pro/image-to-video"
+_KLING = (KLING_T2V, KLING_I2V)
 # model id -> (frames per second, {size: resolution})
 _VIDEO = {
     T2V: (24, {"small": "580p", "medium": "580p", "large": "720p"}),
@@ -121,9 +129,36 @@ class FalProvider(ImageProvider):
                 requires_image=True,
                 upscale_targets=["4k", "8k"],
             ),
+            ModelInfo(
+                id=KLING_T2V,
+                label="Kling 2.6 Pro text-to-video + audio (fal)",
+                kind="video",
+                license="Proprietary (Kling, via fal.ai terms)",
+                commercial_use="unclear",
+                aspect_ratios=["16:9", "9:16", "1:1"],
+                credit_cost=10,
+                max_count=1,
+                durations=[5, 10],
+                has_audio=True,
+            ),
+            ModelInfo(
+                id=KLING_I2V,
+                label="Kling 2.6 Pro image-to-video + audio (fal)",
+                kind="video",
+                license="Proprietary (Kling, via fal.ai terms)",
+                commercial_use="unclear",
+                aspect_ratios=["16:9", "9:16", "1:1"],
+                credit_cost=10,
+                max_count=1,
+                durations=[5, 10],
+                accepts_image=True,
+                requires_image=True,
+                has_audio=True,
+            ),
         ],
         notes="Paid: billed to your own fal.ai account via your key. 4K/8K video uses Topaz "
-        "upscaling on fal (about $0.08 per output second per pass above 1080p).",
+        "upscaling on fal (about $0.08 per output second per pass above 1080p). Kling 2.6 Pro "
+        "adds sound; fal lists about $0.14 per second with audio (unverified, check fal.ai).",
         key_url="https://fal.ai/dashboard/keys",
     )
 
@@ -158,7 +193,27 @@ class FalProvider(ImageProvider):
             raise ProviderError("Unexpected response from fal.ai") from exc
         return await self._download(image_url, 15 * 1024 * 1024, "image/jpeg")
 
+    def _kling_body(self, req: GenerationRequest) -> dict:
+        body: dict = {
+            "prompt": req.prompt,
+            "duration": str(req.duration_s or 5),
+            "generate_audio": True,
+            "enable_safety_checker": True,
+        }
+        if req.model == KLING_I2V:
+            if not req.image:
+                raise ProviderError("This model needs a start image")
+            # Data URI: fal accepts these for file inputs per its docs; not verified live here.
+            body["start_image_url"] = (
+                "data:image/jpeg;base64," + base64.b64encode(req.image).decode()
+            )
+        else:
+            body["aspect_ratio"] = req.aspect_ratio
+        return body
+
     def video_body(self, req: GenerationRequest) -> dict:
+        if req.model in _KLING:
+            return self._kling_body(req)
         if req.model not in _VIDEO:
             raise ProviderError("Unknown fal.ai video model")
         fps, resolutions = _VIDEO[req.model]
@@ -209,7 +264,7 @@ class FalProvider(ImageProvider):
 
     def upscale_passes(self, req: GenerationRequest) -> list[float]:
         """Topaz factors (each 1-4x) that take the base resolution to the 4K/8K short side."""
-        if not req.upscale:
+        if not req.upscale or req.model not in _VIDEO:
             return []
         _, resolutions = _VIDEO[req.model]
         base_short = int(resolutions.get(req.size, "720p").rstrip("p"))

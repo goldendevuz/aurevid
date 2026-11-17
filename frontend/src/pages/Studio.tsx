@@ -332,6 +332,7 @@ export default function Studio() {
               >
                 <ModelSwatch seed={modelKey || "none"} size={20} />
                 <span className="truncate">{model?.label ?? t("studio.model")}</span>
+                {model?.has_audio && <Icon name="sound" size={14} className="shrink-0 text-accent" title={t("studio.withAudio")} />}
                 <Icon name="chevron" size={14} className="text-muted" />
               </button>
             )}
