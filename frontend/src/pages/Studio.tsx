@@ -417,6 +417,19 @@ export default function Studio() {
             )}
           </div>
           {isVideo && <p className="px-2 pt-2 text-[11px] text-muted">{t("studio.videoWait")}</p>}
+          {isVideo && model?.has_audio && (
+            <p className="flex flex-wrap items-center gap-x-2 gap-y-1 px-2 pt-2 text-[11px] text-muted">
+              <Icon name="sound" size={13} className="shrink-0 text-accent" />
+              <span>{t("studio.audioHint")}</span>
+              <button
+                type="button"
+                onClick={() => setPrompt((p) => (p.trim() ? `${p.trim()} ${t("studio.audioExample")}` : t("studio.audioExample")))}
+                className="font-medium text-accent hover:underline"
+              >
+                {t("studio.audioInsert")}
+              </button>
+            </p>
+          )}
           {isVideo && !startImage && <p className="px-2 pt-2 text-[11px] text-muted">{t("studio.startImageHint")}</p>}
           {needsImage && <p className="px-2 pt-2 text-[11px] text-danger">{t("studio.needsImage")}</p>}
           {resolution !== "native" && (

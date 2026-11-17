@@ -115,7 +115,10 @@
     "acceptsImage": "rasm kiritish",
     "perImage": "{{count}} kredit",
     "videoWait": "Video bir necha daqiqa oladi, provayder band bo'lsa ko'proq. Sahifadan chiqib ketishingiz mumkin: yaratish davom etadi va natija Tarix bo'limida paydo bo'ladi.",
-    "withAudio": "ovoz bilan"
+    "withAudio": "ovoz bilan",
+    "audioHint": "Ovoz: promptda tasvirlang (musiqa, shovqin, tirnoq ichida gap). Noaniq prompt deyarli jimjit ovoz beradi.",
+    "audioExample": "Odam aniq aytadi: welcome, friends! Tunuka tomga yomg'ir yog'adi, gitara va olomon shovqini.",
+    "audioInsert": "Namuna qo'shish"
   },
   "job": {
     "queued": "Navbatda",

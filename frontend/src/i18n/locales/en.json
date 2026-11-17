@@ -115,7 +115,10 @@
     "acceptsImage": "image input",
     "perImage": "{{count}} credits",
     "videoWait": "Videos take a few minutes, sometimes longer when the provider is busy. You can leave this page: it keeps generating and the result appears in History.",
-    "withAudio": "with sound"
+    "withAudio": "with sound",
+    "audioHint": "Sound: describe it in the prompt (music, noise, speech in quotes). A vague prompt gives a nearly silent track.",
+    "audioExample": "A man says clearly: welcome, friends! Rain pours on a tin roof, guitar and crowd chatter.",
+    "audioInsert": "Insert an example"
   },
   "job": {
     "queued": "Queued",
