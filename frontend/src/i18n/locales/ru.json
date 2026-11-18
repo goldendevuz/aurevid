@@ -199,7 +199,10 @@
     "getKey": "Получить ключ",
     "guide": "Пошаговая инструкция",
     "steps_cloudflare": "Бесплатно: 1) Зарегистрируйтесь в Cloudflare. 2) My Profile → API Tokens → Create Token → шаблон «Workers AI». 3) Вставьте сюда токен и Account ID (на главной странице дашборда).",
-    "steps_fal": "Платно (оплата напрямую fal.ai): 1) Войдите на fal.ai. 2) Dashboard → Keys → Add key. 3) Добавьте способ оплаты в разделе billing. 4) Вставьте ключ сюда."
+    "steps_fal": "Платно (оплата напрямую fal.ai): 1) Войдите на fal.ai. 2) Dashboard → Keys → Add key. 3) Добавьте способ оплаты в разделе billing. 4) Вставьте ключ сюда.",
+    "field_submit_url": "URL submit в Modal",
+    "field_token_id": "ID токена Modal",
+    "field_token_secret": "Секрет токена Modal"
   },
   "report": {
     "title": "Пожаловаться на изображение",

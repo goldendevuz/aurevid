@@ -11,6 +11,7 @@ from app.providers.base import Credentials, ImageProvider, ModelInfo
 from app.providers.cloudflare import CloudflareProvider
 from app.providers.fal import FalProvider
 from app.providers.mock import MockProvider
+from app.providers.modal_video import ModalVideoProvider
 from app.providers.pollinations import PollinationsProvider
 from app.providers.pollinations_video import PollinationsVideoProvider
 
@@ -24,6 +25,8 @@ def enabled_providers() -> dict[str, ImageProvider]:
         providers.append(PollinationsProvider())
     if s.pollinations_video_enabled:
         providers.append(PollinationsVideoProvider())
+    if s.modal_video_enabled:
+        providers.append(ModalVideoProvider())
     if s.fal_enabled:
         providers.append(FalProvider())
     if s.mock_provider_enabled:

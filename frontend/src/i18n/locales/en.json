@@ -199,7 +199,10 @@
     "getKey": "Get a key",
     "guide": "Step-by-step guide",
     "steps_cloudflare": "Free: 1) Sign up at Cloudflare. 2) My Profile → API Tokens → Create Token → template “Workers AI”. 3) Paste the token here, plus your Account ID (shown on the dashboard home).",
-    "steps_fal": "Paid (billed to you by fal.ai): 1) Sign in at fal.ai. 2) Dashboard → Keys → Add key. 3) Add a payment method in fal.ai billing. 4) Paste the key here."
+    "steps_fal": "Paid (billed to you by fal.ai): 1) Sign in at fal.ai. 2) Dashboard → Keys → Add key. 3) Add a payment method in fal.ai billing. 4) Paste the key here.",
+    "field_submit_url": "Modal submit URL",
+    "field_token_id": "Modal token ID",
+    "field_token_secret": "Modal token secret"
   },
   "report": {
     "title": "Report this image",

@@ -199,7 +199,10 @@
     "getKey": "Kalitni olish",
     "guide": "Batafsil qo'llanma",
     "steps_cloudflare": "Bepul: 1) Cloudflare'da ro'yxatdan o'ting. 2) My Profile → API Tokens → Create Token → “Workers AI” shabloni. 3) Tokenni va Account ID'ni (dashboard bosh sahifasida) shu yerga qo'ying.",
-    "steps_fal": "Pullik (to'lovni fal.ai sizdan oladi): 1) fal.ai'ga kiring. 2) Dashboard → Keys → Add key. 3) fal.ai billing bo'limida to'lov usulini qo'shing. 4) Kalitni shu yerga qo'ying."
+    "steps_fal": "Pullik (to'lovni fal.ai sizdan oladi): 1) fal.ai'ga kiring. 2) Dashboard → Keys → Add key. 3) fal.ai billing bo'limida to'lov usulini qo'shing. 4) Kalitni shu yerga qo'ying.",
+    "field_submit_url": "Modal submit URL manzili",
+    "field_token_id": "Modal token ID",
+    "field_token_secret": "Modal token siri"
   },
   "report": {
     "title": "Bu rasm ustidan shikoyat",
