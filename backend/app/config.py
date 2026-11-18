@@ -50,6 +50,7 @@ class Settings(BaseSettings):
     cloudflare_enabled: bool = True
     # fal.ai (video, image-to-video, 4K/8K video). On by default (owner decision 2026-11-17);
     # it only runs with each user's own key, so the server never pays.
+    pollinations_video_enabled: bool = True  # BYOK only: billed to the user's own Pollinations key
     fal_enabled: bool = True
     fal_video_upscale_enabled: bool = True
     mock_provider_enabled: bool = False

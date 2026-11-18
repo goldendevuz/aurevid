@@ -12,6 +12,7 @@ from app.providers.cloudflare import CloudflareProvider
 from app.providers.fal import FalProvider
 from app.providers.mock import MockProvider
 from app.providers.pollinations import PollinationsProvider
+from app.providers.pollinations_video import PollinationsVideoProvider
 
 
 def enabled_providers() -> dict[str, ImageProvider]:
@@ -21,6 +22,8 @@ def enabled_providers() -> dict[str, ImageProvider]:
         providers.append(CloudflareProvider())
     if s.pollinations_enabled:
         providers.append(PollinationsProvider())
+    if s.pollinations_video_enabled:
+        providers.append(PollinationsVideoProvider())
     if s.fal_enabled:
         providers.append(FalProvider())
     if s.mock_provider_enabled:
