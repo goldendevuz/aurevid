@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
 import { api } from "../api";
@@ -67,7 +67,7 @@ interface NavItem {
   end?: boolean;
 }
 
-export default function Layout() {
+export default function Layout({ children }: { children?: ReactNode }) {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -128,7 +128,7 @@ export default function Layout() {
       </header>
       <Announcements />
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 pb-8 pt-6 sm:px-6 md:pt-8">
-        <Outlet />
+        {children ?? <Outlet />}
       </main>
       <Footer clearTabBar />
       <nav

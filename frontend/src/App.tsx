@@ -2,6 +2,7 @@
 import type { ReactNode } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { AuthProvider, useAuth } from "./auth";
+import Landing from "./pages/Landing";
 import Layout from "./components/Layout";
 import Admin from "./pages/Admin";
 import AuthPage from "./pages/Auth";
@@ -24,6 +25,19 @@ function GuestOnly({ children }: { children: ReactNode }) {
   return user ? <Navigate to="/" replace /> : <>{children}</>;
 }
 
+/** "/" is the studio for signed-in people and the landing page for everyone else. */
+function Root() {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  return user ? (
+    <Layout>
+      <Studio />
+    </Layout>
+  ) : (
+    <Landing />
+  );
+}
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -31,9 +45,9 @@ export default function App() {
         <Routes>
           <Route path="/login" element={<GuestOnly><AuthPage mode="login" /></GuestOnly>} />
           <Route path="/register" element={<GuestOnly><AuthPage mode="register" /></GuestOnly>} />
+          <Route path="/" element={<Root />} />
           <Route path="/terms" element={<Terms />} />
           <Route element={<RequireAuth><Layout /></RequireAuth>}>
-            <Route index element={<Studio />} />
             <Route path="/history" element={<History />} />
             <Route path="/marketing" element={<Marketing />} />
             <Route path="/usage" element={<UsagePage />} />
