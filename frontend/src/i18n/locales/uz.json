@@ -147,7 +147,11 @@
     "slow": "Odatdagidan uzoqroq davom etyapti. Sahifadan chiqib ketishingiz mumkin: jarayon davom etadi va natija Tarix bo'limida ko'rinadi.",
     "details": "Yaratish tafsilotlari",
     "showMore": "To'liq promptni ko'rsatish",
-    "showLess": "Qisqartirish"
+    "showLess": "Qisqartirish",
+    "remix": "Qayta yaratish",
+    "copied": "Nusxalandi",
+    "close": "Yopish",
+    "prompt": "Prompt"
   },
   "history": {
     "title": "Tarix",

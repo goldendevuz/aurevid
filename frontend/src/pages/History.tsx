@@ -53,11 +53,13 @@ export default function History() {
       {jobs.length === 0 ? (
         <EmptyState icon={<Icon name="history" size={22} />} title={t("history.empty")} />
       ) : (
-        <div className="grid items-start gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {jobs.map((j) => (
+        <div className="masonry columns-1 sm:columns-2 xl:columns-3">
+          {jobs.map((j, i) => (
             <JobCard
               key={j.id}
               job={j}
+              index={i % 12}
+              onRemix={(job) => navigate("/", { state: { remix: job } })}
               onChange={(u) => setJobs((p) => p.map((x) => (x.id === u.id ? u : x)))}
               onAnimate={(asset) => navigate("/", { state: { animate: asset } })}
               onUpscale={async (asset, target) => {

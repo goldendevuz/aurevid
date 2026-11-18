@@ -196,10 +196,29 @@ export default function Studio() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
-  // "Animate" pressed on the History page.
+  // Remix: restore every setting of a finished job (prompt, model, format, size, count, preset, duration, upscale).
+  const remix = useCallback((job: Job) => {
+    const video = job.kind === "video";
+    setMode(video ? "video" : "image");
+    setPrompt(job.prompt);
+    setWantAspect(job.params.aspect_ratio);
+    setAspect(job.params.aspect_ratio);
+    if ((SIZES as readonly string[]).includes(job.params.size)) setSize(job.params.size as (typeof SIZES)[number]);
+    setCount(video ? 1 : Math.max(1, job.count));
+    setPresetId(job.preset_id ?? "");
+    setDuration(video ? (job.params.duration ?? null) : null);
+    setResolution(job.params.upscale ?? "native");
+    setStartImage(null);
+    setModelKey(`${job.provider}|${job.model}`); // falls back to a valid model if it is gone
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    document.getElementById("prompt")?.focus({ preventScroll: true });
+  }, []);
+
+  // "Animate" or "Remix" pressed on the History page.
   useEffect(() => {
-    const state = location.state as { animate?: Asset; prefill?: { prompt: string; aspect: string } } | null;
+    const state = location.state as { animate?: Asset; remix?: Job; prefill?: { prompt: string; aspect: string } } | null;
     if (!state) return;
+    if (state.remix) remix(state.remix);
     if (state.animate) animate(state.animate);
     if (state.prefill) {
       setPrompt(state.prefill.prompt);
@@ -208,7 +227,7 @@ export default function Studio() {
       if (!state.animate) setModelKey(""); // re-pick a model that supports this format
     }
     navigate(".", { replace: true, state: null });
-  }, [location.state, animate, navigate]);
+  }, [location.state, animate, remix, navigate]);
 
   const uploadStart = async (file: File) => {
     setError(null);
@@ -284,16 +303,16 @@ export default function Studio() {
 
   return (
     <div>
-      <section className="mx-auto max-w-4xl pb-8 pt-2 text-center sm:pt-6">
-        <p className="mx-auto mb-4 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-medium text-muted">
+      <section className="mx-auto max-w-4xl pb-8 pt-2 text-center sm:pt-8">
+        <p className="rise mx-auto mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-medium text-muted backdrop-blur">
           <Icon name="sparkle" size={13} className="text-accent" />
           {t("studio.eyebrow")}
         </p>
-        <h1 className="text-4xl font-semibold leading-[1.05] tracking-tight sm:text-6xl">
+        <h1 className="rise text-5xl font-extrabold leading-[0.98] tracking-[-0.035em] [--i:1] sm:text-7xl">
           <span className="block">{t("studio.heroLead")}</span>
           <span className="aurora-text block pb-1">{t("studio.heroAccent")}</span>
         </h1>
-        <p className="mx-auto mt-4 max-w-xl text-sm text-muted sm:text-base">{t("studio.heroSub")}</p>
+        <p className="rise mx-auto mt-5 max-w-xl text-sm text-muted [--i:2] sm:text-base">{t("studio.heroSub")}</p>
       </section>
 
       <section className="mx-auto max-w-4xl" aria-label={t("studio.composer")}>
@@ -309,7 +328,7 @@ export default function Studio() {
           />
         </div>
 
-        <div className="glass ring-aurora rounded-[24px] p-3 sm:p-4">
+        <div className="glass ring-aurora spot rise rounded-[28px] p-3 [--i:3] sm:p-4">
           {isVideo && startImage && (
             <div className="mb-3 flex items-center gap-3 rounded-2xl border border-line bg-bg/60 p-2">
               <img src={startImage.preview_url || startImage.url} alt="" className="h-14 w-14 rounded-xl object-cover" />
@@ -555,7 +574,7 @@ export default function Studio() {
 
       <section className="mt-14" aria-labelledby="recent-title">
         <div className="mb-4 flex items-center justify-between">
-          <h2 id="recent-title" className="text-lg font-semibold tracking-tight">{t("studio.recent")}</h2>
+          <h2 id="recent-title" className="text-2xl font-bold tracking-tight">{t("studio.recent")}</h2>
           <Link to="/history" className="inline-flex items-center gap-1 text-xs font-medium text-muted transition hover:text-ink">
             {t("nav.history")}
             <Icon name="arrow" size={13} />
@@ -564,13 +583,14 @@ export default function Studio() {
         {jobs.length === 0 ? (
           <EmptyState icon={<Icon name="sparkle" size={22} />} title={t("studio.empty")} hint={t("studio.emptyHint")} />
         ) : (
-          <div className="grid items-start gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            {jobs.map((j) => (
+          <div className="masonry columns-1 sm:columns-2 xl:columns-3">
+            {jobs.map((j, i) => (
               <JobCard
                 key={j.id}
                 job={j}
+                index={i}
                 onChange={upsertJob}
-                onReuse={setPrompt}
+                onRemix={remix}
                 onAnimate={animate}
                 onUpscale={(a, target) => void upscaleAsset(a, target)}
               />

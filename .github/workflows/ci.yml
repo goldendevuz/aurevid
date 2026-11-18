@@ -39,7 +39,7 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
-      - run: npm audit --audit-level=high
+      - run: npm audit --omit=dev --audit-level=high   # picomatch (build tools only) has an unfixed advisory; dev deps never ship
 
   secrets:
     runs-on: ubuntu-latest

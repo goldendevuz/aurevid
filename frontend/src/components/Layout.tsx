@@ -15,12 +15,12 @@ export function LogoMark({ size = 26 }: { size?: number }) {
     <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden>
       <defs>
         <linearGradient id="av-g" x1="4" y1="28" x2="28" y2="4" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#6ff2cc" />
-          <stop offset="0.55" stopColor="#9a8cff" />
-          <stop offset="1" stopColor="#ff86c1" />
+          <stop offset="0" stopColor="#d4ff3a" />
+          <stop offset="0.55" stopColor="#ffd23a" />
+          <stop offset="1" stopColor="#ff6a3d" />
         </linearGradient>
       </defs>
-      <rect width="32" height="32" rx="9" fill="#0d0f16" />
+      <rect width="32" height="32" rx="9" fill="#111113" />
       <rect x="0.5" y="0.5" width="31" height="31" rx="8.5" fill="none" stroke="#fff" strokeOpacity="0.1" />
       <path d="M16 6.5 7.5 25.5h4l1.8-4.4h5.4l1.8 4.4h4L16 6.5Zm0 7.2 1.9 4.7h-3.8l1.9-4.7Z" fill="url(#av-g)" />
       <circle cx="24.6" cy="8.4" r="2.4" fill="url(#av-g)" />
@@ -32,7 +32,7 @@ export function Logo() {
   return (
     <Link to="/" className="flex items-center gap-2.5 text-lg font-semibold tracking-tight">
       <LogoMark />
-      <span className="hidden sm:inline">aurevid</span>
+      <span className="font-display hidden text-xl font-bold tracking-tight sm:inline">aurevid</span>
     </Link>
   );
 }
@@ -80,8 +80,8 @@ export default function Layout() {
     ...(user?.is_admin ? [{ to: "/admin", label: t("nav.admin"), icon: "shield" as IconName }] : []),
   ];
   const link = ({ isActive }: { isActive: boolean }) =>
-    `flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm font-medium transition ${
-      isActive ? "bg-white/[0.08] text-ink" : "text-muted hover:bg-white/[0.04] hover:text-ink"
+    `flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-medium transition ${
+      isActive ? "bg-ink text-bg shadow-[0_4px_18px_-6px_rgb(212_255_58/0.6)]" : "text-muted hover:bg-white/[0.06] hover:text-ink"
     }`;
   const tab = ({ isActive }: { isActive: boolean }) =>
     `flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl py-1.5 text-[10px] font-medium ${
@@ -90,10 +90,10 @@ export default function Layout() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-30 border-b border-white/[0.06] bg-bg/70 backdrop-blur-xl">
+      <header className="sticky top-0 z-30 bg-gradient-to-b from-bg via-bg/80 to-transparent">
         <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6">
           <Logo />
-          <nav aria-label="Main" className="ml-4 hidden gap-1 md:flex">
+          <nav aria-label="Main" className="glass ml-4 hidden gap-0.5 rounded-full p-1 md:flex">
             {items.map((i) => (
               <NavLink key={i.to} to={i.to} end={i.end} className={link}>
                 <Icon name={i.icon} size={16} />
@@ -105,7 +105,7 @@ export default function Layout() {
             {user && (
               <Link
                 to="/usage"
-                className="flex items-center gap-1.5 whitespace-nowrap rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-semibold text-ink transition hover:border-accent/50"
+                className="glass flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold text-ink transition hover:border-accent/50"
               >
                 <Icon name="bolt" size={14} className="text-accent" />
                 {t("nav.credits", { count: user.credit_balance })}
