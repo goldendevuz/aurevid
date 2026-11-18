@@ -147,7 +147,11 @@
     "slow": "Taking longer than usual. You can leave this page: it keeps running and the result shows up in History.",
     "details": "Generation details",
     "showMore": "Show full prompt",
-    "showLess": "Show less"
+    "showLess": "Show less",
+    "remix": "Remix",
+    "copied": "Copied",
+    "close": "Close",
+    "prompt": "Prompt"
   },
   "history": {
     "title": "History",

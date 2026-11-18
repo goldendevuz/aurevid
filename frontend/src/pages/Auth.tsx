@@ -112,7 +112,7 @@ export default function AuthPage({ mode }: { mode: "login" | "register" }) {
               </div>
               {register && (
                 <label className="flex items-start gap-2.5 text-xs text-muted">
-                  <input type="checkbox" checked={accept} onChange={(e) => setAccept(e.target.checked)} className="mt-0.5 h-4 w-4 accent-[#9a8cff]" />
+                  <input type="checkbox" checked={accept} onChange={(e) => setAccept(e.target.checked)} className="mt-0.5 h-4 w-4 accent-[#d4ff3a]" />
                   <span>
                     {t("auth.acceptTerms")} ·{" "}
                     <Link to="/terms" className="underline hover:text-ink">{t("auth.readTerms")}</Link>
