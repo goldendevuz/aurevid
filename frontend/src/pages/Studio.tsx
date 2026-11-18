@@ -296,7 +296,7 @@ export default function Studio() {
   const cost = ((model?.credit_cost ?? 1) + extra) * (isVideo ? 1 : count);
   const needsImage = Boolean(model?.requires_image && !startImage);
   const chip =
-    "flex items-center gap-1.5 rounded-xl border border-line bg-bg/60 px-3 py-2 text-xs font-medium text-ink transition hover:border-white/20 focus-within:border-accent-2";
+    "flex items-center gap-1.5 rounded-xl border border-line bg-bg/60 px-3 py-2 text-xs font-medium text-ink transition hover:border-white/20 focus-within:border-white/50";
   const selectChip = "cursor-pointer appearance-none bg-transparent pr-1 text-xs font-medium text-ink focus:outline-none [&>option]:bg-surface";
   const examples = (isVideo ? (["v1", "v2", "v3"] as const) : (["i1", "i2", "i3", "i4"] as const)).map((k) => t(`studio.example_${k}`));
   const canGenerate = !(busy || prompt.trim().length < 3 || !provider?.available || needsImage);
@@ -308,7 +308,7 @@ export default function Studio() {
           <Icon name="sparkle" size={13} className="text-accent" />
           {t("studio.eyebrow")}
         </p>
-        <h1 className="rise text-5xl font-extrabold leading-[0.98] tracking-[-0.035em] [--i:1] sm:text-7xl">
+        <h1 className="rise text-5xl font-bold leading-[1] tracking-[-0.04em] [--i:1] sm:text-7xl">
           <span className="block">{t("studio.heroLead")}</span>
           <span className="aurora-text block pb-1">{t("studio.heroAccent")}</span>
         </h1>
@@ -355,8 +355,8 @@ export default function Studio() {
                 const file = e.dataTransfer.files?.[0];
                 if (file) void uploadStart(file);
               }}
-              className={`mb-3 flex cursor-pointer items-center gap-3 rounded-2xl border border-dashed px-4 py-3 text-left transition focus-within:border-accent-2 ${
-                dragging || model?.requires_image ? "border-accent-2/70 bg-accent-2/10" : "border-line hover:border-white/25"
+              className={`mb-3 flex cursor-pointer items-center gap-3 rounded-2xl border border-dashed px-4 py-3 text-left transition focus-within:border-white/50 ${
+                dragging || model?.requires_image ? "border-white/60 bg-white/10" : "border-line hover:border-white/25"
               }`}
             >
               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-raised text-accent">
@@ -542,7 +542,7 @@ export default function Studio() {
                   onClick={() => choosePreset(p.id)}
                   title={p.id ? t(`presets.${p.id}.desc`, { defaultValue: "" }) : undefined}
                   className={`rounded-full border px-3.5 py-1.5 text-xs font-medium transition ${
-                    presetId === p.id ? "border-accent-2/70 bg-accent-2/15 text-ink" : "border-line text-muted hover:border-white/20 hover:text-ink"
+                    presetId === p.id ? "border-white/60 bg-white/10 text-ink" : "border-line text-muted hover:border-white/20 hover:text-ink"
                   }`}
                 >
                   {p.id ? t(`presets.${p.id}.name`, { defaultValue: p.id }) : t("studio.noPreset")}
@@ -562,7 +562,7 @@ export default function Studio() {
                   key={ex}
                   type="button"
                   onClick={() => setPrompt(ex)}
-                  className="max-w-full truncate rounded-xl border border-line bg-raised/30 px-3 py-2 text-left text-xs text-muted transition hover:border-accent-2/50 hover:text-ink"
+                  className="max-w-full truncate rounded-xl border border-line bg-raised/30 px-3 py-2 text-left text-xs text-muted transition hover:border-white/30 hover:text-ink"
                 >
                   {ex}
                 </button>

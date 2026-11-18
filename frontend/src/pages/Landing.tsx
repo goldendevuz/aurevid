@@ -56,7 +56,7 @@ export default function Landing() {
               <Icon name="sparkle" size={13} className="text-accent" />
               {t("auth.heroEyebrow")}
             </p>
-            <h1 className="rise text-5xl font-extrabold leading-[0.96] tracking-[-0.035em] [--i:1] sm:text-7xl">
+            <h1 className="rise text-5xl font-bold leading-[1] tracking-[-0.04em] [--i:1] sm:text-7xl">
               <span className="block">{t("auth.heroLead")}</span>
               <span className="aurora-text block pb-1">{t("auth.heroAccent")}</span>
             </h1>
@@ -119,7 +119,7 @@ export default function Landing() {
           <ol className="mt-10 grid gap-4 md:grid-cols-3">
             {STEPS.map((s, i) => (
               <li key={s} className="glass rounded-[var(--radius-card)] p-6">
-                <span className="aurora-text font-display text-5xl font-extrabold">{i + 1}</span>
+                <span className="aurora-text font-display text-5xl font-bold">{i + 1}</span>
                 <h3 className="mt-3 font-display text-lg font-bold">{t(`landing.${s}`)}</h3>
                 <p className="mt-1.5 text-sm text-muted">{t(`landing.${s}_desc`)}</p>
               </li>
@@ -129,7 +129,7 @@ export default function Landing() {
 
         <section className="mx-auto max-w-7xl px-4 pb-20 pt-8 sm:px-6">
           <div className="glass ring-aurora spot rounded-[32px] px-6 py-14 text-center sm:px-12">
-            <h2 className="mx-auto max-w-2xl text-3xl font-extrabold tracking-tight sm:text-5xl">{t("landing.ctaTitle")}</h2>
+            <h2 className="mx-auto max-w-2xl text-3xl font-bold tracking-tight sm:text-5xl">{t("landing.ctaTitle")}</h2>
             <p className="mx-auto mt-4 max-w-lg text-muted">{t("auth.bonus")}</p>
             <Link to="/register" className="btn-aurora mt-8 inline-flex items-center gap-2 rounded-2xl px-7 py-3.5 text-base font-semibold">
               <Icon name="sparkle" size={18} />

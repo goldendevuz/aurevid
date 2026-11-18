@@ -1,99 +1,72 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 @import "tailwindcss";
-@import "@fontsource-variable/inter";
-@import "@fontsource-variable/bricolage-grotesque";
+@import "@fontsource-variable/geist";
 
-/* Design direction "Solar Darkroom": a warm graphite stage so generated media carries the colour,
-   one signature "solar" gradient (lime -> amber -> ember) for the primary action, logo and focus,
-   a display face with attitude (Bricolage Grotesque) and light that reacts to the pointer.
-   Fonts are bundled locally (OFL), no third-party requests. See docs/design.md.
-   Token names (accent, accent-2, accent-3, aurora) are kept so every page follows automatically. */
+/* Design direction "Mono": pure black stage, neutral grey layers, hairline borders, white pill actions and one
+   typeface (Geist, bundled, OFL). No brand colour: generated media carries all the colour. Green, amber and red appear
+   only when they mean something (free, favourite, error). Token names (accent, aurora, glass) are kept so every page
+   follows automatically. See docs/design.md. */
 @theme {
-  --color-bg: #08080a;
-  --color-surface: #111113;
-  --color-raised: #19191d;
-  --color-line: #27272d;
-  --color-ink: #f6f4ee;
-  --color-muted: #9a9aa4;
-  --color-accent: #d4ff3a;
-  --color-accent-2: #ffb23a;
-  --color-accent-3: #ff6a3d;
-  --color-accent-ink: #0b0d02;
-  --color-ok: #7be08a;
-  --color-danger: #ff5470;
-  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
-  --font-display: "Bricolage Grotesque Variable", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
-  --radius-card: 20px;
-  /* Chart series (data colours, deliberately not the brand gradient), validated on dark
-     surfaces: lightness band, CVD-safe warm/cool pair, contrast >= 3:1. */
+  --color-bg: #000000;
+  --color-surface: #0a0a0a;
+  --color-raised: #141414;
+  --color-line: #262626;
+  --color-ink: #ededed;
+  --color-muted: #8f8f8f;
+  --color-accent: #ffffff;
+  --color-accent-2: #f5c542;
+  --color-accent-3: #ff8a65;
+  --color-accent-ink: #0a0a0a;
+  --color-ok: #46d27a;
+  --color-danger: #ff5c6c;
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+  --font-display: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+  --radius-card: 24px;
+  /* Chart series (data colours, deliberately not neutral), validated on dark surfaces: lightness band, CVD-safe
+     warm/cool pair, contrast >= 3:1. */
   --color-series-1: #c98500;
   --color-series-2: #3987e5;
 }
 
-@property --angle {
-  syntax: "<angle>";
-  initial-value: 0deg;
-  inherits: false;
-}
-
 :root {
-  --aurora: linear-gradient(115deg, #d4ff3a 0%, #ffd23a 52%, #ff6a3d 100%);
-  --aurora-soft: linear-gradient(115deg, rgb(212 255 58 / 0.16), rgb(255 210 58 / 0.14) 52%, rgb(255 106 61 / 0.16));
-  --glass: rgb(25 25 29 / 0.62);
-  --hairline: rgb(255 255 255 / 0.08);
+  --aurora: linear-gradient(180deg, #ffffff 0%, #9a9a9a 100%);
+  --aurora-soft: linear-gradient(180deg, rgb(255 255 255 / 0.08), rgb(255 255 255 / 0.02));
+  --glass: #0a0a0a;
+  --hairline: rgb(255 255 255 / 0.1);
 }
 
 html, body { background: var(--color-bg); color: var(--color-ink); min-height: 100%; }
 body {
   font-family: var(--font-sans);
-  font-feature-settings: "cv11", "ss01";
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   position: relative;
 }
-h1, h2 { font-family: var(--font-display); font-optical-sizing: auto; }
-.font-display { font-family: var(--font-display); font-optical-sizing: auto; }
+h1, h2, h3 { font-family: var(--font-display); letter-spacing: -0.03em; color: #fff; }
+.font-display { font-family: var(--font-display); }
 
-/* Ambient light: two slow-drifting warm glows plus fine film grain. Fixed, non-interactive, cheap. */
+/* One faint light from the top, the only decoration. */
 body::before {
-  content: "";
-  position: fixed;
-  inset: -20vmax;
-  z-index: -2;
-  pointer-events: none;
-  background:
-    radial-gradient(46rem 30rem at 18% 4%, rgb(212 255 58 / 0.10), transparent 62%),
-    radial-gradient(44rem 30rem at 88% 8%, rgb(255 106 61 / 0.11), transparent 62%),
-    radial-gradient(40rem 26rem at 55% 105%, rgb(255 178 58 / 0.07), transparent 62%);
-  animation: drift 26s ease-in-out infinite alternate;
-}
-body::after {
   content: "";
   position: fixed;
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  opacity: 0.07;
-  mix-blend-mode: overlay;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.9 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+  background: radial-gradient(60rem 28rem at 50% -12rem, rgb(255 255 255 / 0.07), transparent 70%);
 }
 
-::selection { background: rgb(212 255 58 / 0.32); color: #fff; }
-:focus-visible { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+::selection { background: rgb(255 255 255 / 0.28); color: #fff; }
+:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
 
 /* Thin dark scrollbars. */
-* { scrollbar-width: thin; scrollbar-color: #2e2e36 transparent; }
+* { scrollbar-width: thin; scrollbar-color: #333 transparent; }
 
 @layer components {
-  /* Frosted panel with depth: translucent fill, hairline, inner highlight, layered shadow. */
+  /* A card: near-black layer, hairline border, soft top highlight. */
   .glass {
     background: var(--glass);
     border: 1px solid var(--hairline);
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.05),
-      0 1px 2px rgb(0 0 0 / 0.5),
-      0 22px 60px -28px rgb(0 0 0 / 0.9);
-    backdrop-filter: blur(18px) saturate(140%);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04), 0 24px 60px -36px rgb(0 0 0 / 1);
   }
   /* Light that follows the pointer (--mx/--my are set by the global listener in main.tsx). */
   .spot { position: relative; isolation: isolate; }
@@ -106,28 +79,26 @@ body::after {
     z-index: 1;
     opacity: 0;
     transition: opacity 0.3s ease;
-    background: radial-gradient(22rem circle at var(--mx, 50%) var(--my, 50%), rgb(255 235 150 / 0.10), transparent 60%);
+    background: radial-gradient(20rem circle at var(--mx, 50%) var(--my, 50%), rgb(255 255 255 / 0.07), transparent 60%);
   }
   .spot:hover::after { opacity: 1; }
+  /* Headline accent: white fading to grey, the way a title reads on black. */
   .aurora-text {
     background: var(--aurora);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
   }
+  /* Primary action: a white pill. */
   .btn-aurora {
-    background: var(--aurora);
+    background: #ededed;
     color: var(--color-accent-ink);
-    box-shadow: 0 10px 30px -12px rgb(255 178 58 / 0.75), inset 0 1px 0 rgb(255 255 255 / 0.45);
-    transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.2s ease;
+    transition: transform 0.15s ease, background 0.2s ease;
   }
-  .btn-aurora:hover:not(:disabled) {
-    filter: saturate(1.15) brightness(1.06);
-    box-shadow: 0 14px 38px -12px rgb(212 255 58 / 0.6), inset 0 1px 0 rgb(255 255 255 / 0.5);
-  }
-  .btn-aurora:active:not(:disabled) { transform: translateY(1px) scale(0.99); }
-  .btn-aurora:disabled { filter: grayscale(0.85) brightness(0.7); box-shadow: none; }
-  /* Gradient hairline border; the light travels around it (a slow conic sweep). */
+  .btn-aurora:hover:not(:disabled) { background: #fff; }
+  .btn-aurora:active:not(:disabled) { transform: scale(0.98); }
+  .btn-aurora:disabled { background: #2a2a2a; color: #777; }
+  /* The selected/active card edge: a brighter hairline. */
   .ring-aurora { position: relative; }
   .ring-aurora::before {
     content: "";
@@ -135,29 +106,27 @@ body::after {
     inset: 0;
     border-radius: inherit;
     padding: 1px;
-    background: conic-gradient(from var(--angle), rgb(212 255 58 / 0.9), rgb(255 106 61 / 0.15) 22%, rgb(255 178 58 / 0.85) 50%, rgb(255 106 61 / 0.15) 72%, rgb(212 255 58 / 0.9));
+    background: linear-gradient(180deg, rgb(255 255 255 / 0.3), rgb(255 255 255 / 0.06) 40%, rgb(255 255 255 / 0.12));
     -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
     -webkit-mask-composite: xor;
     mask-composite: exclude;
     pointer-events: none;
-    animation: sweep 9s linear infinite;
   }
   .shimmer {
-    background: linear-gradient(100deg, var(--color-raised) 30%, #25252b 50%, var(--color-raised) 70%);
+    background: linear-gradient(100deg, #111 30%, #1c1c1c 50%, #111 70%);
     background-size: 200% 100%;
     animation: shimmer 1.6s linear infinite;
   }
   /* Gallery tile: media first, details on hover, gentle lift. */
   .tile { transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.35s ease; }
-  .tile:hover { transform: translateY(-3px); box-shadow: 0 30px 60px -30px rgb(0 0 0 / 0.95), 0 0 0 1px rgb(255 255 255 / 0.1); }
+  .tile:hover { transform: translateY(-3px); box-shadow: 0 30px 60px -30px rgb(0 0 0 / 1), 0 0 0 1px rgb(255 255 255 / 0.14); }
   .masonry { column-gap: 1rem; }
   .masonry > * { break-inside: avoid; margin-bottom: 1rem; }
 }
 
 @keyframes shimmer { to { background-position: -200% 0; } }
-@keyframes rise { from { opacity: 0; transform: translateY(14px) scale(0.985); } to { opacity: 1; transform: none; } }
-@keyframes sweep { to { --angle: 360deg; } }
-@keyframes drift { to { transform: translate3d(3vmax, 2vmax, 0) scale(1.08); } }
+@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes drift { to { transform: translate3d(2%, 3%, 0) scale(1.06); } }
 @keyframes pop { from { opacity: 0; transform: translateY(18px) scale(0.97); } to { opacity: 1; transform: none; } }
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 .rise { animation: rise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; animation-delay: calc(var(--i, 0) * 45ms); }
@@ -165,7 +134,10 @@ body::after {
 .fade { animation: fade 0.2s ease both; }
 
 @media (prefers-reduced-motion: reduce) {
-  body::before, .ring-aurora::before, .shimmer, .rise, .pop, .fade { animation: none; }
+  .shimmer, .rise, .pop, .fade { animation: none; }
   .btn-aurora, .tile { transition: none; }
   .tile:hover { transform: none; }
 }
+
+/* The prompt box sits inside a card that already shows focus; no second ring around the text. */
+textarea#prompt:focus-visible { outline: none; }
