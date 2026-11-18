@@ -126,6 +126,7 @@ body::after {
     box-shadow: 0 14px 38px -12px rgb(212 255 58 / 0.6), inset 0 1px 0 rgb(255 255 255 / 0.5);
   }
   .btn-aurora:active:not(:disabled) { transform: translateY(1px) scale(0.99); }
+  .btn-aurora:disabled { filter: grayscale(0.85) brightness(0.7); box-shadow: none; }
   /* Gradient hairline border; the light travels around it (a slow conic sweep). */
   .ring-aurora { position: relative; }
   .ring-aurora::before {

@@ -96,7 +96,7 @@ export function Label({ children, htmlFor }: { children: ReactNode; htmlFor?: st
 }
 
 export const inputClass =
-  "w-full rounded-xl border border-line bg-bg/70 px-3.5 py-2.5 text-sm text-ink placeholder:text-muted/60 transition focus:border-accent-2 focus:outline-none focus:ring-2 focus:ring-accent-2/25";
+  "w-full rounded-xl border border-white/[0.14] bg-white/[0.05] px-3.5 py-2.5 text-sm text-ink shadow-[inset_0_1px_2px_rgb(0_0_0/0.35)] placeholder:text-muted/60 transition hover:border-white/25 focus:border-accent focus:bg-white/[0.07] focus:outline-none focus:ring-2 focus:ring-accent/30";
 
 export function Badge({ tone, children }: { tone: "free" | "paid" | "muted" | "ok" | "danger"; children: ReactNode }) {
   const styles = {
