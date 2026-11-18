@@ -14,13 +14,13 @@ export function Button({
 }) {
   const styles = {
     primary: "btn-aurora font-semibold",
-    ghost: "border border-line bg-raised/40 text-ink hover:border-white/20 hover:bg-raised",
+    ghost: "border border-white/15 bg-transparent text-ink hover:bg-white/[0.06]",
     danger: "border border-danger/50 text-danger hover:bg-danger/10",
   }[variant];
   const sizes = { sm: "px-3 py-1.5 text-xs", md: "px-4 py-2 text-sm", lg: "px-6 py-3 text-base" }[size];
   return (
     <button
-      className={`inline-flex items-center justify-center gap-2 rounded-xl transition disabled:cursor-not-allowed disabled:opacity-45 ${sizes} ${styles} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-full transition disabled:cursor-not-allowed disabled:opacity-45 ${sizes} ${styles} ${className}`}
       {...props}
     />
   );
@@ -96,7 +96,7 @@ export function Label({ children, htmlFor }: { children: ReactNode; htmlFor?: st
 }
 
 export const inputClass =
-  "w-full rounded-xl border border-white/[0.14] bg-white/[0.05] px-3.5 py-2.5 text-sm text-ink shadow-[inset_0_1px_2px_rgb(0_0_0/0.35)] placeholder:text-muted/60 transition hover:border-white/25 focus:border-accent focus:bg-white/[0.07] focus:outline-none focus:ring-2 focus:ring-accent/30";
+  "w-full rounded-xl border border-white/[0.14] bg-white/[0.05] px-3.5 py-2.5 text-sm text-ink shadow-[inset_0_1px_2px_rgb(0_0_0/0.35)] placeholder:text-muted/60 transition hover:border-white/25 focus:border-white/60 focus:bg-white/[0.07] focus:outline-none focus:ring-2 focus:ring-white/15";
 
 export function Badge({ tone, children }: { tone: "free" | "paid" | "muted" | "ok" | "danger"; children: ReactNode }) {
   const styles = {

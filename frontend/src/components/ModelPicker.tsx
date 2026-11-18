@@ -172,7 +172,7 @@ export default function ModelPicker({
                     <span className="flex items-center gap-1 text-muted"><Icon name="lock" size={12} />{t("studio.needsKey")}</span>
                     <Link to="/settings" onClick={onClose} className="font-semibold text-accent hover:underline">{t("nav.settings")}</Link>
                     {p.key_url && (
-                      <a href={p.key_url} target="_blank" rel="noopener noreferrer" className="text-accent-2 hover:underline">
+                      <a href={p.key_url} target="_blank" rel="noopener noreferrer" className="text-ink underline hover:underline">
                         {t("settings.getKey")} ↗
                       </a>
                     )}
