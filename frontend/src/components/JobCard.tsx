@@ -334,14 +334,13 @@ export default function JobCard({ job, index = 0, ...handlers }: Handlers & { jo
           {video ? (
             <video
               src={first.url}
+              autoPlay
               muted
               loop
               playsInline
               preload="metadata"
               className="block h-auto w-full"
               style={{ aspectRatio: first.width && first.height ? first.width / first.height : undefined }}
-              onMouseEnter={(e) => void e.currentTarget.play().catch(() => undefined)}
-              onMouseLeave={(e) => e.currentTarget.pause()}
             />
           ) : (
             <img src={first.preview_url || first.url} alt={job.prompt} loading="lazy" width={first.width} height={first.height} className="block h-auto w-full" />

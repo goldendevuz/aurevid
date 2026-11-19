@@ -69,6 +69,7 @@ class ModalVideoProvider(ImageProvider):
                 credit_cost=5,
                 max_count=1,
                 durations=[5, 3],
+                has_audio=True,
             )
         ],
         notes="Runs on a GPU in your own Modal workspace, paid from your Modal credit "
