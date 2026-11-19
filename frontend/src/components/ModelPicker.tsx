@@ -93,7 +93,7 @@ export default function ModelPicker({
       >
         <div className="flex items-start justify-between gap-4 p-5 pb-3">
           <div>
-            <h2 id="model-picker-title" className="text-lg font-semibold tracking-tight">
+            <h2 id="model-picker-title" className="text-xl tracking-[0.02em]">
               {mode === "video" ? t("studio.pickVideoModel") : t("studio.pickModel")}
             </h2>
             <p className="mt-0.5 text-xs text-muted">{t("studio.pickModelHint")}</p>

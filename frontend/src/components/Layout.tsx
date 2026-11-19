@@ -15,13 +15,13 @@ export function LogoMark({ size = 26 }: { size?: number }) {
     <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden>
       <defs>
         <linearGradient id="av-g" x1="4" y1="28" x2="28" y2="4" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#ffffff" />
-          <stop offset="0.55" stopColor="#bdbdbd" />
-          <stop offset="1" stopColor="#7a7a7a" />
+          <stop offset="0" stopColor="#ff3e8a" />
+          <stop offset="0.55" stopColor="#ff9a3c" />
+          <stop offset="1" stopColor="#ffe08a" />
         </linearGradient>
       </defs>
-      <rect width="32" height="32" rx="9" fill="#0a0a0a" />
-      <rect x="0.5" y="0.5" width="31" height="31" rx="8.5" fill="none" stroke="#fff" strokeOpacity="0.1" />
+      <rect width="32" height="32" rx="9" fill="#1a0b2c" />
+      <rect x="0.5" y="0.5" width="31" height="31" rx="8.5" fill="none" stroke="#ff3e8a" strokeOpacity="0.45" />
       <path d="M16 6.5 7.5 25.5h4l1.8-4.4h5.4l1.8 4.4h4L16 6.5Zm0 7.2 1.9 4.7h-3.8l1.9-4.7Z" fill="url(#av-g)" />
       <circle cx="24.6" cy="8.4" r="2.4" fill="url(#av-g)" />
     </svg>
@@ -32,7 +32,7 @@ export function Logo() {
   return (
     <Link to="/" className="flex items-center gap-2.5 text-lg font-semibold tracking-tight">
       <LogoMark />
-      <span className="hidden text-lg font-semibold tracking-tight sm:inline">aurevid</span>
+      <span className="hidden font-display text-xl uppercase tracking-[0.06em] text-white sm:inline">aurevid</span>
     </Link>
   );
 }
@@ -81,11 +81,11 @@ export default function Layout({ children }: { children?: ReactNode }) {
   ];
   const link = ({ isActive }: { isActive: boolean }) =>
     `flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-medium transition ${
-      isActive ? "bg-ink text-bg " : "text-muted hover:bg-white/[0.06] hover:text-ink"
+      isActive ? "btn-aurora" : "text-muted hover:bg-white/[0.06] hover:text-ink"
     }`;
   const tab = ({ isActive }: { isActive: boolean }) =>
     `flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl py-1.5 text-[10px] font-medium ${
-      isActive ? "text-accent" : "text-muted"
+      isActive ? "neon-text" : "text-muted"
     }`;
 
   return (
@@ -133,7 +133,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
       <Footer clearTabBar />
       <nav
         aria-label="Main"
-        className="fixed inset-x-0 bottom-0 z-30 flex gap-1 border-t border-white/[0.08] bg-bg/90 px-2 pb-[max(0.4rem,env(safe-area-inset-bottom))] pt-1.5 backdrop-blur-xl md:hidden"
+        className="fixed inset-x-0 bottom-0 z-30 flex gap-1 border-t border-accent/25 bg-bg/90 px-2 pb-[max(0.4rem,env(safe-area-inset-bottom))] pt-1.5 backdrop-blur-xl md:hidden"
       >
         {items.map((i) => (
           <NavLink key={i.to} to={i.to} end={i.end} className={tab}>

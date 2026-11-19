@@ -28,7 +28,7 @@ System fonts avoid font licensing and third-party font requests.
 2. **Light trail "a"**: a lowercase "a" drawn as one continuous stroke that ends in a short glowing
    arc, suggesting camera motion. Works in a single colour.
 
-## Aurora Night (v2, current)
+## Aurora Night (v2, replaced by Neon Coast, see below)
 
 A premium, startup-grade refresh. Original work: the palette, gradient, icon set, logo treatment
 and layouts were designed for Aurevid and do not copy any other product's artwork, code or brand.
@@ -49,3 +49,22 @@ and layouts were designed for Aurevid and do not copy any other product's artwor
 - **Accessibility:** text colours keep >= 4.5:1 on the stage, visible focus ring, `aria-pressed`
   toggles, labelled icon-only buttons, `prefers-reduced-motion` respected.
 - **Charts:** series colours stay a CVD-safe gold/blue pair, separate from the brand gradient.
+
+## Neon Coast (v3, current)
+
+A night sky over a sunset coast, in the spirit of 80s synthwave posters. All artwork (sun, palms,
+skyline, grid) is original SVG/CSS drawn for Aurevid; no game, film or brand artwork is used.
+
+- **Stage:** deep purple `#12071f`, panels `#1a0b2c` / `#24113b`, hairlines `#3a2257`, text `#f6ecff`,
+  muted `#b3a0cc`. A fixed violet-to-sunset sky drifts slowly behind the app, with faint scanlines.
+- **Colour:** pink `#ff3e8a` (accent), orange `#ff9a3c`, teal neon `#19e3d3` (focus ring, secondary
+  glow). The sunset gradient (pink -> orange) fills primary buttons; the headline gradient runs gold ->
+  orange -> pink -> violet. Chart series are an orange/teal pair.
+- **Type:** Anton (OFL) for uppercase poster headlines, Kaushan Script (OFL) for one brush accent line
+  per hero, Geist (OFL) for body text. Anton and Kaushan have no Cyrillic, so Russian headings fall
+  back to Geist glyph by glyph.
+- **Scenery:** `components/Scenery.tsx` stages the landing hero: a striped sun (`.sun-glow`), a
+  skyline with flickering windows (`.neon-flicker`), two swaying palms (`.palm-sway`) and a scrolling
+  perspective grid (`.grid-floor`). Hero sample tiles use the `.postcard` frame.
+- **Motion:** every scenery animation and the sky drift are disabled under `prefers-reduced-motion`.
+- **Token names** (`accent`, `aurora`, `glass`, `btn-aurora`) are unchanged, so every page follows.

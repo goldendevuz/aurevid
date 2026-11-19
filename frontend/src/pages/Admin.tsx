@@ -666,7 +666,7 @@ export default function Admin() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{t("admin.title")}</h1>
+        <h1 className="text-3xl tracking-[0.02em] sm:text-4xl">{t("admin.title")}</h1>
         <label className="flex items-center gap-2 text-xs text-muted" title={t("admin.internalHint")}>
           <input type="checkbox" checked={internal} onChange={(e) => setInternal(e.target.checked)} /> {t("admin.includeInternal")}
         </label>

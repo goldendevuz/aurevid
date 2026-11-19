@@ -574,7 +574,7 @@ export default function Studio() {
 
       <section className="mt-14" aria-labelledby="recent-title">
         <div className="mb-4 flex items-center justify-between">
-          <h2 id="recent-title" className="text-2xl font-bold tracking-tight">{t("studio.recent")}</h2>
+          <h2 id="recent-title" className="text-3xl tracking-[0.02em]">{t("studio.recent")}</h2>
           <Link to="/history" className="inline-flex items-center gap-1 text-xs font-medium text-muted transition hover:text-ink">
             {t("nav.history")}
             <Icon name="arrow" size={13} />
