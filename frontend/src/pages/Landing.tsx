@@ -8,15 +8,6 @@ import { Icon, type IconName } from "../components/icons";
 /** Real interactive sample tiles rendered in the hero */
 const HERO_TILES = [
   {
-    key: "t1",
-    type: "video",
-    src: "/samples/gta6_cinematic.mp4",
-    poster: "/samples/gta6_vice_city.jpg",
-    ratio: "16 / 10",
-    tilt: -2,
-    badge: "GTA VI Trend",
-  },
-  {
     key: "t2",
     type: "video",
     src: "/samples/golden_leaf.mp4",
@@ -57,19 +48,6 @@ interface ShowcaseItem {
 
 const SHOWCASE_ITEMS: ShowcaseItem[] = [
   {
-    id: "gta6_video",
-    kind: "video",
-    src: "/samples/gta6_cinematic.mp4",
-    poster: "/samples/gta6_vice_city.jpg",
-    titleKey: "sample_gta6_title",
-    descKey: "sample_gta6_desc",
-    badge: "GTA VI • Video",
-    model: "Aurevid Cinema / Wan 2.2",
-    aspect: "16:9",
-    prompt:
-      "Grand Theft Auto VI Vice City tropical aesthetic, protagonist in floral Hawaiian shirt, sunglasses, neon Miami sunset, billboard, helicopter in sky, luxury sports car, cinematic 4K photorealism",
-  },
-  {
     id: "golden_leaf",
     kind: "video",
     src: "/samples/golden_leaf.mp4",
@@ -80,18 +58,6 @@ const SHOWCASE_ITEMS: ShowcaseItem[] = [
     aspect: "16:9",
     prompt:
       "A single golden leaf falls slowly through soft morning light, spinning gently as it descends against a blurred forest background, high cinematic motion, 24fps",
-  },
-  {
-    id: "gta6_poster",
-    kind: "image",
-    src: "/samples/gta6_vice_city.jpg",
-    titleKey: "sample_gta6_art_title",
-    descKey: "sample_gta6_art_desc",
-    badge: "GTA VI • Art",
-    model: "FLUX Ultra Photoreal",
-    aspect: "16:9",
-    prompt:
-      "Grand Theft Auto VI x Updaily, Vice City neon nightlife, bold typography, retro palms, cinematic action art poster, sunset lighting",
   },
   {
     id: "cyber_synth",
@@ -227,7 +193,7 @@ export default function Landing() {
               <figure
                 key={x.key}
                 className={`tile rise spot group relative overflow-hidden rounded-[22px] border border-white/15 bg-raised/50 shadow-2xl transition duration-500 hover:scale-[1.03] hover:border-accent/50 ${
-                  i % 2 ? "translate-y-6" : ""
+                  i === 0 ? "col-span-2" : i === 2 ? "translate-y-6" : ""
                 }`}
                 style={{
                   aspectRatio: x.ratio,
@@ -237,7 +203,6 @@ export default function Landing() {
               >
                 <video
                   src={x.src}
-                  poster={"poster" in x ? x.poster : undefined}
                   autoPlay
                   loop
                   muted
@@ -257,7 +222,7 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* TRENDING SHOWCASE SECTION (GTA VI & Live creations) */}
+        {/* TRENDING SHOWCASE SECTION (live creations) */}
         <section id="showcase" className="mx-auto max-w-7xl scroll-mt-20 px-4 py-16 sm:px-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
