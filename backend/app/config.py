@@ -47,6 +47,9 @@ class Settings(BaseSettings):
     daily_job_limit: int = 30
     signup_credits: int = 50
     server_free_videos_per_user: int = 2  # lifetime clips on the owner's Modal key
+    # All users together, per UTC month: keeps the owner's Modal bill inside its free $30 credit
+    # (~$0.18 per clip measured 2026-11-20, so 150 clips ~ $27).
+    server_video_monthly_cap: int = 150
     analytics_utc_offset_hours: int = 5  # Asia/Tashkent; used for "today", daily charts, cohorts
 
     # --- providers ---

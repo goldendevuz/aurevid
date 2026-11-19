@@ -156,6 +156,9 @@ async def create_job(
         raise _bad("provider_key_required")
     if creds.source == "server":
         # The owner's key is shared: each user gets a fair free share (services/allowance.py).
+        if provider.info.id in allowance.LIFETIME_PROVIDERS:
+            if body.count > await allowance.monthly_left(session, provider.info.id):
+                raise _bad("free_month_used", status.HTTP_429_TOO_MANY_REQUESTS)
         left = await allowance.server_left(session, provider, user.id)
         if left is not None and body.count > left:
             raise _bad("free_share_used", status.HTTP_429_TOO_MANY_REQUESTS)
