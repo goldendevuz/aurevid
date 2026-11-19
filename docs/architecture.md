@@ -21,6 +21,7 @@
 - `credits_ledger`: append-only rows with unique idempotency keys and `balance_after`
 - `provider_keys`: BYOK secrets, Fernet-encrypted
 - `reports`, `webhook_events`
+- `payment_orders`: optional credit-pack purchases (`created | pending | paid | failed | expired`)
 - `presets`: JSON files in `backend/app/presets/` (versioned with the code)
 
 ## Request flow: generate
@@ -128,3 +129,29 @@ does not verify email ownership yet). Non-admins get 404 on every admin route.
 Team/test accounts (`users.is_internal`) are excluded from analytics by default. Activity is one
 row per user per Asia/Tashkent day (`user_activity`), written at most once per day per process.
 CSV exports neutralise spreadsheet formulas (CSV injection).
+
+## Payments: optional credit packs (`services/payments/`, `routers/payments.py`)
+
+Aurevid stays free to use; signup credits stay. Packs are optional top-ups paid in UZS.
+Off unless `PAYMENTS_PROVIDER` is set (`none` default, `fake` for dev/tests and refused in prod,
+`inpay` for inPAY.uz: Payme, Click, Uzcard, Humo). Packs come from `CREDIT_PACKS` (the defaults
+are placeholders until the owner sets prices).
+
+Gateway interface (`base.py`): `create_order(amount_uzs, description, order_ref) -> (provider_order_id,
+pay_url)` and `check(provider_order_id) -> (status, amount_uzs, txn_id)`. Hosted checkout only:
+card data never reaches our server and inPAY's `/cardsystem/*` API is never called.
+
+| Step | What happens |
+|---|---|
+| Buy | `POST /api/payments/orders {pack_id}` (auth, CSRF, 5/min + 30/day per user) stores an order (`created`), calls the gateway, stores `provider_order_id` + `pay_url` (`pending`), returns `{order_id, pay_url}`; the browser goes to the hosted checkout |
+| Return | `/credits?order=<id>`: the page only takes the id and polls `GET /api/payments/orders/{id}` every 2 s (≤ ~3 min). The API re-checks a pending order with the gateway at most every 10 s |
+| Webhook | `POST /api/payments/inpay/callback` is unsigned, so it is only a trigger: we look the order up and ask `GET /transactions/` ourselves. CSRF-exempt by exact path, always 200 |
+| Credit | Only if the gateway says `success` **and** the amount equals the stored amount: one transaction with a conditional `UPDATE ... SET status='paid' WHERE status != 'paid'`, a `webhook_events` row and `credits.apply(..., "purchase", "purchase:<order_id>")`. Replays and races cannot double-credit. A mismatched amount marks the order `failed` (not credited) |
+| Reconcile | Worker janitor, every minute: pending orders 2 min to 24 h old are re-checked (backing off to 10 min after 15 min and hourly after 2 h); older ones become `expired`. A late success on an expired order is still credited when checked |
+
+inPAY adapter (`inpay.py`): bearer token from `GET /authorization/` cached ~23 h and refreshed once
+on 401; nested `data` (object or list) parsed defensively; unknown statuses count as pending.
+Errors carry only an HTTP status or exception type, never the token, URLs or upstream bodies;
+httpx request logging is muted because the authorization URL carries the token.
+Admin: read-only Payments tab (`GET /api/admin/payments`: filter by status/email, revenue today /
+30 days / all time). Account deletion keeps payment orders for accounting with `user_id` set to NULL.

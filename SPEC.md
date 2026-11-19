@@ -54,7 +54,7 @@ rests on the owner's brief, not on the reference product's features.
 |---|---|---|---|
 | 4.1 | Marketing helper: product image or text → short ad prompt set for 9:16 and 1:1 | user | done: `/marketing` page, `POST /api/marketing/ideas`. Free offline templates (en/uz/ru) plus a colour palette from the photo; optional AI polish via Cloudflare Workers AI (Mistral Small 3.1) with schema-constrained output, moderation and template fallback |
 | 4.2 | Image-to-video as an optional provider adapter ("Animate" on any own image) | user | done (fal Wan 2.2 I2V; demo) |
-| 4.3 | Payments (Payme/Click), Telegram bot, desktop (Tauri), PWA, browser extension | user | not built; one API for all clients |
+| 4.3 | Payments (Payme/Click), Telegram bot, desktop (Tauri), PWA, browser extension | user | payments: built, off by default (optional UZS credit packs through inPAY.uz hosted checkout: Payme, Click, Uzcard, Humo; the product stays free, signup credits stay); bot, desktop, PWA, extension: not built; one API for all clients |
 | 4.4 | Voice generation | observed (page title only) | unknown, out of scope |
 
 ## 5. Accounts, credits, limits
@@ -65,7 +65,7 @@ rests on the owner's brief, not on the reference product's features.
 | 5.2 | Optional magic link / Telegram login | user | not built |
 | 5.3 | Credits page: balance, today's usage, recent activity | user | done |
 | 5.4 | Append-only credit ledger; no negative balance | user | done |
-| 5.5 | Starter credits on sign-up (default 50); no paid top-ups yet | assumption | done |
+| 5.5 | Starter credits on sign-up (default 50); optional paid credit packs (see 4.3) | assumption | done |
 | 5.6 | Daily generation limit per user (default 30 jobs) and rate limits | user | done |
 | 5.7 | Bring-your-own-key, stored encrypted on the server, never returned | user | done |
 | 5.8 | Export my data; delete my account | user | done |

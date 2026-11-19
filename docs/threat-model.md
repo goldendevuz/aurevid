@@ -11,7 +11,8 @@ the local asset store, Redis (rate limits), and outbound calls to generation pro
 | BYOK provider keys | Direct financial loss for users (paid providers) |
 | Server provider keys (Cloudflare token) | Quota theft; abuse attributed to us |
 | Prompts and generated/uploaded images | Private creative work; may contain personal data |
-| Credit ledger | Free generations = real cost; integrity required before payments exist |
+| Credit ledger | Free generations = real cost; purchased credits are paid for |
+| inPAY merchant token | Lets anyone create orders and read transactions as us |
 | Service availability & reputation | Abuse (illegal content, spam) can get accounts/IPs banned |
 
 ## Attackers
@@ -22,7 +23,8 @@ the local asset store, Redis (rate limits), and outbound calls to generation pro
 3. **Malicious website** visited by a logged-in user: CSRF, clickjacking.
 4. **Compromised/hostile provider**: returns malformed or hostile files or redirect URLs.
 5. **Supply chain**: malicious or vulnerable dependency, leaked secret in git.
-6. **Operator mistakes**: weak secrets in prod, wildcard CORS, mock provider left on.
+6. **Operator mistakes**: weak secrets in prod, wildcard CORS, mock provider left on, fake payments in prod.
+7. **Payment fraud**: forged or replayed gateway callbacks, paying less than the pack price, tampering with the return URL.
 
 ## Threats → controls (and tests)
 
@@ -54,7 +56,13 @@ the local asset store, Redis (rate limits), and outbound calls to generation pro
 | Admin takeover / silent abuse of admin powers | Admins only via CLI (no email-based auto-admin while emails are unverified); 404 for non-admins; cannot block/demote self; every action in a persistent audit log | `test_admin.py` |
 | CSV injection in admin exports | Cells starting with = + - @ tab CR are prefixed with ' | `test_csv_export_neutralises_formulas` |
 | Over-collection in moderation logs | Only the category of a rejected prompt is stored, never the text | `test_moderation_events_store_category_not_prompt` |
-| Webhook forgery/replay (future payments) | HMAC-SHA256 over timestamp+body, 5-min window, processed-event table | `webhooks.py`, `test_webhook_*` |
+| Webhook forgery/replay (signed providers) | HMAC-SHA256 over timestamp+body, 5-min window, processed-event table | `webhooks.py`, `test_webhook_*` |
+| Forged inPAY callback (unsigned) | Callback is only a trigger: we verify with `GET /transactions/` server-to-server and credit only on `success` with the exact stored amount; unknown/junk bodies ignored with 200; per-IP limit; CSRF exemption by exact path only | `test_webhook_alone_never_credits`, `test_amount_mismatch_not_credited`, `test_unknown_or_junk_callback_is_ignored_with_200`, `test_callback_path_is_the_only_csrf_exemption` |
+| Double credit (replay, polling + webhook + reconciler races) | Conditional `status != 'paid'` UPDATE + `purchase:<order_id>` ledger key + `webhook_events` row, all in one transaction | `test_webhook_triggers_verified_credit_and_replay_is_idempotent` |
+| Return-URL tampering (`?order=...&status=paid`) | The client takes only the id; status comes from our API, owner-checked (404 otherwise) | `test_order_idor`, `BuyCredits.tsx` |
+| Card data exposure | Hosted checkout only; `/cardsystem/*` never called; `pay_url` must be https | `inpay.py`, `test_inpay_rejects_non_https_pay_url_and_low_amount` |
+| Merchant token leakage | Env only (`repr=False`, config errors hide input); never in responses, errors or logs (httpx URL logging muted); sent only to `INPAY_BASE_URL` | `test_inpay_*_never_contain_token`, `test_inpay_token_not_logged` |
+| Fake payments in prod | `PAYMENTS_PROVIDER=fake` refused when `APP_ENV=prod`; inpay needs https `PUBLIC_BASE_URL` | `test_settings_refuse_unsafe_payment_config` |
 | Weak production config | Settings refuse missing secrets, wildcard CORS, insecure cookies, mock provider in prod | `test_cors_wildcard_and_weak_prod_config_refused` |
 | Spoofed client IP | Only uvicorn `--proxy-headers` with `FORWARDED_ALLOW_IPS`; nginx overwrites X-Forwarded-For | `Dockerfile`, `nginx.conf` |
 | Vulnerable dependency | Exact pins + lockfiles, Dependabot, pip-audit, npm audit in CI | `.github/` |
@@ -73,6 +81,9 @@ the local asset store, Redis (rate limits), and outbound calls to generation pro
   before accepting outside contributors with workflow changes.
 - Assets on local disk are not encrypted at rest; use an encrypted volume or R2 with SSE in prod.
 - Prompts are sent to the chosen third-party provider; this is disclosed in the Terms.
+- inPAY callbacks are unsigned. Spoofing one only causes an extra status query (rate limited); the
+  inPAY dashboard IP whitelist should be set to `strict` with the server IP for our outgoing calls.
+- Payment refunds/chargebacks are not automated: an admin handles them manually (no "refund purchase" action yet).
 - Videos are not re-encoded (no ffmpeg in the image), so container metadata from the provider is
   kept. Only provider output is accepted, never user uploads.
 - Image-to-video start frames are sent to fal as data URIs: the user's image leaves our server

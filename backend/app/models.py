@@ -164,7 +164,7 @@ class Report(Base):
 
 
 class WebhookEvent(Base):
-    """Processed webhook ids, for idempotency / replay protection (payments come later)."""
+    """Processed webhook ids, for idempotency / replay protection (payment callbacks)."""
 
     __tablename__ = "webhook_events"
 
