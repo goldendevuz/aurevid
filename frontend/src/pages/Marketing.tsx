@@ -110,7 +110,7 @@ export default function Marketing() {
   return (
     <div className="grid gap-6 lg:grid-cols-[380px_1fr]">
       <Card className="h-fit lg:sticky lg:top-6">
-        <h1 className="text-xl font-semibold tracking-tight">{t("marketing.title")}</h1>
+        <h1 className="text-2xl tracking-[0.02em]">{t("marketing.title")}</h1>
         <p className="mt-1 text-xs text-muted">{t("marketing.subtitle")}</p>
         <form onSubmit={generate} className="mt-4 space-y-3">
           <div>

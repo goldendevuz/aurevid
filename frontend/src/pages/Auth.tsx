@@ -58,8 +58,8 @@ export default function AuthPage({ mode }: { mode: "login" | "register" }) {
             <Icon name="sparkle" size={13} className="text-accent" />
             {t("auth.heroEyebrow")}
           </p>
-          <h2 className="text-5xl font-semibold leading-[1.05] tracking-tight xl:text-6xl">
-            {t("auth.heroLead")} <span className="aurora-text">{t("auth.heroAccent")}</span>
+          <h2 className="text-5xl leading-[1] xl:text-7xl">
+            {t("auth.heroLead")} <span className="font-script aurora-text block pt-2 text-4xl xl:text-6xl">{t("auth.heroAccent")}</span>
           </h2>
           <p className="mt-5 max-w-lg text-base text-muted">{t("auth.heroSub")}</p>
           <ul className="mt-8 space-y-4">
@@ -78,7 +78,7 @@ export default function AuthPage({ mode }: { mode: "login" | "register" }) {
         </section>
         <section className="mx-auto w-full max-w-md">
           <div className="glass ring-aurora rounded-[28px] p-6 sm:p-8">
-            <h1 className="text-2xl font-semibold tracking-tight">
+            <h1 className="text-3xl tracking-[0.02em]">
               {register ? t("auth.registerTitle") : t("auth.loginTitle")}
             </h1>
             <p className="mt-1.5 text-sm text-muted">{register ? t("auth.bonus") : t("app.tagline")}</p>

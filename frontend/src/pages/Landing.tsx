@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { Footer, LanguageSelect, Logo } from "../components/Layout";
 import { Icon, type IconName } from "../components/icons";
+import Scenery from "../components/Scenery";
 
 /** Real interactive sample tiles rendered in the hero */
 const HERO_TILES = [
@@ -140,17 +141,19 @@ export default function Landing() {
       </header>
 
       <main className="flex-1">
-        {/* HERO SECTION */}
-        <section className="mx-auto grid max-w-7xl items-center gap-12 px-4 pb-16 pt-10 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:pt-20">
+        {/* HERO SECTION, staged on the Neon Coast sunset */}
+        <div className="relative isolate overflow-hidden">
+        <Scenery />
+        <section className="mx-auto grid max-w-7xl items-center gap-12 px-4 pb-28 pt-10 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:pb-40 lg:pt-20">
           <div>
             <p className="rise mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3.5 py-1 text-[11px] font-medium text-muted backdrop-blur">
               <span className="h-2 w-2 animate-ping rounded-full bg-accent" />
               <Icon name="sparkle" size={13} className="text-accent" />
               {t("auth.heroEyebrow")}
             </p>
-            <h1 className="rise text-5xl font-bold leading-[1] tracking-[-0.04em] [--i:1] sm:text-7xl">
-              <span className="block">{t("auth.heroLead")}</span>
-              <span className="aurora-text block pb-1">{t("auth.heroAccent")}</span>
+            <h1 className="rise text-6xl leading-[0.95] [--i:1] sm:text-8xl">
+              <span className="block drop-shadow-[0_4px_24px_rgb(18_7_31/0.8)]">{t("auth.heroLead")}</span>
+              <span className="font-script aurora-text block pb-2 pt-1 text-5xl sm:text-7xl">{t("auth.heroAccent")}</span>
             </h1>
             <p className="rise mt-6 max-w-xl text-base text-muted [--i:2] sm:text-lg">
               {t("auth.heroSub")}
@@ -192,7 +195,7 @@ export default function Landing() {
             {HERO_TILES.map((x, i) => (
               <figure
                 key={x.key}
-                className={`tile rise spot group relative overflow-hidden rounded-[22px] border border-white/15 bg-raised/50 shadow-2xl transition duration-500 hover:scale-[1.03] hover:border-accent/50 ${
+                className={`tile rise spot postcard group relative overflow-hidden rounded-[14px] bg-raised/50 transition duration-500 hover:scale-[1.03] ${
                   i === 0 ? "col-span-2" : i === 2 ? "translate-y-6" : ""
                 }`}
                 style={{
@@ -221,6 +224,7 @@ export default function Landing() {
             ))}
           </div>
         </section>
+        </div>
 
         {/* TRENDING SHOWCASE SECTION (live creations) */}
         <section id="showcase" className="mx-auto max-w-7xl scroll-mt-20 px-4 py-16 sm:px-6">
@@ -230,7 +234,7 @@ export default function Landing() {
                 <span className="h-2 w-2 rounded-full bg-accent animate-ping" />
                 {t("landing.livePreview")}
               </div>
-              <h2 className="mt-3 text-3xl font-bold tracking-tight sm:text-5xl">
+              <h2 className="mt-3 text-3xl sm:text-5xl">
                 {t("landing.showcaseTitle")}
               </h2>
               <p className="mt-2 max-w-2xl text-sm text-muted sm:text-base">
@@ -246,7 +250,9 @@ export default function Landing() {
                   type="button"
                   onClick={() => setFilter(f)}
                   className={`rounded-lg px-3.5 py-1.5 text-xs font-medium transition ${
-                    filter === f ? "bg-white/10 text-ink shadow-sm" : "text-muted hover:text-ink"
+                    filter === f
+                      ? "bg-accent/15 text-white shadow-[inset_0_0_0_1px_rgb(255_62_138/0.55),0_0_16px_-4px_rgb(255_62_138/0.6)]"
+                      : "text-muted hover:text-ink"
                   }`}
                 >
                   {t(`landing.filter_${f}`)}
@@ -303,7 +309,7 @@ export default function Landing() {
                     </span>
                   </div>
 
-                  <h3 className="mt-2 text-base font-bold text-ink">
+                  <h3 className="mt-2 text-lg tracking-[0.02em] text-ink">
                     {t(`landing.${item.titleKey}`)}
                   </h3>
                   <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted">
@@ -331,7 +337,7 @@ export default function Landing() {
 
         {/* FEATURES SECTION */}
         <section id="features" className="mx-auto max-w-7xl scroll-mt-20 px-4 py-16 sm:px-6">
-          <h2 className="max-w-2xl text-3xl font-bold tracking-tight sm:text-5xl">
+          <h2 className="max-w-2xl text-3xl sm:text-5xl">
             {t("landing.featuresTitle")}
           </h2>
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -341,10 +347,10 @@ export default function Landing() {
                 className="glass spot rise rounded-[var(--radius-card)] p-6"
                 style={{ ["--i" as string]: i }}
               >
-                <span className="mb-4 grid h-11 w-11 place-items-center rounded-2xl border border-white/10 bg-white/[0.04] text-accent">
+                <span className="mb-4 grid h-11 w-11 place-items-center rounded-2xl border border-white/10 bg-accent/10 text-accent shadow-[0_0_18px_-6px_rgb(255_62_138/0.7)]">
                   <Icon name={f.icon} size={20} />
                 </span>
-                <h3 className="font-display text-lg font-bold tracking-tight">
+                <h3 className="text-xl tracking-[0.02em]">
                   {t(`landing.f_${f.key}`)}
                 </h3>
                 <p className="mt-1.5 text-sm text-muted">{t(`landing.f_${f.key}_desc`)}</p>
@@ -355,14 +361,14 @@ export default function Landing() {
 
         {/* HOW IT WORKS SECTION */}
         <section id="how" className="mx-auto max-w-7xl scroll-mt-20 px-4 py-16 sm:px-6">
-          <h2 className="text-3xl font-bold tracking-tight sm:text-5xl">
+          <h2 className="text-3xl sm:text-5xl">
             {t("landing.howTitle")}
           </h2>
           <ol className="mt-10 grid gap-4 md:grid-cols-3">
             {STEPS.map((s, i) => (
               <li key={s} className="glass rounded-[var(--radius-card)] p-6">
-                <span className="aurora-text font-display text-5xl font-bold">{i + 1}</span>
-                <h3 className="mt-3 font-display text-lg font-bold">{t(`landing.${s}`)}</h3>
+                <span className="aurora-text font-display text-6xl">{i + 1}</span>
+                <h3 className="mt-3 text-xl tracking-[0.02em]">{t(`landing.${s}`)}</h3>
                 <p className="mt-1.5 text-sm text-muted">{t(`landing.${s}_desc`)}</p>
               </li>
             ))}
@@ -372,7 +378,7 @@ export default function Landing() {
         {/* CALL TO ACTION */}
         <section className="mx-auto max-w-7xl px-4 pb-20 pt-8 sm:px-6">
           <div className="glass ring-aurora spot rounded-[32px] px-6 py-14 text-center sm:px-12">
-            <h2 className="mx-auto max-w-2xl text-3xl font-bold tracking-tight sm:text-5xl">
+            <h2 className="mx-auto max-w-2xl text-3xl sm:text-5xl">
               {t("landing.ctaTitle")}
             </h2>
             <p className="mx-auto mt-4 max-w-lg text-muted">{t("auth.bonus")}</p>

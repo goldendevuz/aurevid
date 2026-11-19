@@ -36,7 +36,7 @@ export function PageHeader({ title, subtitle, actions }: { title: ReactNode; sub
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">{title}</h1>
+        <h1 className="text-3xl tracking-[0.02em] sm:text-4xl">{title}</h1>
         {subtitle && <p className="mt-1 max-w-2xl text-sm text-muted">{subtitle}</p>}
       </div>
       {actions}
@@ -77,7 +77,7 @@ export function Segmented<T extends string>({
           aria-pressed={value === o.value}
           onClick={() => onChange(o.value)}
           className={`rounded-lg px-3 py-1.5 text-sm font-medium transition ${
-            value === o.value ? "bg-raised text-ink shadow-[inset_0_0_0_1px_rgb(255_255_255/0.08)]" : "text-muted hover:text-ink"
+            value === o.value ? "bg-accent/15 text-white shadow-[inset_0_0_0_1px_rgb(255_62_138/0.55),0_0_16px_-4px_rgb(255_62_138/0.6)]" : "text-muted hover:text-ink"
           }`}
         >
           {o.label}
@@ -96,7 +96,7 @@ export function Label({ children, htmlFor }: { children: ReactNode; htmlFor?: st
 }
 
 export const inputClass =
-  "w-full rounded-xl border border-white/[0.14] bg-white/[0.05] px-3.5 py-2.5 text-sm text-ink shadow-[inset_0_1px_2px_rgb(0_0_0/0.35)] placeholder:text-muted/60 transition hover:border-white/25 focus:border-white/60 focus:bg-white/[0.07] focus:outline-none focus:ring-2 focus:ring-white/15";
+  "w-full rounded-xl border border-white/[0.14] bg-white/[0.05] px-3.5 py-2.5 text-sm text-ink shadow-[inset_0_1px_2px_rgb(0_0_0/0.35)] placeholder:text-muted/60 transition hover:border-white/25 focus:border-accent/70 focus:bg-white/[0.07] focus:outline-none focus:ring-2 focus:ring-accent/25";
 
 export function Badge({ tone, children }: { tone: "free" | "paid" | "muted" | "ok" | "danger"; children: ReactNode }) {
   const styles = {
