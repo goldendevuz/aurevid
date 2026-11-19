@@ -31,7 +31,17 @@ def enabled_providers() -> dict[str, ImageProvider]:
         providers.append(FalProvider())
     if s.mock_provider_enabled:
         providers.append(MockProvider())
-    return {p.info.id: p for p in providers}
+    out: dict[str, ImageProvider] = {}
+    for p in providers:
+        allowed = [m for m in p.info.models if s.allow_unclear_models or m.commercial_use == "yes"]
+        if not allowed:
+            continue
+        if len(allowed) != len(p.info.models):
+            # Per-instance copy: the class-level catalogue stays intact, this instance only
+            # exposes models whose commercial use is clearly allowed.
+            p.info = p.info.model_copy(update={"models": allowed})
+        out[p.info.id] = p
+    return out
 
 
 def allowed_upscales(model: ModelInfo) -> list[str]:
@@ -40,7 +50,9 @@ def allowed_upscales(model: ModelInfo) -> list[str]:
         from app import upscaler
 
         return ["4k", "8k"] if upscaler.available() else []
-    if model.kind == "video" and not get_settings().fal_video_upscale_enabled:
+    s = get_settings()
+    # Video upscaling runs on Topaz (fal), whose output terms are unclear: same rule as models.
+    if model.kind == "video" and not (s.fal_video_upscale_enabled and s.allow_unclear_models):
         return []
     return list(model.upscale_targets)
 

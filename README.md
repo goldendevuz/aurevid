@@ -21,7 +21,6 @@ Uzbek, Russian.
 - 3 original camera presets (Gentle Drift In, Halo Orbit, Skyward Unveil) with image and camera-motion wording
 - **4K / 8K images for free**: a local AI upscaler (Real-ESRGAN, BSD-3) runs on your own server's
   CPU, no API or GPU needed (measured on 8 cores: ~30 s for 4K, ~100 s for 8K, peak ~780 MB RAM). "Upscale 4K/8K" on any image.
-- **4K / 8K video** (opt-in, paid): Topaz upscaling on fal.ai with the user's own key
 - Fair job queue: per-user limits, round-robin between users, one heavy CPU job at a time,
   per-provider concurrency caps, back-pressure (429/503 + Retry-After), queue position and ETA
 - **Admin panel** (`/admin`): overview with trends (Tashkent time), users (search, filters,
@@ -42,16 +41,15 @@ Uzbek, Russian.
 | Provider | Free? | Needs | Enabled by default |
 |---|---|---|---|
 | Cloudflare Workers AI (FLUX.1 schnell, Apache-2.0) | Yes, daily free allocation | Cloudflare account ID + API token (server-wide or per user) | Yes |
-| fal.ai (FLUX.1 schnell image; Wan 2.2 video and image-to-video, Apache-2.0; Kling 2.6 with audio; Topaz 4K/8K video) | **Paid** (user's own key) | fal.ai key | Yes (BYOK only) |
+| fal.ai (FLUX.1 schnell image; Wan 2.2 video and image-to-video, Apache-2.0) | **Paid** (user's own key) | fal.ai key | Yes (BYOK only) |
 | Modal (your own Wan 2.2 TI2V-5B on a Modal GPU, Apache-2.0; see `deploy/modal/`) | **Paid** from your Modal credit | Modal token | Yes (BYOK only) |
-| Pollinations video (Wan 2.2 fast, Seedance 2.0 mini) | **Paid** (user's own Pollinations key) | Pollinations key | Yes (BYOK only), commercial use unclear |
 | Pollinations | Yes, anonymous | nothing | **No**: its terms could not be verified, see [MODEL_LICENSES.md](MODEL_LICENSES.md) |
 | Offline demo (image + short video clip) | Yes | nothing | Dev only |
 
 > **Video has no free provider.** We found no hosted video API with a verifiable free tier (see
 > MODEL_LICENSES.md). Video uses the user's own key on fal.ai (about $0.15 per 5 s clip for
-> Wan 2.2 5B at the time of writing), Modal or Pollinations; development uses the offline demo clip.
-> Models marked "commercial use unclear" stay available because they only run on the user's own key
+> Wan 2.2 5B at the time of writing) or Modal; development uses the offline demo clip.
+> Only models whose commercial use is clearly allowed are offered; the rule is enforced in code
 > (see MODEL_LICENSES.md, rule 3).
 
 ## Quick start (Docker, one command)
