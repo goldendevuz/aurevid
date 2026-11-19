@@ -208,7 +208,8 @@
     "limitsHelp": "Free services rarely publish exact limits. Aurevid counts what you use and learns from limit errors, so these numbers get more accurate over time.",
     "usedToday": "Used today",
     "limit": "Daily limit",
-    "unknown": "unknown"
+    "unknown": "unknown",
+    "reason_purchase": "Credit pack"
   },
   "settings": {
     "title": "Settings",
@@ -323,7 +324,10 @@
     "job_not_finished": "This generation is still running. Wait until it finishes.",
     "free_month_used": "This month's free video clips on the Aurevid key are used up. Add your own Modal key in Settings or try again next month.",
     "recipe_step_unavailable": "No video model that can animate an image is available to you. Add a key in Settings.",
-    "recipe_step_failed": "The previous step did not produce an image, so the recipe stopped."
+    "recipe_step_failed": "The previous step did not produce an image, so the recipe stopped.",
+    "payments_disabled": "Payments are not available yet.",
+    "unknown_pack": "This credit pack is no longer available.",
+    "payment_gateway_error": "The payment service did not respond. Please try again in a moment."
   },
   "admin": {
     "title": "Admin panel",
@@ -477,7 +481,19 @@
     "status_done": "Done",
     "status_failed": "Failed",
     "status_running": "Running",
-    "status_queued": "Queued"
+    "status_queued": "Queued",
+    "tab_payments": "Payments",
+    "revenueToday": "Revenue today",
+    "revenue30d": "Revenue, 30 days",
+    "revenueAll": "Revenue, all time",
+    "paidOrders": "{{count}} paid orders",
+    "searchPayments": "Email or order id",
+    "pack": "Pack",
+    "paidAt": "Paid",
+    "status_created": "Created",
+    "status_pending": "Pending",
+    "status_paid": "Paid",
+    "status_expired": "Expired"
   },
   "marketing": {
     "title": "Marketing helper",
@@ -634,5 +650,27 @@
     "stepWaiting": "Recipe: this image will be animated automatically when it is ready.",
     "stepStarted": "Recipe: the next step (animation) has started.",
     "stepFrom": "Recipe: animated from the previous image."
+  },
+  "buy": {
+    "title": "Buy credits",
+    "subtitle": "Optional top-ups, paid in so'm with Payme, Click, Uzcard or Humo on the secure payment page.",
+    "credits": "{{count}} credits",
+    "price": "{{price}} so'm",
+    "perCredit": "{{price}} so'm per credit",
+    "button": "Buy",
+    "redirecting": "Opening payment…",
+    "comingSoon": "Payments are coming soon. Aurevid stays free to use in the meantime.",
+    "checking": "Checking your payment…",
+    "checkingHint": "This usually takes a few seconds. You can keep this page open.",
+    "paid": "Payment received: {{count}} credits were added to your balance.",
+    "failed": "The payment did not go through. No credits were charged.",
+    "expired": "This payment was not completed in time.",
+    "stillPending": "We have not received confirmation yet. If you paid, your credits will appear automatically within a few minutes.",
+    "orders": "Recent purchases",
+    "status_created": "Created",
+    "status_pending": "Waiting for payment",
+    "status_paid": "Paid",
+    "status_failed": "Failed",
+    "status_expired": "Expired"
   }
 }

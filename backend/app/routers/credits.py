@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""Credits & usage (read-only for users; no payments in the MVP)."""
+"""Credits & usage (read-only; optional credit packs are in routers/payments.py)."""
 
 from datetime import UTC, datetime
 

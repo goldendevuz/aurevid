@@ -4,7 +4,7 @@
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, HTTPException, Response, status
-from sqlalchemy import delete, select
+from sqlalchemy import delete, select, update
 
 from app.crypto import byok_available, encrypt_secret
 from app.deps import CurrentUser, Session, not_found
@@ -14,6 +14,7 @@ from app.models import (
     CreditLedger,
     Job,
     ModerationEvent,
+    PaymentOrder,
     ProviderKey,
     RefreshToken,
     User,
@@ -111,6 +112,11 @@ async def export_data(user: CurrentUser, session: Session):
         .scalars()
         .all()
     )
+    payments = (
+        (await session.execute(select(PaymentOrder).where(PaymentOrder.user_id == user.id)))
+        .scalars()
+        .all()
+    )
     return {
         "user": UserOut.model_validate(user).model_dump(mode="json"),
         "jobs": [
@@ -132,6 +138,17 @@ async def export_data(user: CurrentUser, session: Session):
             {"delta": e.delta, "reason": e.reason, "created_at": e.created_at.isoformat()}
             for e in ledger
         ],
+        "payment_orders": [
+            {
+                "id": o.id,
+                "pack_id": o.pack_id,
+                "credits": o.credits,
+                "amount_uzs": o.amount_uzs,
+                "status": o.status,
+                "created_at": o.created_at.isoformat(),
+            }
+            for o in payments
+        ],
     }
 
 
@@ -149,6 +166,10 @@ async def delete_me(body: DeleteMeIn, response: Response, user: CurrentUser, ses
         Asset, Job, ProviderKey, CreditLedger, RefreshToken, UserActivity, ModerationEvent,
     ):  # fmt: skip
         await session.execute(delete(model).where(model.user_id == user.id))
+    # Payment orders hold no personal data and are kept for accounting, detached from the user.
+    await session.execute(
+        update(PaymentOrder).where(PaymentOrder.user_id == user.id).values(user_id=None)
+    )
     await quota.delete_scope(session, f"user:{user.id}")
     await session.execute(delete(User).where(User.id == user.id))
     await session.commit()

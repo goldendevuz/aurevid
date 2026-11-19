@@ -51,7 +51,8 @@ export default function App() {
           <Route element={<RequireAuth><Layout /></RequireAuth>}>
             <Route path="/history" element={<History />} />
             <Route path="/marketing" element={<Marketing />} />
-            <Route path="/usage" element={<UsagePage />} />
+            <Route path="/credits" element={<UsagePage />} />
+            <Route path="/usage" element={<Navigate to="/credits" replace />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/admin" element={<Admin />} />
           </Route>

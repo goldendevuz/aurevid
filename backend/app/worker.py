@@ -33,6 +33,7 @@ from app.models import Asset, Job, JobStatus, WorkerHeartbeat
 from app.providers.base import GenerationRequest, ProviderError
 from app.providers.registry import get_provider, resolve_credentials
 from app.services import allowance, credits, queue, quota, recipes
+from app.services.payments import orders as payment_orders
 
 log = logging.getLogger("aurevid.worker")
 
@@ -378,8 +379,17 @@ async def _slot(stop: asyncio.Event | None, poll: float) -> None:
 
 
 async def _janitor(stop: asyncio.Event | None) -> None:
+    """Every minute: reconcile payment orders; every 5 minutes: recover stale jobs."""
+    tick = 0
     while not (stop and stop.is_set()):
-        await asyncio.sleep(300)
+        await asyncio.sleep(60)
+        tick += 1
+        try:
+            await payment_orders.reconcile()
+        except Exception:  # noqa: BLE001
+            log.exception("payment reconciliation failed")
+        if tick % 5:
+            continue
         try:
             await recover_stale()
         except Exception:  # noqa: BLE001

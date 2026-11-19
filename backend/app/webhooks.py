@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Webhook verification helpers (signature, timestamp window, idempotency).
 
-No webhook endpoint is wired yet (payments come later); these helpers are tested so the
-first real webhook (Payme/Click/provider callbacks) reuses one audited path.
+The inPAY callback is unsigned, so it uses only `claim_event` (see services/payments) and trusts
+nothing it is sent. `verify_signature` is ready for a future gateway that signs its callbacks.
 """
 
 import hashlib

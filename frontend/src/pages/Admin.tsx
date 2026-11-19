@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Admin panel: overview, users, jobs, analytics, moderation, system, announcements, audit.
+// Admin panel: overview, users, jobs, payments, analytics, moderation, system, announcements, audit.
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, useSearchParams } from "react-router-dom";
@@ -7,8 +7,9 @@ import { api } from "../api";
 import { useAuth } from "../auth";
 import { BarList, ColumnChart, Heatmap, SERIES, StatTile } from "../components/charts";
 import { Badge, Button, Card, ErrorText, inputClass } from "../components/ui";
+import { formatSom } from "../money";
 
-const TABS = ["overview", "users", "jobs", "analytics", "moderation", "system", "announcements", "audit"] as const;
+const TABS = ["overview", "users", "jobs", "payments", "analytics", "moderation", "system", "announcements", "audit"] as const;
 type Tab = (typeof TABS)[number];
 type Json = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -73,6 +74,7 @@ function Status({ s }: { s: string }) {
   const map: Record<string, ["ok" | "danger" | "paid" | "muted", string]> = {
     healthy: ["ok", "✓"], unhealthy: ["danger", "✕"], warning: ["paid", "!"], disabled: ["muted", "–"],
     done: ["ok", "✓"], failed: ["danger", "✕"], running: ["paid", "▶"], queued: ["muted", "…"],
+    paid: ["ok", "✓"], pending: ["muted", "…"], created: ["muted", "…"], expired: ["muted", "–"],
   };
   const [tone, icon] = map[s] ?? ["muted", "•"];
   return <Badge tone={tone}>{icon} {t(`admin.status_${s}`, { defaultValue: s })}</Badge>;
@@ -362,6 +364,59 @@ function Jobs({ internal }: { internal: boolean }) {
         ) : (
           <p className="text-xs text-muted">—</p>
         )}
+      </Section>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------------------------
+
+function Payments() {
+  const { t } = useTranslation();
+  const f = useFmt();
+  const [status, setStatus] = useState("");
+  const [q, setQ] = useState("");
+  const [page, setPage] = useState(1);
+  const { data, error } = useData(`/api/admin/payments?${qs({ status, q, page, limit: 25 })}`, 30000);
+  useEffect(() => setPage(1), [status, q]);
+  const som = (n: number) => t("buy.price", { price: formatSom(n) });
+  return (
+    <div className="space-y-4">
+      {data && (
+        <div className="grid gap-3 sm:grid-cols-3">
+          {([["today", "revenueToday"], ["30d", "revenue30d"], ["all", "revenueAll"]] as const).map(([k, label]) => (
+            <StatTile key={k} label={t(`admin.${label}`)} value={som(data.revenue[k].amount_uzs)} hint={t("admin.paidOrders", { count: data.revenue[k].orders })} />
+          ))}
+        </div>
+      )}
+      <Section
+        title={t("admin.tab_payments")}
+        actions={
+          <>
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("admin.searchPayments")} className="rounded-lg border border-line bg-bg/70 px-2 py-1.5 text-xs" />
+            <Select label="status" value={status} onChange={setStatus} options={[["", t("admin.f_all")], ...["created", "pending", "paid", "failed", "expired"].map((v) => [v, t(`admin.status_${v}`)] as [string, string])]} />
+          </>
+        }
+      >
+        <ErrorText error={error} />
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead><tr><th className={th}>{t("admin.created")}</th><th className={th}>{t("admin.user")}</th><th className={th}>{t("admin.pack")}</th><th className={th}>{t("admin.amount")}</th><th className={th}>Status</th><th className={th}>{t("admin.paidAt")}</th></tr></thead>
+            <tbody>
+              {data?.items.map((o: Json) => (
+                <tr key={o.id} className="border-t border-line">
+                  <td className={`${td} whitespace-nowrap text-muted`}>{f.date(o.created_at)}</td>
+                  <td className={td}>{o.user_email ?? "—"}<p className="text-[10px] text-muted">{o.id}</p></td>
+                  <td className={td}>{o.pack_id} · {o.credits}<p className="text-[10px] text-muted">{o.provider}{o.provider_txn_id ? ` · ${o.provider_txn_id}` : ""}</p></td>
+                  <td className={`${td} whitespace-nowrap tabular-nums`}>{som(o.amount_uzs)}</td>
+                  <td className={td}><Status s={o.status} /></td>
+                  <td className={`${td} whitespace-nowrap text-muted`}>{f.date(o.paid_at)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {data && <Pager page={page} total={data.total} limit={25} onPage={setPage} />}
       </Section>
     </div>
   );
@@ -687,6 +742,7 @@ export default function Admin() {
       {tab === "overview" && <Overview internal={internal} />}
       {tab === "users" && <Users />}
       {tab === "jobs" && <Jobs internal={internal} />}
+      {tab === "payments" && <Payments />}
       {tab === "analytics" && <Analytics internal={internal} />}
       {tab === "moderation" && <Moderation />}
       {tab === "system" && <System />}

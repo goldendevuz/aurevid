@@ -38,6 +38,7 @@ async def _job(client, prompt="a lamp", **kw):
 GET_ROUTES = [
     "/api/admin/stats", "/api/admin/funnel", "/api/admin/retention", "/api/admin/cohorts",
     "/api/admin/health", "/api/admin/users", "/api/admin/jobs", "/api/admin/jobs/errors",
+    "/api/admin/payments",
     "/api/admin/moderation", "/api/admin/reports", "/api/admin/providers",
     "/api/admin/announcements", "/api/admin/audit", "/api/admin/export/users.csv",
     "/api/admin/export/jobs.csv",

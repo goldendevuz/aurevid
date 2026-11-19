@@ -12,12 +12,25 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.config import get_settings
-from app.routers import admin, assets, auth, catalog, credits, jobs, marketing, me, recipes
+from app.routers import (
+    admin,
+    assets,
+    auth,
+    catalog,
+    credits,
+    jobs,
+    marketing,
+    me,
+    payments,
+    recipes,
+)
 from app.security import CSRF_COOKIE, CSRF_HEADER, csrf_matches
 from app.services.presets import load_presets
 
 log = logging.getLogger("aurevid")
 UNSAFE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
+# Server-to-server callbacks: no cookies, no Origin. Exact paths only; they trust nothing sent.
+CSRF_EXEMPT_PATHS = frozenset({payments.CALLBACK_PATH})
 
 
 @asynccontextmanager
@@ -50,7 +63,11 @@ def create_app() -> FastAPI:
 
     @app.middleware("http")
     async def csrf_and_headers(request: Request, call_next):
-        if request.method in UNSAFE_METHODS and request.url.path.startswith("/api/"):
+        if (
+            request.method in UNSAFE_METHODS
+            and request.url.path.startswith("/api/")
+            and request.url.path not in CSRF_EXEMPT_PATHS
+        ):
             origin = request.headers.get("origin")
             if origin and origin not in s.cors_origins:
                 return JSONResponse({"detail": {"code": "bad_origin"}}, status_code=403)
@@ -95,6 +112,7 @@ def create_app() -> FastAPI:
         admin.router,
         admin.public,
         marketing.router,
+        payments.router,
     ):
         app.include_router(router)
 
