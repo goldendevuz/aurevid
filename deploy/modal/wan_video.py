@@ -17,7 +17,7 @@ import modal
 
 MODEL_ID = "Wan-AI/Wan2.2-TI2V-5B-Diffusers"  # Apache-2.0 weights
 GPU = "L40S"
-STEPS = 30
+STEPS = 20  # 30 -> 20 (2026-11-20): ~30% less GPU time per clip
 FPS = 24
 
 app = modal.App("aurevid-wan")
@@ -50,7 +50,8 @@ def download():
     cache.commit()
 
 
-@app.cls(image=gpu_image, gpu=GPU, volumes={"/cache": cache}, timeout=1800, scaledown_window=120)
+# Idle GPU time is billed: a short scale-down window keeps the cost per clip low (was 120 s).
+@app.cls(image=gpu_image, gpu=GPU, volumes={"/cache": cache}, timeout=1800, scaledown_window=30)
 class Wan:
     @modal.enter()
     def load(self):
