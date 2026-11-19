@@ -27,6 +27,7 @@ async def test_bob_cannot_touch_alice_resources(alice, bob):
         await bob.get(f"/api/assets/{asset_id}/file"),
         await bob.post(f"/api/assets/{asset_id}/favorite", json={"favorite": True}, headers=h),
         await bob.delete(f"/api/assets/{asset_id}", headers=h),
+        await bob.delete(f"/api/jobs/{job_id}", headers=h),
         await bob.post("/api/reports", json={"asset_id": asset_id, "reason": "other"}, headers=h),
     ]
     assert [r.status_code for r in checks] == [404] * len(checks)
@@ -34,8 +35,11 @@ async def test_bob_cannot_touch_alice_resources(alice, bob):
     missing = await bob.get("/api/jobs/" + "0" * 32)
     assert checks[0].json() == missing.json()
     assert (await bob.get("/api/jobs")).json() == []
+    assert (await bob.get("/api/jobs", params={"q": "private"})).json() == []
+    assert (await bob.get("/api/jobs/facets")).json()["total"] == 0
     # Alice still has everything.
     assert (await alice.get(f"/api/assets/{asset_id}/file")).status_code == 200
+    assert (await alice.get(f"/api/jobs/{job_id}")).status_code == 200
 
 
 async def test_non_admin_cannot_use_admin_api(alice, bob):

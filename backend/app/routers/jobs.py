@@ -3,7 +3,8 @@
 
 import asyncio
 import json
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
+from typing import Literal
 
 from fastapi import APIRouter, Header, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
@@ -13,12 +14,13 @@ from sqlalchemy.exc import IntegrityError
 from app import db
 from app.config import get_settings
 from app.deps import CurrentUser, Session, not_found
+from app.images import delete_stored
 from app.models import Asset, Job, JobStatus, ModerationEvent, new_id
 from app.moderation import moderator
 from app.providers.base import UPSCALE_CREDITS, dimensions
 from app.providers.registry import allowed_upscales, get_provider, resolve_credentials
 from app.ratelimit import hit
-from app.schemas import AssetOut, JobCreateIn, JobOut
+from app.schemas import AssetOut, FacetOut, JobCreateIn, JobFacetsOut, JobOut
 from app.services import allowance, credits, queue, quota
 from app.services.presets import load_presets
 
@@ -219,6 +221,30 @@ async def create_job(
     return await job_out(session, job)
 
 
+HistoryKind = Literal["image", "video", "upscale"]
+HistoryStatus = Literal["done", "failed", "active"]
+HistoryPeriod = Literal["today", "7d", "30d", "all"]
+ACTIVE = (JobStatus.queued, JobStatus.running)
+PERIOD_DAYS = {"7d": 7, "30d": 30}
+
+
+def _history_kind(provider: str, kind: str) -> str:
+    """Local upscales are image jobs in the table but their own kind in History."""
+    return "upscale" if provider == queue.LOCAL_PROVIDER else kind
+
+
+def _history_status(job_status: str) -> str:
+    return "active" if job_status in ACTIVE else str(job_status)
+
+
+def _by_count(counts: dict) -> list:
+    return sorted(counts.items(), key=lambda kv: (-kv[1], str(kv[0])))
+
+
+def _like_escape(text: str) -> str:
+    return text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
+
 @router.get("", response_model=list[JobOut])
 async def list_jobs(
     user: CurrentUser,
@@ -226,15 +252,87 @@ async def list_jobs(
     limit: int = Query(default=20, ge=1, le=50),
     before: datetime | None = None,
     favorites: bool = False,
+    kind: HistoryKind | None = None,
+    job_status: HistoryStatus | None = Query(default=None, alias="status"),
+    provider: str | None = Query(default=None, max_length=32),
+    model: str | None = Query(default=None, max_length=64),
+    period: HistoryPeriod | None = None,
+    q: str | None = Query(default=None, max_length=200),
+    hide_failed: bool = False,
 ):
+    """Your history, newest first. Every filter is optional, combinable and owner-scoped."""
     stmt = select(Job).where(Job.user_id == user.id)
     if before is not None:
         stmt = stmt.where(Job.created_at < before)
     if favorites:
         fav_jobs = select(Asset.job_id).where(Asset.user_id == user.id, Asset.is_favorite)
         stmt = stmt.where(Job.id.in_(fav_jobs))
+    if kind == "upscale":
+        stmt = stmt.where(Job.provider == queue.LOCAL_PROVIDER)
+    elif kind is not None:
+        stmt = stmt.where(Job.kind == kind, Job.provider != queue.LOCAL_PROVIDER)
+    if job_status == "active":
+        stmt = stmt.where(Job.status.in_(ACTIVE))
+    elif job_status is not None:
+        stmt = stmt.where(Job.status == JobStatus(job_status))
+    if hide_failed:
+        stmt = stmt.where(Job.status != JobStatus.failed)
+    if provider:
+        stmt = stmt.where(Job.provider == provider)
+    if model:
+        stmt = stmt.where(Job.model == model)
+    if period == "today":
+        start = datetime.now(UTC).replace(hour=0, minute=0, second=0, microsecond=0)
+        stmt = stmt.where(Job.created_at >= start)
+    elif period in PERIOD_DAYS:
+        stmt = stmt.where(Job.created_at >= datetime.now(UTC) - timedelta(days=PERIOD_DAYS[period]))
+    if q and q.strip():
+        stmt = stmt.where(Job.prompt.ilike(f"%{_like_escape(q.strip())}%", escape="\\"))
     jobs = (await session.execute(stmt.order_by(Job.created_at.desc()).limit(limit))).scalars()
     return [await job_out(session, j) for j in jobs]
+
+
+@router.get("/facets", response_model=JobFacetsOut)
+async def job_facets(user: CurrentUser, session: Session):
+    """Filter options built from your own jobs only, with counts."""
+    rows = (
+        await session.execute(
+            select(Job.provider, Job.model, Job.kind, Job.status, func.count(Job.id))
+            .where(Job.user_id == user.id)
+            .group_by(Job.provider, Job.model, Job.kind, Job.status)
+        )
+    ).all()
+    kinds: dict[str, int] = {}
+    statuses: dict[str, int] = {}
+    providers: dict[str, int] = {}
+    models: dict[tuple[str, str], int] = {}
+    for prov, mod, kind, st, n in rows:
+        kinds[_history_kind(prov, kind)] = kinds.get(_history_kind(prov, kind), 0) + n
+        statuses[_history_status(st)] = statuses.get(_history_status(st), 0) + n
+        providers[prov] = providers.get(prov, 0) + n
+        models[(prov, mod)] = models.get((prov, mod), 0) + n
+
+    def provider_label(pid: str) -> str:
+        p = get_provider(pid)
+        return p.info.name if p else pid
+
+    def model_label(pid: str, mid: str) -> str:
+        p = get_provider(pid)
+        m = p.model(mid) if p else None
+        return m.label if m else mid.split("/")[-1]
+
+    return JobFacetsOut(
+        total=sum(statuses.values()),
+        kinds=[FacetOut(value=k, count=n) for k, n in _by_count(kinds)],
+        statuses=[FacetOut(value=k, count=n) for k, n in _by_count(statuses)],
+        providers=[
+            FacetOut(value=k, label=provider_label(k), count=n) for k, n in _by_count(providers)
+        ],
+        models=[
+            FacetOut(value=m, provider=p, label=model_label(p, m), count=n)
+            for (p, m), n in _by_count(models)
+        ],
+    )
 
 
 async def _owned_job(session, user_id: str, job_id: str) -> Job:
@@ -247,6 +345,30 @@ async def _owned_job(session, user_id: str, job_id: str) -> Job:
 @router.get("/{job_id}", response_model=JobOut)
 async def get_job(job_id: str, user: CurrentUser, session: Session):
     return await job_out(session, await _owned_job(session, user.id, job_id))
+
+
+@router.delete("/{job_id}", status_code=204)
+async def delete_job(job_id: str, user: CurrentUser, session: Session) -> None:
+    """Remove one of your finished jobs together with its files (credits history is kept)."""
+    job = await _owned_job(session, user.id, job_id)
+    if job.status in ACTIVE:
+        raise _bad("job_not_finished", status.HTTP_409_CONFLICT)
+    assets = (
+        (
+            await session.execute(
+                select(Asset).where(Asset.job_id == job.id, Asset.user_id == user.id)
+            )
+        )
+        .scalars()
+        .all()
+    )
+    keys = [(a.storage_key, a.preview_key) for a in assets]
+    for a in assets:
+        await session.delete(a)
+    await session.delete(job)
+    await session.commit()
+    for storage_key, preview_key in keys:
+        delete_stored(storage_key, preview_key)
 
 
 @router.get("/{job_id}/events")

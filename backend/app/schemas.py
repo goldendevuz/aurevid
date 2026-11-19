@@ -139,6 +139,21 @@ class JobOut(BaseModel):
     has_audio: bool = False
 
 
+class FacetOut(BaseModel):
+    value: str
+    count: int
+    label: str | None = None
+    provider: str | None = None  # models only: which provider the model belongs to
+
+
+class JobFacetsOut(BaseModel):
+    total: int
+    kinds: list[FacetOut]
+    statuses: list[FacetOut]
+    providers: list[FacetOut]
+    models: list[FacetOut]
+
+
 class FavoriteIn(_In):
     favorite: bool
 
