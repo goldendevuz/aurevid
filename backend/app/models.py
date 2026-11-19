@@ -82,6 +82,9 @@ class Job(Base):
     prompt: Mapped[str] = mapped_column(Text)
     preset_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     params: Mapped[dict] = mapped_column(JSON, default=dict)
+    # Whose key ran it: "user" (BYOK), "server" (owner's key, counts against the free share),
+    # "none" (keyless/local). Set at creation; the worker switches it on a server fallback.
+    key_source: Mapped[str | None] = mapped_column(String(8), nullable=True, index=True)
     count: Mapped[int] = mapped_column(Integer, default=1)
     cost: Mapped[int] = mapped_column(Integer, default=0)
     status: Mapped[JobStatus] = mapped_column(

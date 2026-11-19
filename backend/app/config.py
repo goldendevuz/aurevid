@@ -21,6 +21,10 @@ class Settings(BaseSettings):
     turnstile_secret: str = Field(default="", repr=False)
     cf_account_id: str = Field(default="", repr=False)
     cf_api_token: str = Field(default="", repr=False)
+    # Owner's own Modal endpoint (deploy/modal): a few free clips per user, see allowance.py.
+    modal_submit_url: str = Field(default="", repr=False)
+    modal_token_id: str = Field(default="", repr=False)
+    modal_token_secret: str = Field(default="", repr=False)
 
     # --- cookies / auth ---
     cookie_secure: bool = True
@@ -42,6 +46,7 @@ class Settings(BaseSettings):
     max_video_bytes: int = 600 * 1024 * 1024  # 8K clips; streamed to disk, never held in memory
     daily_job_limit: int = 30
     signup_credits: int = 50
+    server_free_videos_per_user: int = 2  # lifetime clips on the owner's Modal key
     analytics_utc_offset_hours: int = 5  # Asia/Tashkent; used for "today", daily charts, cohorts
 
     # --- providers ---

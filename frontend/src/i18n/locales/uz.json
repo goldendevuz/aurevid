@@ -121,7 +121,8 @@
     "audioInsert": "Namuna qo'shish",
     "uploadStart": "Boshlang'ich rasm yuklash",
     "uploadHint": "PNG, JPEG yoki WEBP. Bosing yoki faylni shu yerga tashlang.",
-    "uploading": "Yuklanmoqda…"
+    "uploading": "Yuklanmoqda…",
+    "freeLeft": "{{count}} ta bepul qoldi"
   },
   "job": {
     "queued": "Navbatda",
@@ -285,7 +286,8 @@
     "queue_full": "Server hozir band. Taxminan {{minutes}} daqiqadan keyin urining.",
     "cannot_target_self": "Buni o'z hisobingizga qilib bo'lmaydi.",
     "job_not_queued": "Faqat navbatdagi jobni bekor qilish mumkin.",
-    "job_not_failed": "Faqat xato bo'lgan jobni qayta ishga tushirish mumkin."
+    "job_not_failed": "Faqat xato bo'lgan jobni qayta ishga tushirish mumkin.",
+    "free_share_used": "Aurevid kalitidagi bepul ulushingiz tugadi. Sozlamalarda o'z kalitingizni qo'shing yoki ertaga qayta urining."
   },
   "admin": {
     "title": "Admin panel",

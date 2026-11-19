@@ -6,7 +6,7 @@ from fastapi import APIRouter
 from app.deps import CurrentUser, Session
 from app.providers.base import UPSCALE_CREDITS
 from app.providers.registry import allowed_upscales, enabled_providers, resolve_credentials
-from app.services import quota
+from app.services import allowance, quota
 from app.services.presets import load_presets
 
 router = APIRouter(prefix="/api", tags=["catalog"])
@@ -25,6 +25,12 @@ async def list_providers(user: CurrentUser, session: Session):
             }
         data["available"] = provider.has_usable_credentials(creds)
         data["key_source"] = creds.source  # "server" | "user" | "none"; never the key itself
+        # Free outputs left on the owner's key for this user (None = no per-user cap).
+        data["free_left"] = (
+            await allowance.server_left(session, provider, user.id)
+            if creds.source == "server"
+            else None
+        )
         data["quota"] = None
         if provider.info.track_quota:
             view = await quota.view(

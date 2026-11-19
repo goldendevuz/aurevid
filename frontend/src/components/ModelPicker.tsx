@@ -150,6 +150,7 @@ export default function ModelPicker({
                   <Badge tone={p.tier === "free" ? "free" : "paid"}>{p.tier === "free" ? t("studio.free") : t("studio.paid")}</Badge>
                   <Badge tone={m.commercial_use === "yes" ? "ok" : "muted"}>{t(`studio.commercial_${m.commercial_use}`)}</Badge>
                   {p.key_source === "user" && <Badge tone="muted">{t("studio.byok")}</Badge>}
+                  {p.key_source === "server" && p.free_left !== null && <Badge tone="free">{t("studio.freeLeft", { count: p.free_left })}</Badge>}
                 </div>
                 <ul className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted">
                   <li className="flex items-center gap-1"><Icon name="ratio" size={12} />{m.aspect_ratios.join(" · ")}</li>
