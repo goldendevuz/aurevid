@@ -68,6 +68,7 @@ export interface Asset {
   width: number;
   height: number;
   is_favorite: boolean;
+  alt_text?: string | null; // machine-written description (Cloudflare image-to-text)
   url: string;
   preview_url: string;
 }

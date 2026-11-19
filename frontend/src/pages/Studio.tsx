@@ -8,6 +8,7 @@ import { Icon } from "../components/icons";
 import JobCard from "../components/JobCard";
 import { retryJob, watchJob } from "../jobs";
 import ModelPicker, { ModelSwatch } from "../components/ModelPicker";
+import VoiceButton from "../components/VoiceButton";
 import { Badge, Button, EmptyState, ErrorText, Segmented } from "../components/ui";
 import { onFreeShare, priceOf } from "../pricing";
 import type { Asset, Job, ModelInfo, Preset, Provider } from "../types";
@@ -229,6 +230,16 @@ export default function Studio() {
       } catch (err) {
         setError(err);
       }
+    },
+    [upsertJob, watch, reload],
+  );
+
+  const editAsset = useCallback(
+    async (asset: Asset, instruction: string) => {
+      const job = await api<Job>(`/api/assets/${asset.id}/edit`, { method: "POST", body: { instruction } });
+      upsertJob(job);
+      watch(job.id);
+      void reload();
     },
     [upsertJob, watch, reload],
   );
@@ -596,6 +607,10 @@ export default function Studio() {
 
           <div className="flex flex-wrap items-end justify-between gap-3 px-1 pt-2">
            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+            <VoiceButton
+              onError={setError}
+              onText={(text) => setPrompt((p) => (p.trim() ? `${p.trim()} ${text}` : text).slice(0, MAX_PROMPT))}
+            />
             {activeTool === "compare" ? null : choices.length === 0 ? (
               <p className="text-xs text-muted">
                 {t("studio.noVideoModels")}{" "}
@@ -841,6 +856,7 @@ export default function Studio() {
                   setJobs((prev) => prev.filter((x) => x.id !== job.id));
                 }}
                 onAnimate={animate}
+                onEdit={editAsset}
                 onUpscale={(a, target) => void upscaleAsset(a, target)}
               />
             ))}

@@ -116,6 +116,8 @@ class Asset(Base):
     height: Mapped[int] = mapped_column(Integer)
     size_bytes: Mapped[int] = mapped_column(Integer)
     is_favorite: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    # Short machine-written description (Cloudflare image-to-text), used as the <img alt>.
+    alt_text: Mapped[str | None] = mapped_column(String(400), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 

@@ -82,7 +82,7 @@ async def test_counters_reset_each_utc_day_but_estimate_persists():
 async def test_documented_prior_shown_before_any_use(alice):
     s_providers = {p["id"]: p for p in (await alice.get("/api/providers")).json()}
     cf = s_providers["cloudflare"]["quota"]
-    assert cf["estimated_limit"] == 170 and cf["source"] == "documented"
+    assert cf["estimated_limit"] == 68 and cf["source"] == "documented"
 
 
 async def test_worker_learns_and_api_blocks_during_cooldown(alice, monkeypatch):

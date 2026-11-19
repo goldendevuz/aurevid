@@ -79,6 +79,11 @@ class Settings(BaseSettings):
     pollinations_enabled: bool = False  # terms unverified (MODEL_LICENSES.md); opt-in only
     pollinations_base_url: str = "https://image.pollinations.ai"
     cloudflare_enabled: bool = True
+    # Side tools on the Cloudflare account (user's key first, else the server key):
+    alt_text_enabled: bool = True  # describe generated/uploaded images (Qwen 3.8 27B)
+    voice_enabled: bool = True  # voice prompts (Whisper large-v3-turbo)
+    voice_max_bytes: int = 1024 * 1024  # ~60 s of Opus; the browser stops at voice_max_seconds
+    voice_max_seconds: int = 30
     # fal.ai (video, image-to-video, 4K/8K video). On by default (owner decision 2026-11-17);
     # it only runs with each user's own key, so the server never pays.
     # Owner rule (2026-11-20): only models whose licence AND service terms clearly allow commercial

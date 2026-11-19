@@ -32,7 +32,7 @@ from app.images import (
 from app.models import Asset, Job, JobStatus, WorkerHeartbeat
 from app.providers.base import GenerationRequest, ProviderError
 from app.providers.registry import get_provider, resolve_credentials
-from app.services import allowance, credits, queue, quota, recipes
+from app.services import allowance, credits, describe, queue, quota, recipes
 from app.services.payments import orders as payment_orders
 
 log = logging.getLogger("aurevid.worker")
@@ -260,6 +260,7 @@ async def process(job: Job) -> None:
         await _finish(job.id, 0, exc.public)
         return
     produced = 0
+    described: list[str] = []
     error: str | None = None
     base_seed = params.get("seed")
     for i in range(job.count):
@@ -316,22 +317,25 @@ async def process(job: Job) -> None:
             if await session.get(Job, job.id) is None:  # user deleted account meanwhile
                 delete_stored(stored.storage_key, stored.preview_key)
                 return
-            session.add(
-                Asset(
-                    user_id=job.user_id,
-                    job_id=job.id,
-                    source="generated",
-                    storage_key=stored.storage_key,
-                    mime=stored.mime,
-                    width=stored.width,
-                    height=stored.height,
-                    size_bytes=stored.size_bytes,
-                    preview_key=stored.preview_key,
-                )
+            asset = Asset(
+                user_id=job.user_id,
+                job_id=job.id,
+                source="generated",
+                storage_key=stored.storage_key,
+                mime=stored.mime,
+                width=stored.width,
+                height=stored.height,
+                size_bytes=stored.size_bytes,
+                preview_key=stored.preview_key,
             )
+            session.add(asset)
             await session.commit()
+            if stored.mime.startswith("image/"):
+                described.append(asset.id)
         produced += 1
     await _finish(job.id, produced, error)
+    for asset_id in described:  # after the job is done, so alt text never delays results
+        await describe.describe_asset(asset_id)
     log.info("job=%s produced=%d status=%s", job.id, produced, "ok" if produced else "failed")
 
 

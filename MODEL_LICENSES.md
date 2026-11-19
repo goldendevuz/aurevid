@@ -1,11 +1,14 @@
 # Model & provider licenses
 
-Checked on 2026-11-17. Licences and service terms change, so re-check before a commercial launch.
+Checked on 2026-11-17; Cloudflare additions (FLUX.2 klein 4B, Qwen 3.8 27B alt text, Whisper) on 2026-11-20. Licences and service terms change, so re-check before a commercial launch.
 This is an engineering record, not legal advice.
 
 | Provider (adapter) | Model | Model licence | Commercial use of outputs | Service terms | Default |
 |---|---|---|---|---|---|
 | Cloudflare Workers AI (`cloudflare`) | `@cf/black-forest-labs/flux-1-schnell` | Apache-2.0 (FLUX.1 [schnell] weights) | **Yes** by model licence | Cloudflare Workers AI terms; free allocation of 10,000 Neurons/day per account, shared across all models, requests fail above it on the Free plan | **On** (needs a CF account ID + token: server or BYOK) |
+| Cloudflare Workers AI (`cloudflare`) | `@cf/black-forest-labs/flux-2-klein-4b` (text-to-image and "Edit with text") | Apache-2.0 (FLUX.2 [klein] 4B weights) | **Yes**: weights Apache-2.0; BFL terms linked from the CF page claim no ownership of outputs | Same 10,000 Neurons/day as schnell (shared); ~104 Neurons per 1024px image, +5.37 per input tile when editing | **On** |
+| Cloudflare Workers AI (`cloudflare`) | `@cf/qwen/qwen3.8-27b` (alt text: image → short description) | Apache-2.0 (Qwen/Qwen3.8-27B model card) | **Yes** by model licence | Same shared allocation; ~25-40 Neurons per description (image downscaled to 512px, thinking off, ≤120 output tokens) | **On** (`ALT_TEXT_ENABLED`) |
+| Cloudflare Workers AI (`cloudflare`) | `@cf/openai/whisper-large-v3-turbo` (voice prompts, speech → text) | MIT (openai/whisper-large-v3-turbo model card) | **Yes** by model licence | Same shared allocation; 46.63 Neurons per audio minute (≤30 s clips, 6/min and 40/day per user) | **On** (`VOICE_ENABLED`) |
 | fal.ai (`fal`) | `fal-ai/flux/schnell` | Apache-2.0 | **Yes** by model licence | fal.ai terms; **paid**, billed to the user's own key | **On** (`FAL_ENABLED`, owner decision 2026-11-17), BYOK only |
 | fal.ai (`fal`) | `fal-ai/wan/v2.2-5b/text-to-video` | Apache-2.0 (Wan 2.2 TI2V-5B weights) | **Yes** by model licence | fal.ai terms; **paid**, $0.15 per video per fal's model page (2026-11-17) | **On**, BYOK only |
 | fal.ai (`fal`) | `fal-ai/wan/v2.2-a14b/image-to-video` | Apache-2.0 (Wan 2.2 I2V-A14B weights) | **Yes** by model licence | fal.ai terms; **paid**, $0.04-0.08 per video second by resolution | **On**, BYOK only |
@@ -53,6 +56,31 @@ This is an engineering record, not legal advice.
   by *some* models; this was not verified live for Wan 2.2 I2V (no key in CI).
 - Pollinations: no first-party terms found in search. **Rule applied: unclear licence → disabled by
   default.** Enable only for personal testing until its terms are reviewed.
+
+- **Cloudflare additions, checked 2026-11-20** (official pages fetched with curl):
+  - FLUX.2 [klein] 4B: CF model page developers.cloudflare.com/workers-ai/models/flux-2-klein-4b/
+    links "Terms and License" to bfl.ai/legal/terms-of-service ("We claim no ownership rights in
+    and to Your Content", i.e. inputs and outputs); model card huggingface.co/black-forest-labs/FLUX.2-klein-4B
+    has `license: apache-2.0` ("Fully open under Apache 2.0 ... production use"). Workers AI
+    specifics from the CF changelog 2026-01-15: multipart input, fixed 4 steps, up to 4 reference
+    images, each "smaller than 512x512". **Not used:** FLUX.2 [dev] and FLUX.2 [klein] 9B
+    (non-commercial licences).
+  - Alt text: Qwen 3.8 27B, CF page developers.cloudflare.com/workers-ai/models/qwen3.8-27b/ (Vision:
+    Yes, `image_url` input), model card huggingface.co/Qwen/Qwen3.8-27B `license: apache-2.0`.
+    **Rejected:** Llama 3.2 11B Vision (Llama 3.2 licence: 700M MAU cap and no rights for EU-domiciled
+    entities to the multimodal models), Llama 4 Scout (Llama 4 licence, MAU cap and branding
+    duties), Moondream 3.1 (Moondream licence, not permissive), LLaVA 1.5 (Llama 2 base, planned
+    CF deprecation 2026-11-20), Mistral Small 3.1 (Apache-2.0, but the CF schema takes no image
+    input), Gemma 3 / UForm (removed from the CF catalogue).
+  - Whisper large-v3-turbo: CF page developers.cloudflare.com/workers-ai/models/whisper-large-v3-turbo/,
+    model card huggingface.co/openai/whisper-large-v3-turbo `license: mit`.
+  - Neuron prices: developers.cloudflare.com/workers-ai/platform/pricing/ (klein 4B: 5.37 Neurons per
+    input 512px tile, 26.05 per output tile; schnell: 4.80 per tile + 9.60 per step; Qwen 3.8 27B:
+    40,909 / 290,909 Neurons per M input / output tokens; Whisper turbo: 46.63 per audio minute).
+    All share the account's 10,000 Neurons/day, so the quota prior is 68 outputs/day (worst case:
+    klein image + alt text, ~147 Neurons); see `backend/app/providers/cloudflare.py`.
+  - Not verified live (no key in CI): whether Whisper on Workers AI decodes WebM/Opus and MP4/AAC
+    as recorded by browsers; the request shapes follow the published JSON schemas.
 
 ## Rules for adding a model
 

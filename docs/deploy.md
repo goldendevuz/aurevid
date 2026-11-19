@@ -92,6 +92,6 @@ tier (check current limits) is the planned target. Until then, keep `/app/data` 
 
 ## What still costs money
 
-- Nothing for development and a small beta on Cloudflare's free allocation (~170 images/day/account).
+- Nothing for development and a small beta on Cloudflare's free allocation (~170 FLUX.1 schnell or ~96 FLUX.2 klein images/day/account; the app plans with 68 because both models and alt text share it).
 - A domain name (optional; Cloudflare Tunnel gives a free subdomain for testing).
 - Paid providers (fal.ai) are billed to each user's own key, never to you.

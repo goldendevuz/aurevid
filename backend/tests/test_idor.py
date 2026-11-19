@@ -26,6 +26,7 @@ async def test_bob_cannot_touch_alice_resources(alice, bob):
         await bob.get(f"/api/jobs/{job_id}/events"),
         await bob.get(f"/api/assets/{asset_id}/file"),
         await bob.post(f"/api/assets/{asset_id}/favorite", json={"favorite": True}, headers=h),
+        await bob.post(f"/api/assets/{asset_id}/edit", json={"instruction": "recolor"}, headers=h),
         await bob.delete(f"/api/assets/{asset_id}", headers=h),
         await bob.delete(f"/api/jobs/{job_id}", headers=h),
         await bob.post("/api/reports", json={"asset_id": asset_id, "reason": "other"}, headers=h),

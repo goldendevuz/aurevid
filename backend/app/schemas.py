@@ -85,6 +85,9 @@ def check_prompt(v: str) -> str:
     return v
 
 
+check_prompt_text = check_prompt  # name used by the edit/voice schemas
+
+
 class JobCreateIn(_In):
     prompt: str = Field(min_length=3)
     provider: str = Field(max_length=32)
@@ -123,6 +126,7 @@ class RecipeRunIn(_In):
     @classmethod
     def _prompt_len(cls, v: str) -> str:
         return check_prompt(v)
+        return check_prompt_text(v)
 
 
 class AssetOut(BaseModel):
@@ -134,6 +138,7 @@ class AssetOut(BaseModel):
     width: int
     height: int
     is_favorite: bool
+    alt_text: str | None = None
     created_at: UTCDateTime
     url: str = ""
     preview_url: str = ""
@@ -177,6 +182,21 @@ class JobFacetsOut(BaseModel):
     statuses: list[FacetOut]
     providers: list[FacetOut]
     models: list[FacetOut]
+
+
+class EditIn(_In):
+    """'Edit with text': an instruction applied to one of the caller's own images."""
+
+    instruction: str = Field(min_length=3)
+
+    @field_validator("instruction")
+    @classmethod
+    def _instruction(cls, v: str) -> str:
+        return check_prompt_text(v)
+
+
+class TranscriptOut(BaseModel):
+    text: str
 
 
 class FavoriteIn(_In):

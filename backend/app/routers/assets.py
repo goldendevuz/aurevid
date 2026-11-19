@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 """Assets: owner-only file download, favourites, deletion, validated uploads, reports."""
 
-from fastapi import APIRouter, HTTPException, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, UploadFile, status
 from fastapi.responses import FileResponse
 from sqlalchemy import select
 
@@ -11,10 +11,12 @@ from app.deps import CurrentUser, Session, not_found
 from app.images import InvalidImageError, asset_path, delete_stored, store_image
 from app.models import Asset, Job, Report
 from app.providers.base import UPSCALE_CREDITS
+from app.providers.cloudflare import KLEIN
+from app.providers.registry import get_provider
 from app.ratelimit import hit
-from app.routers.jobs import asset_out, check_daily_limit, enqueue, job_out
-from app.schemas import AssetOut, FavoriteIn, JobOut, ReportIn, UpscaleIn
-from app.services import queue
+from app.routers.jobs import asset_out, check_daily_limit, create_job, enqueue, job_out
+from app.schemas import AssetOut, EditIn, FavoriteIn, JobCreateIn, JobOut, ReportIn, UpscaleIn
+from app.services import describe, queue
 from app.worker import LOCAL_UPSCALE_MODEL, LOCAL_UPSCALE_PROVIDER
 
 router = APIRouter(prefix="/api", tags=["assets"])
@@ -90,6 +92,26 @@ async def upscale_asset(asset_id: str, body: UpscaleIn, user: CurrentUser, sessi
     return await job_out(session, job)
 
 
+@router.post("/assets/{asset_id}/edit", response_model=JobOut, status_code=201)
+async def edit_asset(asset_id: str, body: EditIn, user: CurrentUser, session: Session):
+    """'Edit with text': queue FLUX.2 [klein] 4B with your image as the reference.
+
+    Goes through the normal job path, so moderation of the instruction, the owner check on the
+    start image (not-yours = 404), credits, the free share and the quota learner all apply.
+    """
+    if len(asset_id) > 32:
+        raise not_found()
+    provider = get_provider("cloudflare")
+    if provider is None or provider.model(KLEIN) is None:
+        raise HTTPException(
+            status.HTTP_503_SERVICE_UNAVAILABLE, detail={"code": "edit_unavailable"}
+        )
+    job = JobCreateIn(
+        prompt=body.instruction, provider="cloudflare", model=KLEIN, image_asset_id=asset_id
+    )
+    return await create_job(job, user, session, None)
+
+
 @router.post("/assets/{asset_id}/favorite", response_model=AssetOut)
 async def set_favorite(asset_id: str, body: FavoriteIn, user: CurrentUser, session: Session):
     asset = await _owned(session, user.id, asset_id)
@@ -108,7 +130,9 @@ async def delete_asset(asset_id: str, user: CurrentUser, session: Session) -> No
 
 
 @router.post("/assets/upload", response_model=AssetOut, status_code=201)
-async def upload(file: UploadFile, user: CurrentUser, session: Session):
+async def upload(
+    file: UploadFile, user: CurrentUser, session: Session, background: BackgroundTasks
+):
     """Reference image upload (for marketing helper / image-to-video, later)."""
     hit("upload-user", user.id, "20/hour")
     limit = get_settings().max_upload_bytes
@@ -133,6 +157,7 @@ async def upload(file: UploadFile, user: CurrentUser, session: Session):
     )
     session.add(asset)
     await session.commit()
+    background.add_task(describe.describe_asset, asset.id)  # alt text, after the response
     return asset_out(asset)
 
 

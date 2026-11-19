@@ -123,7 +123,11 @@
     "uploadHint": "PNG, JPEG yoki WEBP. Bosing yoki faylni shu yerga tashlang.",
     "uploading": "Yuklanmoqda…",
     "freeLeft": "{{count}} ta bepul qoldi",
-    "makeAd": "Reklama tayyorlash"
+    "makeAd": "Reklama tayyorlash",
+    "voice": "Ovoz",
+    "voiceStart": "Promptni ovoz bilan ayting",
+    "voiceStop": "Yozishni to'xtatish",
+    "voiceSending": "Matnga aylantirilmoqda…"
   },
   "job": {
     "queued": "Navbatda",
@@ -157,7 +161,14 @@
     "retry": "Qayta urinish",
     "retrying": "Qayta urinilmoqda…",
     "deleteJobConfirm": "Bu natija va uning barcha fayllari o'chirilsinmi? Buni qaytarib bo'lmaydi.",
-    "noFiles": "Bu natijaning barcha fayllari o'chirilgan."
+    "noFiles": "Bu natijaning barcha fayllari o'chirilgan.",
+    "edit": "Matn bilan tahrirlash",
+    "editTitle": "Nimani o'zgartirish kerakligini yozing",
+    "editPlaceholder": "masalan: fonni oq qil, logoni olib tashla",
+    "editHint": "FLUX.2 klein bilan yangi rasm yaratiladi; asl rasm o'zgarmaydi.",
+    "editSubmit": "Tahrirlash",
+    "altText": "Tavsif (alt matn)",
+    "copyAltText": "Tavsifni nusxalash"
   },
   "history": {
     "title": "Tarix",
@@ -327,7 +338,13 @@
     "recipe_step_failed": "Oldingi qadam rasm bermadi, shuning uchun retsept to'xtadi.",
     "payments_disabled": "To'lovlar hozircha mavjud emas.",
     "unknown_pack": "Bu kredit paketi endi mavjud emas.",
-    "payment_gateway_error": "To'lov xizmati javob bermadi. Birozdan keyin qayta urinib ko'ring."
+    "payment_gateway_error": "To'lov xizmati javob bermadi. Birozdan keyin qayta urinib ko'ring.",
+    "edit_unavailable": "Hozir bu serverda tahrirlash mavjud emas.",
+    "voice_unavailable": "Hozir bu serverda ovozli kiritish mavjud emas.",
+    "audio_too_large": "Yozuv juda uzun. 30 soniyadan qisqa bo'lsin.",
+    "invalid_audio": "Bu yozuvni o'qib bo'lmadi. Qaytadan urinib ko'ring.",
+    "transcription_failed": "Nutqni aniqlab bo'lmadi. Qaytadan urinib ko'ring yoki promptni yozing.",
+    "mic_denied": "Mikrofonga ruxsat berilmadi. Ovoz bilan yozish uchun brauzerda ruxsat bering."
   },
   "admin": {
     "title": "Admin panel",
