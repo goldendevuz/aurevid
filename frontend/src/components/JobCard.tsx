@@ -128,13 +128,84 @@ interface Handlers {
   onRemix?: (job: Job) => void;
   onAnimate?: (asset: Asset) => void;
   onUpscale?: (asset: Asset, target: "4k" | "8k") => void;
+  /** "Edit with text": throws an ApiError the form shows inline. */
+  onEdit?: (asset: Asset, instruction: string) => Promise<void>;
+}
+
+function EditForm({ asset, onEdit, onDone }: { asset: Asset; onEdit: NonNullable<Handlers["onEdit"]>; onDone: () => void }) {
+  const { t } = useTranslation();
+  const [instruction, setInstruction] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<unknown>(null);
+  return (
+    <form
+      className="space-y-2 rounded-xl border border-line bg-bg/80 p-3"
+      onSubmit={async (e) => {
+        e.preventDefault();
+        setBusy(true);
+        setError(null);
+        try {
+          await onEdit(asset, instruction.trim());
+          onDone();
+        } catch (err) {
+          setError(err);
+        } finally {
+          setBusy(false);
+        }
+      }}
+    >
+      <label htmlFor={`edit-${asset.id}`} className="text-xs font-semibold">{t("job.editTitle")}</label>
+      <textarea
+        id={`edit-${asset.id}`}
+        value={instruction}
+        minLength={3}
+        maxLength={1000}
+        required
+        onChange={(e) => setInstruction(e.target.value)}
+        placeholder={t("job.editPlaceholder")}
+        className={inputClass}
+        rows={2}
+      />
+      <p className="text-[11px] text-muted">{t("job.editHint")}</p>
+      <Button type="submit" disabled={busy || instruction.trim().length < 3}>{busy ? t("studio.generating") : t("job.editSubmit")}</Button>
+      <ErrorText error={error} />
+    </form>
+  );
+}
+
+function AltText({ text }: { text: string }) {
+  const { t } = useTranslation();
+  const [copied, setCopied] = useState(false);
+  return (
+    <div>
+      <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-[0.1em] text-muted">{t("job.altText")}</p>
+      <p className="break-words text-xs leading-relaxed text-ink/90">{text}</p>
+      <button
+        type="button"
+        onClick={async () => {
+          try {
+            await navigator.clipboard.writeText(text);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1500);
+          } catch {
+            /* clipboard unavailable */
+          }
+        }}
+        className="mt-2 inline-flex items-center gap-1.5 text-[11px] font-medium text-muted transition hover:text-accent"
+      >
+        <Icon name={copied ? "check" : "copy"} size={12} />
+        {copied ? t("job.copied") : t("job.copyAltText")}
+      </button>
+    </div>
+  );
 }
 
 /** Full-size viewer: the media on the left, every detail and action on the right (Remix restores all settings). */
-function JobDialog({ job, onClose, onChange, onRemix, onAnimate, onUpscale }: Handlers & { job: Job; onClose: () => void }) {
+function JobDialog({ job, onClose, onChange, onRemix, onAnimate, onUpscale, onEdit }: Handlers & { job: Job; onClose: () => void }) {
   const { t } = useTranslation();
   const [idx, setIdx] = useState(0);
   const [reporting, setReporting] = useState(false);
+  const [editing, setEditing] = useState(false);
   const [copied, setCopied] = useState(false);
   const closeRef = useRef<HTMLButtonElement>(null);
   const assets = job.assets;
@@ -196,7 +267,7 @@ function JobDialog({ job, onClose, onChange, onRemix, onAnimate, onUpscale }: Ha
           {video ? (
             <video key={a.id} src={a.url} controls autoPlay loop playsInline className="max-h-[70vh] w-auto max-w-full rounded-2xl" style={{ aspectRatio: a.width && a.height ? a.width / a.height : undefined }} />
           ) : (
-            <img key={a.id} src={a.url} alt={job.prompt} width={a.width} height={a.height} className="max-h-[75vh] w-auto max-w-full rounded-2xl object-contain" />
+            <img key={a.id} src={a.url} alt={a.alt_text || job.prompt} width={a.width} height={a.height} className="max-h-[75vh] w-auto max-w-full rounded-2xl object-contain" />
           )}
           {assets.length > 1 && (
             <div className="flex flex-wrap justify-center gap-2" role="tablist">
@@ -220,6 +291,7 @@ function JobDialog({ job, onClose, onChange, onRemix, onAnimate, onUpscale }: Ha
               </button>
             )}
           </div>
+          {a.alt_text && <AltText key={a.id} text={a.alt_text} />}
           <Chips job={job} />
           <p className="text-[11px] tabular-nums text-muted">
             {a.width}×{a.height}
@@ -233,6 +305,12 @@ function JobDialog({ job, onClose, onChange, onRemix, onAnimate, onUpscale }: Ha
               <button type="button" onClick={() => { onRemix(job); onClose(); }} className="btn-aurora col-span-2 inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold">
                 <Icon name="sparkle" size={16} />
                 {t("job.remix")}
+              </button>
+            )}
+            {onEdit && !video && (
+              <button type="button" className={act} onClick={() => setEditing((v) => !v)} aria-expanded={editing}>
+                <Icon name="wand" size={15} />
+                {t("job.edit")}
               </button>
             )}
             {onAnimate && !video && (
@@ -268,6 +346,7 @@ function JobDialog({ job, onClose, onChange, onRemix, onAnimate, onUpscale }: Ha
               {t("job.delete")}
             </button>
           </div>
+          {editing && onEdit && !video && <EditForm key={a.id} asset={a} onEdit={onEdit} onDone={onClose} />}
           {reporting && <ReportForm asset={a} onClose={() => setReporting(false)} />}
         </aside>
       </div>
@@ -414,7 +493,7 @@ export default function JobCard({ job, index = 0, ...handlers }: Handlers & { jo
               style={{ aspectRatio: first.width && first.height ? first.width / first.height : undefined }}
             />
           ) : (
-            <img src={first.preview_url || first.url} alt={job.prompt} loading="lazy" width={first.width} height={first.height} className="block h-auto w-full" />
+            <img src={first.preview_url || first.url} alt={first.alt_text || job.prompt} loading="lazy" width={first.width} height={first.height} className="block h-auto w-full" />
           )}
         </button>
         <div className="pointer-events-none absolute left-2.5 top-2.5 flex gap-1.5">

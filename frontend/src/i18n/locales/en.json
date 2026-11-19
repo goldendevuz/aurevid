@@ -123,7 +123,11 @@
     "uploadHint": "PNG, JPEG or WEBP. Click or drop a file here.",
     "uploading": "Uploading…",
     "freeLeft": "{{count}} free left",
-    "makeAd": "Make an ad"
+    "makeAd": "Make an ad",
+    "voice": "Voice",
+    "voiceStart": "Dictate the prompt",
+    "voiceStop": "Stop recording",
+    "voiceSending": "Transcribing…"
   },
   "job": {
     "queued": "Queued",
@@ -157,7 +161,14 @@
     "retry": "Retry",
     "retrying": "Retrying…",
     "deleteJobConfirm": "Delete this generation and all its files? This cannot be undone.",
-    "noFiles": "All files of this generation were deleted."
+    "noFiles": "All files of this generation were deleted.",
+    "edit": "Edit with text",
+    "editTitle": "Describe the change",
+    "editPlaceholder": "e.g. make the background white, remove the logo",
+    "editHint": "Creates a new image with FLUX.2 klein; the original stays as it is.",
+    "editSubmit": "Edit image",
+    "altText": "Description (alt text)",
+    "copyAltText": "Copy description"
   },
   "history": {
     "title": "History",
@@ -327,7 +338,13 @@
     "recipe_step_failed": "The previous step did not produce an image, so the recipe stopped.",
     "payments_disabled": "Payments are not available yet.",
     "unknown_pack": "This credit pack is no longer available.",
-    "payment_gateway_error": "The payment service did not respond. Please try again in a moment."
+    "payment_gateway_error": "The payment service did not respond. Please try again in a moment.",
+    "edit_unavailable": "Editing is not available on this server right now.",
+    "voice_unavailable": "Voice input is not available on this server right now.",
+    "audio_too_large": "The recording is too long. Keep it under 30 seconds.",
+    "invalid_audio": "This recording could not be read. Try again.",
+    "transcription_failed": "Speech recognition failed. Try again or type the prompt.",
+    "mic_denied": "Microphone access was denied. Allow it in the browser to dictate."
   },
   "admin": {
     "title": "Admin panel",

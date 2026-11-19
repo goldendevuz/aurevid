@@ -50,7 +50,7 @@ cp .env.example .env
 docker compose up --build
 ```
 
-Cloudflare kuniga 10 000 "neuron" bepul beradi, bu taxminan 170 ta 1024×1024 rasm.
+Cloudflare kuniga 10 000 "neuron" bepul beradi, bu taxminan 170 ta FLUX.1 schnell yoki 96 ta FLUX.2 klein 1024×1024 rasm (ikki model bitta kvotani bo'lishadi; ilova ehtiyotkorlik bilan kuniga 68 ta deb hisoblaydi, chunki alt matn ham shu kvotadan oladi).
 
 > Docker *"all predefined address pools have been fully subnetted"* desa, eski Docker tarmoqlari
 > ko'payib ketgan. Ro'yxatni `docker network ls` bilan ko'rib, keraksizlarini `docker network prune`

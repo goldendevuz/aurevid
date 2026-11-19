@@ -78,6 +78,7 @@ class ProviderKeyOut(BaseModel):
 
 
 def check_prompt(v: str) -> str:
+def check_prompt_text(v: str) -> str:
     if len(v) > get_settings().max_prompt_chars:
         raise ValueError("prompt too long")
     if any(ord(c) < 32 and c not in "\n\t" for c in v):
@@ -123,6 +124,7 @@ class RecipeRunIn(_In):
     @classmethod
     def _prompt_len(cls, v: str) -> str:
         return check_prompt(v)
+        return check_prompt_text(v)
 
 
 class AssetOut(BaseModel):
@@ -134,6 +136,7 @@ class AssetOut(BaseModel):
     width: int
     height: int
     is_favorite: bool
+    alt_text: str | None = None
     created_at: UTCDateTime
     url: str = ""
     preview_url: str = ""
@@ -177,6 +180,19 @@ class JobFacetsOut(BaseModel):
     statuses: list[FacetOut]
     providers: list[FacetOut]
     models: list[FacetOut]
+class EditIn(_In):
+    """'Edit with text': an instruction applied to one of the caller's own images."""
+
+    instruction: str = Field(min_length=3)
+
+    @field_validator("instruction")
+    @classmethod
+    def _instruction(cls, v: str) -> str:
+        return check_prompt_text(v)
+
+
+class TranscriptOut(BaseModel):
+    text: str
 
 
 class FavoriteIn(_In):

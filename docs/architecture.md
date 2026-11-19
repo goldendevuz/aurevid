@@ -64,7 +64,7 @@ Free services rarely publish exact limits. For every provider and credential sco
 | Field | Meaning |
 |---|---|
 | `used_today` | outputs produced in the current UTC day |
-| `est_daily_limit` | estimate: starts from a documented prior (Cloudflare ≈170 images/day) or unknown |
+| `est_daily_limit` | estimate: starts from a documented prior (Cloudflare: 68 outputs/day, worst case of klein + alt text; see `providers/cloudflare.py`) or unknown |
 | `observations` | how many limit errors have informed the estimate |
 | `cooldown_s`, `blocked_until` | learned back-off after a limit error |
 

@@ -24,6 +24,7 @@ from app.routers import (
     payments,
     recipes,
 )
+from app.routers import admin, assets, auth, catalog, credits, jobs, marketing, me, voice
 from app.security import CSRF_COOKIE, CSRF_HEADER, csrf_matches
 from app.services.presets import load_presets
 
@@ -113,6 +114,7 @@ def create_app() -> FastAPI:
         admin.public,
         marketing.router,
         payments.router,
+        voice.router,
     ):
         app.include_router(router)
 

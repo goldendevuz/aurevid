@@ -283,6 +283,10 @@ export default function History() {
               onDelete={remove}
               onChange={(u) => setJobs((p) => p.map((x) => (x.id === u.id ? u : x)))}
               onAnimate={(asset) => navigate("/", { state: { animate: asset } })}
+              onEdit={async (asset, instruction) => {
+                await api(`/api/assets/${asset.id}/edit`, { method: "POST", body: { instruction } });
+                navigate("/");
+              }}
               onUpscale={async (asset, target) => {
                 try {
                   await api(`/api/assets/${asset.id}/upscale`, { method: "POST", body: { target } });
