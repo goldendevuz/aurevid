@@ -72,6 +72,15 @@ export interface Asset {
   preview_url: string;
 }
 
+/** Chain state stored on each job of a recipe (see backend services/recipes.py). */
+export interface RecipeState {
+  id: string;
+  next?: { provider: string; model: string; duration: number | null; upscale: "4k" | "8k" | null }[];
+  next_job_id?: string;
+  prev_job_id?: string;
+  error?: string;
+}
+
 export type JobStatus = "queued" | "running" | "done" | "failed";
 
 export interface Job {
@@ -92,6 +101,7 @@ export interface Job {
     upscale?: "4k" | "8k" | null;
     seed?: number | null;
     source_asset_id?: string | null;
+    recipe?: RecipeState;
   };
   count: number;
   cost: number;

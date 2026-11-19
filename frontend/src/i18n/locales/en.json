@@ -320,7 +320,9 @@
     "job_not_failed": "Only failed jobs can be retried.",
     "free_share_used": "You have used your free share on the Aurevid key. Add your own key in Settings or try again tomorrow.",
     "job_not_finished": "This generation is still running. Wait until it finishes.",
-    "free_month_used": "This month's free video clips on the Aurevid key are used up. Add your own Modal key in Settings or try again next month."
+    "free_month_used": "This month's free video clips on the Aurevid key are used up. Add your own Modal key in Settings or try again next month.",
+    "recipe_step_unavailable": "No video model that can animate an image is available to you. Add a key in Settings.",
+    "recipe_step_failed": "The previous step did not produce an image, so the recipe stopped."
   },
   "admin": {
     "title": "Admin panel",
@@ -565,5 +567,33 @@
     "s3": "Refine",
     "s3_desc": "Remix, animate, upscale and download.",
     "ctaTitle": "Your next image is one prompt away."
+  },
+  "price": {
+    "selection": "{{count}} credits",
+    "selectionMany": "{{count}} credits ({{n}} × {{each}})",
+    "freeShare": "runs on the Aurevid key: free within your share",
+    "free": "free share"
+  },
+  "tools": {
+    "label": "Tool",
+    "single": "One model",
+    "compare": "Compare models",
+    "recipe": "Recipe"
+  },
+  "compare": {
+    "pick": "Pick 2 to {{max}} image models ({{count}} chosen)",
+    "hint": "One image per model with the same prompt; results appear side by side. Each model is charged separately.",
+    "send": "Compare {{count}} models",
+    "results": "Comparison"
+  },
+  "recipe": {
+    "title": "Image → Animate → 4K",
+    "desc": "Creates the image, then animates it automatically. Each step is charged when it starts; if a step fails, the chain stops.",
+    "videoModel": "Video model for animation",
+    "upscale4k": "Finish in 4K",
+    "stopped": "Recipe stopped: {{reason}}",
+    "stepWaiting": "Recipe: this image will be animated automatically when it is ready.",
+    "stepStarted": "Recipe: the next step (animation) has started.",
+    "stepFrom": "Recipe: animated from the previous image."
   }
 }

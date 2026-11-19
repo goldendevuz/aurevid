@@ -320,7 +320,9 @@
     "job_not_failed": "Faqat xato bo'lgan jobni qayta ishga tushirish mumkin.",
     "free_share_used": "Aurevid kalitidagi bepul ulushingiz tugadi. Sozlamalarda o'z kalitingizni qo'shing yoki ertaga qayta urining.",
     "job_not_finished": "Bu natija hali tayyorlanmoqda. Tugashini kuting.",
-    "free_month_used": "Aurevid kalitidagi bu oylik bepul video limiti tugadi. Sozlamalarda o'z Modal kalitingizni qo'shing yoki keyingi oyda urinib ko'ring."
+    "free_month_used": "Aurevid kalitidagi bu oylik bepul video limiti tugadi. Sozlamalarda o'z Modal kalitingizni qo'shing yoki keyingi oyda urinib ko'ring.",
+    "recipe_step_unavailable": "Sizda rasmni jonlantira oladigan video model yo'q. Sozlamalarda kalit qo'shing.",
+    "recipe_step_failed": "Oldingi qadam rasm bermadi, shuning uchun retsept to'xtadi."
   },
   "admin": {
     "title": "Admin panel",
@@ -565,5 +567,33 @@
     "s3": "Takomillashtiring",
     "s3_desc": "Qayta yarating, jonlantiring, kattalashtiring va yuklab oling.",
     "ctaTitle": "Keyingi rasmingiz bitta prompt narida."
+  },
+  "price": {
+    "selection": "{{count}} kredit",
+    "selectionMany": "{{count}} kredit ({{n}} × {{each}})",
+    "freeShare": "Aurevid kalitida ishlaydi: ulushingiz doirasida bepul",
+    "free": "bepul ulush"
+  },
+  "tools": {
+    "label": "Vosita",
+    "single": "Bitta model",
+    "compare": "Modellarni solishtirish",
+    "recipe": "Retsept"
+  },
+  "compare": {
+    "pick": "2 tadan {{max}} tagacha rasm modelini tanlang ({{count}} ta tanlandi)",
+    "hint": "Har bir model bir xil prompt bilan bitta rasm chizadi; natijalar yonma-yon chiqadi. Har bir model uchun alohida kredit yechiladi.",
+    "send": "{{count}} ta modelni solishtirish",
+    "results": "Solishtirish"
+  },
+  "recipe": {
+    "title": "Rasm → Jonlantirish → 4K",
+    "desc": "Avval rasm yaratiladi, keyin avtomatik jonlantiriladi. Har bir qadam boshlanganda kredit yechiladi; qadam muvaffaqiyatsiz bo'lsa, zanjir to'xtaydi.",
+    "videoModel": "Jonlantirish uchun video model",
+    "upscale4k": "4K da yakunlash",
+    "stopped": "Retsept to'xtadi: {{reason}}",
+    "stepWaiting": "Retsept: rasm tayyor bo'lgach, avtomatik jonlantiriladi.",
+    "stepStarted": "Retsept: keyingi qadam (jonlantirish) boshlandi.",
+    "stepFrom": "Retsept: oldingi rasmdan jonlantirildi."
   }
 }

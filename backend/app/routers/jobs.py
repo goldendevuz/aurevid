@@ -117,9 +117,20 @@ async def create_job(
         if existing is not None:
             return await job_out(session, existing)
 
+    job = await prepare_job(session, user.id, body, idempotency_key)
+    await enqueue(session, job)
+    return await job_out(session, job)
+
+
+async def prepare_job(
+    session, user_id: str, body: JobCreateIn, client_request_id: str | None = None
+) -> Job:
+    """Validate a request with every user check (moderation, limits, keys, free share) and
+    build the Job, unsaved. Raises HTTPException with a {"code": ...} detail when refused.
+    Shared by POST /api/jobs and recipe chains (the worker creates the next step with it)."""
     verdict = moderator.check_prompt(body.prompt)
     if not verdict.allowed:
-        await _log_rejection(session, user.id, verdict.category)
+        await _log_rejection(session, user_id, verdict.category)
         raise _bad("prompt_rejected")
 
     provider = get_provider(body.provider)
@@ -146,12 +157,12 @@ async def create_job(
             raise _bad("image_input_unsupported")
         source = await session.get(Asset, body.image_asset_id)
         # Only the caller's own images can be animated (IDOR): not-yours looks like not-found.
-        if source is None or source.user_id != user.id or not source.mime.startswith("image/"):
+        if source is None or source.user_id != user_id or not source.mime.startswith("image/"):
             raise not_found()
     elif model.requires_image:
         raise _bad("image_required")
 
-    creds = await resolve_credentials(session, provider, user.id)
+    creds = await resolve_credentials(session, provider, user_id)
     if not provider.has_usable_credentials(creds):
         raise _bad("provider_key_required")
     if creds.source == "server":
@@ -159,14 +170,14 @@ async def create_job(
         if provider.info.id in allowance.LIFETIME_PROVIDERS:
             if body.count > await allowance.monthly_left(session, provider.info.id):
                 raise _bad("free_month_used", status.HTTP_429_TOO_MANY_REQUESTS)
-        left = await allowance.server_left(session, provider, user.id)
+        left = await allowance.server_left(session, provider, user_id)
         if left is not None and body.count > left:
             raise _bad("free_share_used", status.HTTP_429_TOO_MANY_REQUESTS)
     if provider.info.track_quota:
         q = await quota.view(
             session,
             provider.info.id,
-            quota.scope_for(creds.source, user.id),
+            quota.scope_for(creds.source, user_id),
             provider.info.daily_quota_prior,
         )
         if q.blocked_seconds > 30:
@@ -184,11 +195,11 @@ async def create_job(
         final_prompt = preset.render(body.prompt, model.kind)
     preset_verdict = moderator.check_prompt(final_prompt)
     if not preset_verdict.allowed:
-        await _log_rejection(session, user.id, preset_verdict.category)
+        await _log_rejection(session, user_id, preset_verdict.category)
         raise _bad("prompt_rejected")
 
-    await check_daily_limit(session, user.id)
-    await queue.admit(session, user.id)
+    await check_daily_limit(session, user_id)
+    await queue.admit(session, user_id)
 
     width, height = dimensions(body.aspect_ratio, body.size)
     job_id = new_id()
@@ -198,8 +209,8 @@ async def create_job(
     cost = per_output * body.count
     job = Job(
         id=job_id,
-        user_id=user.id,
-        client_request_id=idempotency_key,
+        user_id=user_id,
+        client_request_id=client_request_id,
         kind=model.kind,
         provider=provider.info.id,
         model=model.id,
@@ -220,8 +231,7 @@ async def create_job(
             "final_prompt": final_prompt,
         },
     )
-    await enqueue(session, job)
-    return await job_out(session, job)
+    return job
 
 
 HistoryKind = Literal["image", "video", "upscale"]

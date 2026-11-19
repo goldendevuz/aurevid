@@ -70,6 +70,22 @@ function useElapsed(since: string | null | undefined, active: boolean): number |
 
 const clock = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
+/** A step of a recipe chain: what comes next, or why the chain stopped. */
+function RecipeNote({ job, className }: { job: Job; className: string }) {
+  const { t } = useTranslation();
+  const r = job.params.recipe;
+  if (!r) return null;
+  if (r.error) {
+    return (
+      <p role="status" className={`${className} text-danger`}>
+        {t("recipe.stopped", { reason: t(`errors.${r.error}`, { defaultValue: t("errors.generic") }) })}
+      </p>
+    );
+  }
+  const key = r.next_job_id ? "recipe.stepStarted" : r.next?.length ? "recipe.stepWaiting" : r.prev_job_id ? "recipe.stepFrom" : null;
+  return key ? <p className={`${className} text-muted`}>{t(key)}</p> : null;
+}
+
 function Chips({ job }: { job: Job }) {
   const { t } = useTranslation();
   const isVideo = job.kind === "video";
@@ -210,6 +226,7 @@ function JobDialog({ job, onClose, onChange, onRemix, onAnimate, onUpscale }: Ha
             {big >= 7680 ? " · 8K" : big >= 3840 ? " · 4K" : ""}
           </p>
           {job.status === "done" && job.error && <p className="text-xs text-accent-3">{t("job.partial")}</p>}
+          <RecipeNote job={job} className="text-xs" />
 
           <div className="mt-auto grid grid-cols-2 gap-2">
             {onRemix && !isUpscaleJob && (
@@ -429,6 +446,7 @@ export default function JobCard({ job, index = 0, ...handlers }: Handlers & { jo
           </div>
         </div>
         {job.status === "done" && job.error && <p className="px-3 py-2 text-[11px] text-accent-3">{t("job.partial")}</p>}
+        <RecipeNote job={job} className="px-3 py-2 text-[11px]" />
       </article>
       {open && <JobDialog job={job} onClose={closeDialog} {...handlers} />}
     </>
