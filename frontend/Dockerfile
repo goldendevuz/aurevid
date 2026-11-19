@@ -2,7 +2,7 @@
 FROM node:22-alpine AS build
 WORKDIR /src
 COPY package.json package-lock.json ./
-RUN npm ci --no-audit --no-fund
+RUN npm ci --no-audit --no-fund --fetch-timeout=60000 --fetch-retries=5
 COPY . .
 ARG VITE_TURNSTILE_SITE_KEY=
 ARG VITE_SOURCE_URL=
