@@ -319,7 +319,8 @@
     "job_not_queued": "Only queued jobs can be cancelled.",
     "job_not_failed": "Only failed jobs can be retried.",
     "free_share_used": "You have used your free share on the Aurevid key. Add your own key in Settings or try again tomorrow.",
-    "job_not_finished": "This generation is still running. Wait until it finishes."
+    "job_not_finished": "This generation is still running. Wait until it finishes.",
+    "free_month_used": "This month's free video clips on the Aurevid key are used up. Add your own Modal key in Settings or try again next month."
   },
   "admin": {
     "title": "Admin panel",

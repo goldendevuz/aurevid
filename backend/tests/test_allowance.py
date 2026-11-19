@@ -96,3 +96,19 @@ async def test_worker_falls_back_to_owner_key_when_user_key_fails(monkeypatch):
     assert await worker._server_fallback(provider, job, user_key, 2) is None
     assert ProviderError  # imported for readers: the worker re-raises the user's error
     await client.aclose()
+
+
+async def test_monthly_cap_across_all_users():
+    _owner_modal()
+    get_settings().server_video_monthly_cap = 3
+    a, _ = await make_user("m1@example.com")
+    b, _ = await make_user("m2@example.com")
+    assert (await _video(a)).status_code == 201
+    assert (await _video(a)).status_code == 201
+    assert (await _video(b)).status_code == 201
+    r = await _video(b)  # b still has 1 personal clip, but the month is full
+    assert r.status_code == 429 and r.json()["detail"]["code"] == "free_month_used"
+    providers = (await b.get("/api/providers")).json()
+    assert next(p for p in providers if p["id"] == "modal_video")["free_left"] == 0
+    await a.aclose()
+    await b.aclose()

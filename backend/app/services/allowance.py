@@ -45,6 +45,19 @@ async def _used(
     return int((await session.execute(stmt)).scalar_one())
 
 
+async def monthly_left(session: AsyncSession, provider_id: str) -> int:
+    """Clips left this UTC month on the owner's key, across all users."""
+    start = datetime.now(UTC).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    stmt = select(func.coalesce(func.sum(Job.count), 0)).where(
+        Job.provider == provider_id,
+        Job.key_source == "server",
+        Job.status != JobStatus.failed,
+        Job.created_at >= start,
+    )
+    used = int((await session.execute(stmt)).scalar_one())
+    return max(0, get_settings().server_video_monthly_cap - used)
+
+
 async def users_count(session: AsyncSession) -> int:
     stmt = select(func.count(User.id)).where(User.is_blocked.is_(False))
     return max(1, int((await session.execute(stmt)).scalar_one()))
@@ -68,7 +81,8 @@ async def server_left(
     pid = provider.info.id
     if pid in LIFETIME_PROVIDERS:
         limit = get_settings().server_free_videos_per_user
-        return max(0, limit - await _used(session, user_id, pid, None, exclude_job_id))
+        own = max(0, limit - await _used(session, user_id, pid, None, exclude_job_id))
+        return min(own, await monthly_left(session, pid))
     share = await daily_share(session, provider)
     if share is None:
         return None
