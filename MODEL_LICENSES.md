@@ -43,6 +43,9 @@ This is an engineering record, not legal advice.
 - **4K/8K video** has no free path. It uses Topaz upscaling on fal (720p → 4K = one 3x pass;
   8K = 4x + 1.5x passes). Topaz/fal output terms are not stated on the model page, so it is
   **opt-in** (`FAL_VIDEO_UPSCALE_ENABLED`). 8K output is H.265 and may not play in every browser.
+- **Not used:** MMAudio (video-to-audio). Code is MIT but the checkpoints are CC-BY-NC 4.0
+  (README of hkchengrex/MMAudio, read 2026-11-20), so outputs cannot be used commercially.
+  Its Modal script was removed; Modal clips are silent.
 - **Not used:** LTX-2 / LTX-2.x (native 4K video). Its *LTX-2 Community License* allows free
   commercial use only below USD 10M annual revenue and output ownership is not clearly stated, so
   it is conditional, not permissive.

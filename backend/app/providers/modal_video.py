@@ -69,7 +69,7 @@ class ModalVideoProvider(ImageProvider):
                 credit_cost=5,
                 max_count=1,
                 durations=[5, 3],
-                has_audio=True,
+                has_audio=False,  # Wan 2.2 TI2V-5B makes silent clips
             )
         ],
         notes="Runs on a Modal GPU. Each account gets a few free clips on the Aurevid key; "
