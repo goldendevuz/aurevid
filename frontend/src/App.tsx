@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import type { ReactNode } from "react";
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
-import { AuthProvider, useAuth } from "./auth";
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { AuthProvider, nextPath, useAuth } from "./auth";
 import Landing from "./pages/Landing";
 import Layout from "./components/Layout";
 import Admin from "./pages/Admin";
@@ -21,8 +21,9 @@ function RequireAuth({ children }: { children: ReactNode }) {
 
 function GuestOnly({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
+  const location = useLocation();
   if (loading) return null;
-  return user ? <Navigate to="/" replace /> : <>{children}</>;
+  return user ? <Navigate to={nextPath(location.state)} replace /> : <>{children}</>;
 }
 
 /** "/" is the studio for signed-in people and the landing page for everyone else. */

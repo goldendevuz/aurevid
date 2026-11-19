@@ -1,11 +1,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Marketing helper: product text/photo -> ready ad prompts for 9:16 (stories/reels) and 1:1 (feed).
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../auth";
 import { api } from "../api";
 import { Badge, Button, Card, ErrorText, inputClass, Label } from "../components/ui";
-import type { Asset, Provider } from "../types";
+import type { Asset, Job, ModelInfo, Provider } from "../types";
 
 interface Idea {
   id: string;
@@ -21,6 +22,28 @@ interface Result {
   ai_available: boolean;
   palette: { hex: string; name: string; share: number }[];
   ideas: Idea[];
+}
+
+/** Business presets: fill the form with a typical starting point (texts live in i18n). */
+const BUSINESS = ["shop", "cafe", "services", "event"] as const;
+const BUSINESS_TONE: Record<(typeof BUSINESS)[number], string> = {
+  shop: "friendly",
+  cafe: "playful",
+  services: "premium",
+  event: "bold",
+};
+
+type Choice = { p: Provider; m: ModelInfo };
+
+/** Default model for one-click ads: an available image model allowed for commercial use that
+ * supports the format, preferring free providers, then the lowest credit cost. */
+export function pickAdModel(providers: Provider[], aspect: string): Choice | undefined {
+  const all = providers
+    .filter((p) => p.available)
+    .flatMap((p) => p.models.map((m) => ({ p, m })))
+    .filter(({ m }) => m.kind === "image" && m.commercial_use === "yes" && m.aspect_ratios.includes(aspect));
+  const rank = ({ p, m }: Choice) => (p.tier === "free" ? 0 : 1_000_000) + m.credit_cost;
+  return all.sort((a, b) => rank(a) - rank(b))[0];
 }
 
 function CopyButton({ text }: { text: string }) {
@@ -48,6 +71,7 @@ function CopyButton({ text }: { text: string }) {
 export default function Marketing() {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const { reload } = useAuth();
   const [form, setForm] = useState({
     product: "",
     description: "",
@@ -58,17 +82,37 @@ export default function Marketing() {
   });
   const [photo, setPhoto] = useState<Asset | null>(null);
   const [useAi, setUseAi] = useState(false);
-  const [aiReady, setAiReady] = useState(false);
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const aiReady = providers.some((p) => p.id === "cloudflare" && p.available);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [result, setResult] = useState<Result | null>(null);
   const [edits, setEdits] = useState<Record<string, string>>({});
+  const [sent, setSent] = useState<Record<string, "busy" | "sent">>({});
+  const [confirmAll, setConfirmAll] = useState(false);
+  const [running, setRunning] = useState(false);
 
   useEffect(() => {
     api<Provider[]>("/api/providers")
-      .then((ps) => setAiReady(ps.some((p) => p.id === "cloudflare" && p.available)))
-      .catch(() => setAiReady(false));
+      .then(setProviders)
+      .catch(() => setProviders([]));
   }, []);
+
+  const models = useMemo(
+    () => ({ "9:16": pickAdModel(providers, "9:16"), "1:1": pickAdModel(providers, "1:1") }),
+    [providers],
+  );
+  const pending = (result?.ideas ?? []).filter((i) => sent[i.id] !== "sent" && models[i.format]);
+  const totalCost = pending.reduce((sum, i) => sum + (models[i.format]?.m.credit_cost ?? 0), 0);
+
+  const applyBusiness = (b: (typeof BUSINESS)[number]) =>
+    setForm({
+      ...form,
+      product: t(`marketing.biz_${b}_product`),
+      description: t(`marketing.biz_${b}_desc`),
+      audience: t(`marketing.biz_${b}_audience`),
+      tone: BUSINESS_TONE[b],
+    });
 
   const upload = async (file: File) => {
     setError(null);
@@ -92,6 +136,8 @@ export default function Marketing() {
       });
       setResult(r);
       setEdits({});
+      setSent({});
+      setConfirmAll(false);
     } catch (err) {
       setError(err);
     } finally {
@@ -100,6 +146,46 @@ export default function Marketing() {
   };
 
   const promptOf = (i: Idea) => edits[i.id] ?? i.prompt;
+  /** Create one image job for an idea with the default model; false if it failed (error shown). */
+  const createJob = async (i: Idea): Promise<boolean> => {
+    const choice = models[i.format];
+    if (!choice) return false;
+    setSent((s) => ({ ...s, [i.id]: "busy" }));
+    try {
+      await api<Job>("/api/jobs", {
+        method: "POST",
+        headers: { "Idempotency-Key": crypto.randomUUID() },
+        body: { prompt: promptOf(i), provider: choice.p.id, model: choice.m.id, aspect_ratio: i.format, size: "large", count: 1 },
+      });
+      setSent((s) => ({ ...s, [i.id]: "sent" }));
+      return true;
+    } catch (err) {
+      setError(err);
+      setSent((s) => {
+        const { [i.id]: _drop, ...rest } = s;
+        return rest;
+      });
+      return false;
+    }
+  };
+
+  const generateOne = async (i: Idea) => {
+    setError(null);
+    await createJob(i);
+    void reload();
+  };
+
+  const generateAll = async () => {
+    setConfirmAll(false);
+    setRunning(true);
+    setError(null);
+    for (const i of pending) {
+      if (!(await createJob(i))) break; // stop on the first error (credits, limits)
+    }
+    setRunning(false);
+    void reload();
+  };
+
   const openInStudio = (i: Idea, animate = false) =>
     navigate("/", {
       state: animate && photo
@@ -113,6 +199,21 @@ export default function Marketing() {
         <h1 className="text-2xl tracking-[0.02em]">{t("marketing.title")}</h1>
         <p className="mt-1 text-xs text-muted">{t("marketing.subtitle")}</p>
         <form onSubmit={generate} className="mt-4 space-y-3">
+          <div>
+            <Label>{t("marketing.business")}</Label>
+            <div className="flex flex-wrap gap-1.5">
+              {BUSINESS.map((b) => (
+                <button
+                  key={b}
+                  type="button"
+                  onClick={() => applyBusiness(b)}
+                  className="rounded-full border border-line bg-bg/60 px-3 py-1 text-xs font-medium text-ink transition hover:border-accent hover:text-accent"
+                >
+                  {t(`marketing.biz_${b}`)}
+                </button>
+              ))}
+            </div>
+          </div>
           <div>
             <Label htmlFor="mk-product">{t("marketing.product")}</Label>
             <input id="mk-product" required minLength={2} maxLength={80} value={form.product} onChange={(e) => setForm({ ...form, product: e.target.value })} placeholder={t("marketing.productPh")} className={inputClass} />
@@ -191,6 +292,30 @@ export default function Marketing() {
                 </span>
               ))}
             </div>
+            <Card className="flex flex-wrap items-center gap-3 p-4 text-sm">
+              {pending.length === 0 ? (
+                <span className="text-muted">
+                  {Object.values(sent).includes("sent") ? (
+                    <>{t("marketing.allSent")} <Link to="/" className="underline hover:text-accent">{t("marketing.seeResults")}</Link></>
+                  ) : (
+                    t("marketing.noModel")
+                  )}
+                </span>
+              ) : confirmAll ? (
+                <>
+                  <span className="flex-1">{t("marketing.confirmAll", { count: pending.length, credits: totalCost })}</span>
+                  <Button className="px-3 py-1.5 text-xs" onClick={() => void generateAll()}>{t("marketing.confirm")}</Button>
+                  <Button variant="ghost" className="px-3 py-1.5 text-xs" onClick={() => setConfirmAll(false)}>{t("marketing.cancel")}</Button>
+                </>
+              ) : (
+                <>
+                  <span className="flex-1 text-muted">{t("marketing.allCost", { count: pending.length, credits: totalCost })}</span>
+                  <Button className="px-3 py-1.5 text-xs" disabled={running} onClick={() => setConfirmAll(true)}>
+                    {running ? t("marketing.working") : t("marketing.generateAll")}
+                  </Button>
+                </>
+              )}
+            </Card>
             {(["9:16", "1:1"] as const).map((fmt) => (
               <section key={fmt}>
                 <h2 className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted">
@@ -210,8 +335,17 @@ export default function Marketing() {
                       </div>
                       <Label htmlFor={`p-${i.id}`}>{t("marketing.imagePrompt")}</Label>
                       <textarea id={`p-${i.id}`} rows={4} value={promptOf(i)} onChange={(e) => setEdits({ ...edits, [i.id]: e.target.value })} className={`${inputClass} text-xs`} />
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        <Button className="px-3 py-1.5 text-xs" onClick={() => openInStudio(i)}>{t("marketing.openStudio")}</Button>
+                      <div className="mt-2 flex flex-wrap items-center gap-2">
+                        {sent[i.id] === "sent" ? (
+                          <Link to="/" className="text-xs font-semibold text-accent hover:underline">✓ {t("marketing.sent")}</Link>
+                        ) : (
+                          models[fmt] && (
+                            <Button className="px-3 py-1.5 text-xs" disabled={running || sent[i.id] === "busy"} onClick={() => void generateOne(i)}>
+                              {sent[i.id] === "busy" ? t("marketing.working") : t("marketing.generateOne", { count: models[fmt]!.m.credit_cost })}
+                            </Button>
+                          )
+                        )}
+                        <Button variant="ghost" className="px-3 py-1.5 text-xs" onClick={() => openInStudio(i)}>{t("marketing.openStudio")}</Button>
                         {photo && fmt === "9:16" && (
                           <Button variant="ghost" className="px-3 py-1.5 text-xs" onClick={() => openInStudio(i, true)}>▶ {t("marketing.animatePhoto")}</Button>
                         )}
