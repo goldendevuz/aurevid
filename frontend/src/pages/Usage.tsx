@@ -2,6 +2,8 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api";
+import { useAuth } from "../auth";
+import { BuyCredits } from "../components/BuyCredits";
 import { Card, ErrorText, PageHeader } from "../components/ui";
 import type { Provider, Usage } from "../types";
 import { QuotaLine } from "./Studio";
@@ -11,9 +13,11 @@ export default function UsagePage() {
   const [usage, setUsage] = useState<Usage | null>(null);
   const [providers, setProviders] = useState<Provider[]>([]);
   const [error, setError] = useState<unknown>(null);
+  const { reload } = useAuth();
+  const loadUsage = () => api<Usage>("/api/credits").then(setUsage).catch(setError);
 
   useEffect(() => {
-    api<Usage>("/api/credits").then(setUsage).catch(setError);
+    void loadUsage();
     api<Provider[]>("/api/providers")
       .then((p) => setProviders(p.filter((x) => x.quota && x.available)))
       .catch(setError);
@@ -39,6 +43,12 @@ export default function UsagePage() {
             </p>
             <p className="mt-3 text-xs text-muted">{t("usage.note")}</p>
           </Card>
+          <BuyCredits
+            onPaid={() => {
+              void loadUsage();
+              void reload();
+            }}
+          />
           {providers.length > 0 && (
             <Card>
               <h2 className="text-sm font-semibold">{t("usage.limits")}</h2>

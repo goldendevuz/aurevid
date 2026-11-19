@@ -143,4 +143,25 @@ export interface JobFacets {
   statuses: Facet[];
   providers: Facet[];
   models: Facet[];
+export interface CreditPack {
+  id: string;
+  credits: number;
+  amount_uzs: number;
+}
+
+export interface CreditPacks {
+  enabled: boolean;
+  packs: CreditPack[];
+}
+
+export type PaymentStatus = "created" | "pending" | "paid" | "failed" | "expired";
+
+export interface PaymentOrder {
+  id: string;
+  pack_id: string;
+  credits: number;
+  amount_uzs: number;
+  status: PaymentStatus;
+  created_at: string;
+  paid_at: string | null;
 }

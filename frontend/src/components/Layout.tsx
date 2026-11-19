@@ -75,7 +75,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
     { to: "/", label: t("nav.studio"), icon: "sparkle", end: true },
     { to: "/marketing", label: t("nav.marketing"), icon: "megaphone" },
     { to: "/history", label: t("nav.history"), icon: "history" },
-    { to: "/usage", label: t("nav.usage"), icon: "coins" },
+    { to: "/credits", label: t("nav.usage"), icon: "coins" },
     { to: "/settings", label: t("nav.settings"), icon: "settings" },
     ...(user?.is_admin ? [{ to: "/admin", label: t("nav.admin"), icon: "shield" as IconName }] : []),
   ];
@@ -104,7 +104,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
           <div className="ml-auto flex items-center gap-2 sm:gap-3">
             {user && (
               <Link
-                to="/usage"
+                to="/credits"
                 className="glass flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold text-ink transition hover:border-accent/50"
               >
                 <Icon name="bolt" size={14} className="text-accent" />

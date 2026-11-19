@@ -208,7 +208,8 @@
     "limitsHelp": "Bepul servislar aniq limitlarni kamdan-kam e'lon qiladi. Aurevid ishlatilganini sanaydi va limit xatolaridan o'rganadi, shuning uchun bu raqamlar vaqt o'tishi bilan aniqlashadi.",
     "usedToday": "Bugun ishlatildi",
     "limit": "Kunlik limit",
-    "unknown": "noma'lum"
+    "unknown": "noma'lum",
+    "reason_purchase": "Kredit paketi"
   },
   "settings": {
     "title": "Sozlamalar",
@@ -323,7 +324,10 @@
     "job_not_finished": "Bu natija hali tayyorlanmoqda. Tugashini kuting.",
     "free_month_used": "Aurevid kalitidagi bu oylik bepul video limiti tugadi. Sozlamalarda o'z Modal kalitingizni qo'shing yoki keyingi oyda urinib ko'ring.",
     "recipe_step_unavailable": "Sizda rasmni jonlantira oladigan video model yo'q. Sozlamalarda kalit qo'shing.",
-    "recipe_step_failed": "Oldingi qadam rasm bermadi, shuning uchun retsept to'xtadi."
+    "recipe_step_failed": "Oldingi qadam rasm bermadi, shuning uchun retsept to'xtadi.",
+    "payments_disabled": "To'lovlar hozircha mavjud emas.",
+    "unknown_pack": "Bu kredit paketi endi mavjud emas.",
+    "payment_gateway_error": "To'lov xizmati javob bermadi. Birozdan keyin qayta urinib ko'ring."
   },
   "admin": {
     "title": "Admin panel",
@@ -477,7 +481,19 @@
     "status_done": "Tayyor",
     "status_failed": "Xato",
     "status_running": "Ishlayapti",
-    "status_queued": "Navbatda"
+    "status_queued": "Navbatda",
+    "tab_payments": "To'lovlar",
+    "revenueToday": "Bugungi tushum",
+    "revenue30d": "Tushum, 30 kun",
+    "revenueAll": "Tushum, jami",
+    "paidOrders": "{{count}} ta to'langan buyurtma",
+    "searchPayments": "Email yoki buyurtma id",
+    "pack": "Paket",
+    "paidAt": "To'langan",
+    "status_created": "Yaratildi",
+    "status_pending": "Kutilmoqda",
+    "status_paid": "To'langan",
+    "status_expired": "Muddati o'tdi"
   },
   "marketing": {
     "title": "Marketing yordamchisi",
@@ -634,5 +650,27 @@
     "stepWaiting": "Retsept: rasm tayyor bo'lgach, avtomatik jonlantiriladi.",
     "stepStarted": "Retsept: keyingi qadam (jonlantirish) boshlandi.",
     "stepFrom": "Retsept: oldingi rasmdan jonlantirildi."
+  },
+  "buy": {
+    "title": "Kredit sotib olish",
+    "subtitle": "Ixtiyoriy to'ldirish: xavfsiz to'lov sahifasida Payme, Click, Uzcard yoki Humo orqali so'mda to'lanadi.",
+    "credits": "{{count}} kredit",
+    "price": "{{price}} so'm",
+    "perCredit": "1 kredit {{price}} so'm",
+    "button": "Sotib olish",
+    "redirecting": "To'lov sahifasi ochilmoqda…",
+    "comingSoon": "To'lovlar tez orada ishga tushadi. Ungacha Aurevid'dan bepul foydalanishingiz mumkin.",
+    "checking": "To'lov tekshirilmoqda…",
+    "checkingHint": "Odatda bir necha soniya oladi. Sahifani ochiq qoldirishingiz mumkin.",
+    "paid": "To'lov qabul qilindi: balansingizga {{count}} kredit qo'shildi.",
+    "failed": "To'lov amalga oshmadi. Hech qanday kredit yechilmadi.",
+    "expired": "Bu to'lov o'z vaqtida yakunlanmadi.",
+    "stillPending": "Tasdiq hali kelmadi. Agar to'lagan bo'lsangiz, kreditlar bir necha daqiqada avtomatik qo'shiladi.",
+    "orders": "So'nggi xaridlar",
+    "status_created": "Yaratildi",
+    "status_pending": "To'lov kutilmoqda",
+    "status_paid": "To'langan",
+    "status_failed": "Muvaffaqiyatsiz",
+    "status_expired": "Muddati o'tdi"
   }
 }
