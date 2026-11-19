@@ -10,7 +10,7 @@ Thanks for helping! A few rules keep the project original, legal and safe.
    `THIRD_PARTY_LICENSES.md`. Never take code from repositories without a LICENSE file.
 2. **Permissive dependencies only** (MIT, BSD, Apache-2.0, ISC, ...). Run `scripts/licenses.sh` and
    commit the updated `THIRD_PARTY_LICENSES.md`. Ask in the PR before adding anything copyleft.
-3. **New models/providers:** record licence and terms in `MODEL_LICENSES.md` first. Unclear → off by default.
+3. **New models/providers:** record licence and terms in `MODEL_LICENSES.md` first. Unclear → off by default (BYOK-only exception: see MODEL_LICENSES.md, rule 3).
 4. **No secrets in git.** Install hooks: `pip install pre-commit && pre-commit install` (runs gitleaks).
 5. **SPDX header** on every source file: `SPDX-License-Identifier: AGPL-3.0-or-later`.
 

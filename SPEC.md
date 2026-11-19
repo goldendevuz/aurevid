@@ -25,7 +25,7 @@ rests on the owner's brief, not on the reference product's features.
 | # | Requirement | Source | Status |
 |---|---|---|---|
 | 2.1 | One prompt box; user picks a generation model from a list of providers | user | done |
-| 2.2 | Image first, video later | user | done: image + video (text-to-video) |
+| 2.2 | Image first, video later | user | done: image + video (text-to-video, image-to-video) |
 | 2.2a | Video settings: length (model-specific seconds), aspect ratio, size → resolution | assumption | done |
 | 2.3 | Settings: aspect ratio, size, number of outputs | user | done (5 ratios, 3 sizes, 1-4) |
 | 2.3a | Sharp output up to 4K-8K for images and videos | user | images: done (free local AI upscaler); video: done via Topaz on fal, opt-in, paid |
@@ -36,6 +36,8 @@ rests on the owner's brief, not on the reference product's features.
 | 2.7 | Jobs are asynchronous: queued → running → done/failed, live status via SSE with polling fallback | user | done |
 | 2.8 | Failed or partial generations refund unused credits automatically | assumption | done |
 | 2.9 | Reuse a past prompt in one click | assumption | done |
+| 2.10 | Landing page for guests at `/`; the studio opens after login | assumption | done |
+| 2.11 | Gallery detail dialog with Remix (reuse a result's prompt and settings) | assumption | done |
 
 ## 3. Camera / motion presets
 
@@ -50,7 +52,7 @@ rests on the owner's brief, not on the reference product's features.
 
 | # | Requirement | Source | Status |
 |---|---|---|---|
-| 4.1 | Marketing helper: product image or text → short ad prompt set for 9:16 and 1:1 | user | not built; upload endpoint ready |
+| 4.1 | Marketing helper: product image or text → short ad prompt set for 9:16 and 1:1 | user | done: `/marketing` page, `POST /api/marketing/ideas`. Free offline templates (en/uz/ru) plus a colour palette from the photo; optional AI polish via Cloudflare Workers AI (Mistral Small 3.1) with schema-constrained output, moderation and template fallback |
 | 4.2 | Image-to-video as an optional provider adapter ("Animate" on any own image) | user | done (fal Wan 2.2 I2V; demo) |
 | 4.3 | Payments (Payme/Click), Telegram bot, desktop (Tauri), PWA, browser extension | user | not built; one API for all clients |
 | 4.4 | Voice generation | observed (page title only) | unknown, out of scope |
@@ -76,7 +78,7 @@ rests on the owner's brief, not on the reference product's features.
 |---|---|---|---|
 | 6.1 | Terms / Acceptable Use page; user responsible for prompts and uploads | user | done (draft, en/uz/ru) |
 | 6.2 | Prohibited: infringing, deceptive, sexual and minor-related content | user | done (terms + prompt filter) |
-| 6.3 | Report button on results; admin can block users and remove assets | user | done (API; no admin UI yet) |
+| 6.3 | Report button on results; admin can block users and remove assets | user | done (report button, admin moderation tab in `/admin`) |
 | 6.4 | Image-output moderation | assumption | not built (known gap) |
 
 ## 7. Providers (MVP)
@@ -85,6 +87,8 @@ rests on the owner's brief, not on the reference product's features.
 |---|---|---|---|---|
 | Cloudflare Workers AI, FLUX.1 schnell | free (daily allocation) | server or BYOK | on | user |
 | Pollinations | free (anonymous) | none | **off**, terms unclear | user (fallback) / assumption (off) |
-| fal.ai (FLUX image, Wan 2.2 video + image-to-video) | paid | BYOK only | off | user |
+| fal.ai (FLUX image, Wan 2.2 video + image-to-video, Kling 2.6, Topaz 4K/8K video) | paid | BYOK only | on (owner decision 2026-11-17); Kling and Topaz: commercial-use status unclear, BYOK exception | user |
+| Modal (own Wan 2.2 TI2V-5B on the user's Modal GPU, `deploy/modal/`) | paid from the user's Modal credit | BYOK only | on | assumption |
+| Pollinations video (Wan 2.2 fast, Seedance 2.0 mini) | paid, user's own Pollinations key | BYOK only | on, commercial-use status unclear (BYOK exception, MODEL_LICENSES.md rule 3) | assumption |
 | Replicate | paid | BYOK | not built | user |
 | Offline demo | free | none | dev only | assumption |

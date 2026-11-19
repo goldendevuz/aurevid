@@ -50,7 +50,14 @@ and layouts were designed for Aurevid and do not copy any other product's artwor
   toggles, labelled icon-only buttons, `prefers-reduced-motion` respected.
 - **Charts:** series colours stay a CVD-safe gold/blue pair, separate from the brand gradient.
 
-## Neon Coast (v3, current)
+## Neon Coast (v3, current, temporary)
+
+> **Status:** a temporary production theme that follows the current synthwave/coastal-night trend.
+> A full redesign may replace it next month. Earlier directions are archived in git and can be
+> restored or mixed: **Solar Darkroom** (black + yellow-lime accent `#d4ff3a`, commit `67c5c8c`,
+> PR #20) and **Mono** (black stage, grey layers, white pill actions, Geist; commit `f06e03d`,
+> PR #22, branch `feat/mono-redesign`). Keep new pages on the shared tokens (`accent`, `aurora`,
+> `glass`, `btn-aurora`) so a theme swap stays a CSS change, and keep scenery in `Scenery.tsx` only.
 
 A night sky over a sunset coast, in the spirit of 80s synthwave posters. All artwork (sun, palms,
 skyline, grid) is original SVG/CSS drawn for Aurevid; no game, film or brand artwork is used.
