@@ -90,6 +90,8 @@ export interface Job {
     duration?: number | null;
     image_asset_id?: string | null;
     upscale?: "4k" | "8k" | null;
+    seed?: number | null;
+    source_asset_id?: string | null;
   };
   count: number;
   cost: number;
@@ -116,4 +118,19 @@ export interface ProviderKeyStatus {
   provider: string;
   configured: boolean;
   updated_at: string | null;
+}
+
+export interface Facet {
+  value: string;
+  count: number;
+  label?: string | null;
+  provider?: string | null;
+}
+
+export interface JobFacets {
+  total: number;
+  kinds: Facet[];
+  statuses: Facet[];
+  providers: Facet[];
+  models: Facet[];
 }

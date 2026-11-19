@@ -152,14 +152,45 @@
     "remix": "Remix",
     "copied": "Copied",
     "close": "Close",
-    "prompt": "Prompt"
+    "prompt": "Prompt",
+    "retry": "Retry",
+    "retrying": "Retrying…",
+    "deleteJobConfirm": "Delete this generation and all its files? This cannot be undone.",
+    "noFiles": "All files of this generation were deleted."
   },
   "history": {
     "title": "History",
     "all": "All",
     "favorites": "Favourites",
     "empty": "Nothing here yet.",
-    "loadMore": "Load more"
+    "loadMore": "Load more",
+    "total": "Generations in total: {{count}}",
+    "filters": "Filters",
+    "search": "Search",
+    "searchPlaceholder": "Search your prompts…",
+    "period": "Period",
+    "period_all": "Any time",
+    "period_today": "Today",
+    "period_7d": "Last 7 days",
+    "period_30d": "Last 30 days",
+    "kind": "Type",
+    "anyKind": "All types",
+    "kind_image": "Images",
+    "kind_video": "Videos",
+    "kind_upscale": "Upscales",
+    "status": "Status",
+    "anyStatus": "Any status",
+    "status_done": "Done",
+    "status_failed": "Failed",
+    "status_active": "In progress",
+    "provider": "Service",
+    "anyProvider": "All services",
+    "model": "Model",
+    "anyModel": "All models",
+    "hideFailed": "Hide failed",
+    "clearFilters": "Clear filters",
+    "noMatch": "Nothing matches these filters.",
+    "localUpscaler": "Built-in upscaler"
   },
   "usage": {
     "title": "Credits & usage",
@@ -287,7 +318,8 @@
     "cannot_target_self": "You can't do this to your own account.",
     "job_not_queued": "Only queued jobs can be cancelled.",
     "job_not_failed": "Only failed jobs can be retried.",
-    "free_share_used": "You have used your free share on the Aurevid key. Add your own key in Settings or try again tomorrow."
+    "free_share_used": "You have used your free share on the Aurevid key. Add your own key in Settings or try again tomorrow.",
+    "job_not_finished": "This generation is still running. Wait until it finishes."
   },
   "admin": {
     "title": "Admin panel",
