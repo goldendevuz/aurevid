@@ -24,8 +24,8 @@ Avval bepul provayderlardan foydalanadi, foydalanuvchi xohlasa o'z API kalitini 
   server to'lsa 429/503, navbatdagi o'rin va taxminiy vaqt ko'rinadi.
 - Admin panel (`/admin`): trendlar, foydalanuvchilar, joblar, voronka, retention, kogortalar, moderatsiya,
   tizim holati, provayder limitlari, e'lonlar, audit jurnali, CSV eksport.
-- Marketing yordamchisi: mahsulot rasmi yoki matnidan 9:16 va 1:1 reklama promptlari. Kod bor
-  (`backend/app/routers/marketing.py`), lekin SPEC hali "qurilmagan" deb yozilgan. SPEC yangilanishi kerak.
+- Marketing yordamchisi (`/marketing`): mahsulot rasmi yoki matnidan 9:16 va 1:1 reklama promptlari,
+  bepul offline shablonlar va ixtiyoriy AI sayqal (SPEC 4.1).
 - Interfeys: o'zbek, rus, ingliz.
 
 ## 3. Nimaga kerak?
@@ -122,6 +122,8 @@ kreditlar bor. Pul ishlash modeli hali belgilanmagan. Bu ochiq savol.
 | Fayllar shifrlanmagan | Lokal diskdagi rasmlar shifrlanmagan: shifrlangan volume yoki R2 SSE |
 | Nom | Google "Aurevid"ni "ayurvedic"ga tuzatishi mumkin. Sarlavhalarda "AI studio" bilan birga ishlatiladi |
 | Mualliflik huquqi | GTA VI namunalari huquqiy sabab bilan olib tashlangan. Dizaynda faqat kayfiyat olinadi, logo, shrift va nom olinmaydi |
+| Vaqtinchalik dizayn | Neon Coast (quyosh, palmalar, grid) trenddagi kayfiyat uchun prod'ga qo'yilgan vaqtinchalik dizayn; keyingi oy redesign bo'lishi mumkin (`docs/design.md`) |
+| "Unclear" modellar yoqilgan | Pollinations video, Kling, Topaz faqat foydalanuvchi kaliti bilan ishlagani uchun egasining qarori bilan yoqilgan (`MODEL_LICENSES.md`, 3-qoida istisnosi); pullik ishga tushirishdan oldin qayta tekshirish kerak |
 
 ## Xulosa
 
