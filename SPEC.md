@@ -87,8 +87,8 @@ rests on the owner's brief, not on the reference product's features.
 |---|---|---|---|---|
 | Cloudflare Workers AI, FLUX.1 schnell | free (daily allocation) | server or BYOK | on | user |
 | Pollinations | free (anonymous) | none | **off**, terms unclear | user (fallback) / assumption (off) |
-| fal.ai (FLUX image, Wan 2.2 video + image-to-video) | paid | BYOK only | off | user |
+| fal.ai (FLUX image, Wan 2.2 video + image-to-video, Kling 2.6, Topaz 4K/8K video) | paid | BYOK only | on (owner decision 2026-11-17); Kling and Topaz: commercial-use status unclear, BYOK exception | user |
 | Modal (own Wan 2.2 TI2V-5B on the user's Modal GPU, `deploy/modal/`) | paid from the user's Modal credit | BYOK only | on | assumption |
-| Pollinations video (Wan 2.2 fast, Seedance 2.0 mini) | paid, user's own Pollinations key | BYOK only | on, commercial-use status unclear | assumption |
+| Pollinations video (Wan 2.2 fast, Seedance 2.0 mini) | paid, user's own Pollinations key | BYOK only | on, commercial-use status unclear (BYOK exception, MODEL_LICENSES.md rule 3) | assumption |
 | Replicate | paid | BYOK | not built | user |
 | Offline demo | free | none | dev only | assumption |

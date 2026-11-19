@@ -42,13 +42,17 @@ Uzbek, Russian.
 | Provider | Free? | Needs | Enabled by default |
 |---|---|---|---|
 | Cloudflare Workers AI (FLUX.1 schnell, Apache-2.0) | Yes, daily free allocation | Cloudflare account ID + API token (server-wide or per user) | Yes |
-| fal.ai (FLUX.1 schnell image; Wan 2.2 video and image-to-video, Apache-2.0) | **Paid** (user's own key) | fal.ai key | No |
+| fal.ai (FLUX.1 schnell image; Wan 2.2 video and image-to-video, Apache-2.0; Kling 2.6 with audio; Topaz 4K/8K video) | **Paid** (user's own key) | fal.ai key | Yes (BYOK only) |
+| Modal (your own Wan 2.2 TI2V-5B on a Modal GPU, Apache-2.0; see `deploy/modal/`) | **Paid** from your Modal credit | Modal token | Yes (BYOK only) |
+| Pollinations video (Wan 2.2 fast, Seedance 2.0 mini) | **Paid** (user's own Pollinations key) | Pollinations key | Yes (BYOK only), commercial use unclear |
 | Pollinations | Yes, anonymous | nothing | **No**: its terms could not be verified, see [MODEL_LICENSES.md](MODEL_LICENSES.md) |
 | Offline demo (image + short video clip) | Yes | nothing | Dev only |
 
 > **Video has no free provider.** We found no hosted video API with a verifiable free tier (see
-> MODEL_LICENSES.md). Video uses fal.ai with each user's own key (about $0.15 per 5 s clip for
-> Wan 2.2 5B at the time of writing); development uses the offline demo clip.
+> MODEL_LICENSES.md). Video uses the user's own key on fal.ai (about $0.15 per 5 s clip for
+> Wan 2.2 5B at the time of writing), Modal or Pollinations; development uses the offline demo clip.
+> Models marked "commercial use unclear" stay available because they only run on the user's own key
+> (see MODEL_LICENSES.md, rule 3).
 
 ## Quick start (Docker, one command)
 
