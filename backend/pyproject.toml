@@ -43,6 +43,7 @@ ignore = ["S101", "B008"]
 "alembic/versions/*" = ["E501"]
 "app/services/marketing.py" = ["E501"]  # template copy is data
 "tests/test_marketing.py" = ["E501"]
+"tests/test_payments.py" = ["E501"]  # gateway response tables
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

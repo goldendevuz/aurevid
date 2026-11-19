@@ -4,12 +4,33 @@
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+class CreditPack(BaseModel):
+    """An optional credit top-up sold in UZS (see services/payments)."""
+
+    id: str = Field(pattern=r"^[a-z0-9_-]{1,32}$")
+    credits: int = Field(gt=0, le=1_000_000)
+    amount_uzs: int = Field(ge=1000, le=100_000_000)  # inPAY minimum is 1 000 so'm
+
+
+# PLACEHOLDER prices: the owner must confirm them before payments are switched on.
+DEFAULT_CREDIT_PACKS = [
+    CreditPack(id="small", credits=100, amount_uzs=15_000),
+    CreditPack(id="medium", credits=300, amount_uzs=39_000),
+    CreditPack(id="large", credits=1000, amount_uzs=119_000),
+]
+
+
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+        hide_input_in_errors=True,  # a config error must never print secrets from the env
+    )
 
     app_env: Literal["dev", "test", "prod"] = "dev"
     database_url: str = "sqlite+aiosqlite:///./data/aurevid.db"
@@ -25,6 +46,8 @@ class Settings(BaseSettings):
     modal_submit_url: str = Field(default="", repr=False)
     modal_token_id: str = Field(default="", repr=False)
     modal_token_secret: str = Field(default="", repr=False)
+    inpay_merchant_id: str = Field(default="", repr=False)
+    inpay_merchant_token: str = Field(default="", repr=False)
 
     # --- cookies / auth ---
     cookie_secure: bool = True
@@ -71,6 +94,12 @@ class Settings(BaseSettings):
     upscaler_timeout_seconds: int = 300  # hard stop per image (checked between tiles)
     upscaler_threads: int = 0  # 0 = all cores but one (keeps the API responsive)
 
+    # --- payments (optional credit packs; the product stays free to use) ---
+    payments_provider: Literal["none", "fake", "inpay"] = "none"  # fake: dev/test only
+    inpay_base_url: str = "https://inpay.uz/api/v1"
+    public_base_url: str = ""  # e.g. https://aurevid.example; builds callback/return URLs
+    credit_packs: list[CreditPack] = Field(default_factory=lambda: list(DEFAULT_CREDIT_PACKS))
+
     # --- worker ---
     run_worker_in_api: bool = True
     # --- queue / resource control ---
@@ -90,6 +119,13 @@ class Settings(BaseSettings):
             raise ValueError("CORS wildcard '*' is not allowed; list explicit origins")
         return v
 
+    @field_validator("credit_packs")
+    @classmethod
+    def _unique_packs(cls, v: list[CreditPack]) -> list[CreditPack]:
+        if len({p.id for p in v}) != len(v):
+            raise ValueError("CREDIT_PACKS ids must be unique")
+        return v
+
     @model_validator(mode="after")
     def _prod_requirements(self) -> "Settings":
         if self.app_env == "prod":
@@ -103,7 +139,19 @@ class Settings(BaseSettings):
                 raise ValueError("MOCK_PROVIDER_ENABLED must be false in prod")
             if self.allow_unclear_models:
                 raise ValueError("ALLOW_UNCLEAR_MODELS must be false in prod (commercial-use rule)")
-        elif not self.jwt_secret:
+            if self.payments_provider == "fake":
+                raise ValueError("PAYMENTS_PROVIDER=fake is not allowed in prod")
+            if self.payments_provider != "none" and not self.public_base_url.startswith("https://"):
+                raise ValueError("PUBLIC_BASE_URL must be an https:// URL in prod")
+        if self.payments_provider == "inpay":
+            if not (self.inpay_merchant_id and self.inpay_merchant_token and self.public_base_url):
+                raise ValueError(
+                    "PAYMENTS_PROVIDER=inpay needs INPAY_MERCHANT_ID, INPAY_MERCHANT_TOKEN "
+                    "and PUBLIC_BASE_URL"
+                )
+            if not self.inpay_base_url.startswith("https://"):
+                raise ValueError("INPAY_BASE_URL must be https")
+        if self.app_env != "prod" and not self.jwt_secret:
             # Dev/test convenience only: an ephemeral secret, sessions reset on restart.
             import secrets
 

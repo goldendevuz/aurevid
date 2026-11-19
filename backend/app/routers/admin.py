@@ -28,6 +28,8 @@ from app.models import (
     Job,
     JobStatus,
     ModerationEvent,
+    PaymentOrder,
+    PaymentStatus,
     ProviderKey,
     ProviderQuota,
     RefreshToken,
@@ -409,6 +411,78 @@ async def change_credits(user_id: str, body: CreditsIn, admin: AdminUser, sessio
     await _audit(session, admin, f"credits.{body.mode}", user_id, amount=body.amount)
     await session.commit()
     return {"balance": entry.balance_after}
+
+
+# --- payments (read-only) ---------------------------------------------------------------------
+
+
+@router.get("/payments")
+async def list_payments(
+    _: AdminUser,
+    session: Session,
+    status_filter: PaymentStatus | None = Query(None, alias="status"),
+    q: str = Query("", max_length=100),
+    page: int = Query(1, ge=1, le=10_000),
+    limit: int = Query(25, ge=1, le=100),
+):
+    """Payment orders + revenue totals (paid orders only). No changes possible from here."""
+    stmt = select(PaymentOrder, User.email).outerjoin(User, User.id == PaymentOrder.user_id)
+    if status_filter is not None:
+        stmt = stmt.where(PaymentOrder.status == status_filter)
+    if q.strip():
+        stmt = stmt.where(or_(User.email.like(_like(q), escape="\\"), PaymentOrder.id == q.strip()))
+    total = (await session.execute(select(func.count()).select_from(stmt.subquery()))).scalar_one()
+    rows = await session.execute(
+        stmt.order_by(PaymentOrder.created_at.desc()).limit(limit).offset((page - 1) * limit)
+    )
+    items = [
+        {
+            "id": o.id,
+            "user_email": email,
+            "pack_id": o.pack_id,
+            "credits": o.credits,
+            "amount_uzs": o.amount_uzs,
+            "provider": o.provider,
+            "provider_order_id": o.provider_order_id,
+            "provider_txn_id": o.provider_txn_id,
+            "status": o.status,
+            "created_at": as_utc(o.created_at),
+            "paid_at": as_utc(o.paid_at) if o.paid_at else None,
+        }
+        for o, email in rows.all()
+    ]
+
+    async def revenue(since: datetime | None) -> dict:
+        r = select(
+            func.count(PaymentOrder.id),
+            func.coalesce(func.sum(PaymentOrder.amount_uzs), 0),
+            func.coalesce(func.sum(PaymentOrder.credits), 0),
+        ).where(PaymentOrder.status == PaymentStatus.paid)
+        if since is not None:
+            r = r.where(PaymentOrder.paid_at >= since)
+        n, amount, credits_ = (await session.execute(r)).one()
+        return {"orders": n, "amount_uzs": int(amount), "credits": int(credits_)}
+
+    by_status = dict(
+        (
+            await session.execute(
+                select(PaymentOrder.status, func.count(PaymentOrder.id)).group_by(
+                    PaymentOrder.status
+                )
+            )
+        ).all()
+    )
+    return {
+        "total": total,
+        "page": page,
+        "items": items,
+        "revenue": {
+            "today": await revenue(_since("today")),
+            "30d": await revenue(_since("30d")),
+            "all": await revenue(None),
+        },
+        "by_status": by_status,
+    }
 
 
 # --- jobs --------------------------------------------------------------------------------------

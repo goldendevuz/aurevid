@@ -42,7 +42,7 @@ async def fresh_db(tmp_path):
         await conn.run_sync(db.Base.metadata.create_all)
     reset_limits()
     s = get_settings()
-    saved = s.model_dump()
+    saved = {k: getattr(s, k) for k in type(s).model_fields}  # keeps nested models as models
     s.asset_dir = str(tmp_path / "assets")
     yield
     for k, v in saved.items():

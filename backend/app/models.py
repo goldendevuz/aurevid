@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""ORM models: users, refresh_tokens, jobs, assets, credits_ledger, provider_keys, reports."""
+"""ORM models: users, refresh_tokens, jobs, assets, credits_ledger, provider_keys, reports,
+payment_orders."""
 
 import enum
 import uuid
@@ -255,3 +256,44 @@ class AdminAudit(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, index=True
     )
+
+
+class PaymentStatus(enum.StrEnum):
+    created = "created"  # our row exists, gateway order not created yet
+    pending = "pending"  # waiting for the user to pay on the hosted checkout
+    paid = "paid"
+    failed = "failed"
+    expired = "expired"
+
+
+class PaymentOrder(Base):
+    """An optional credit-pack purchase. Credits are granted only after a server-side check.
+
+    Kept after account deletion (user_id is set to NULL): it holds no personal data and is
+    needed for accounting.
+    """
+
+    __tablename__ = "payment_orders"
+    __table_args__ = (
+        CheckConstraint("credits > 0", name="ck_payment_orders_credits_pos"),
+        CheckConstraint("amount_uzs > 0", name="ck_payment_orders_amount_pos"),
+        UniqueConstraint("provider_order_id", name="uq_payment_orders_provider_order_id"),
+    )
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=new_id)
+    user_id: Mapped[str | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    pack_id: Mapped[str] = mapped_column(String(32))
+    credits: Mapped[int] = mapped_column(Integer)
+    amount_uzs: Mapped[int] = mapped_column(Integer)
+    provider: Mapped[str] = mapped_column(String(16))
+    provider_order_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    pay_url: Mapped[str | None] = mapped_column(String(1024), nullable=True)
+    status: Mapped[str] = mapped_column(String(16), default=PaymentStatus.created, index=True)
+    provider_txn_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, index=True
+    )
+    paid_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    last_checked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
