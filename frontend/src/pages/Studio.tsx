@@ -432,6 +432,14 @@ export default function Studio() {
           <span className="aurora-text block pb-1">{t("studio.heroAccent")}</span>
         </h1>
         <p className="rise mx-auto mt-5 max-w-xl text-sm text-muted [--i:2] sm:text-base">{t("studio.heroSub")}</p>
+        <Link
+          to="/marketing"
+          className="rise mt-4 inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-4 py-1.5 text-xs font-semibold text-accent transition hover:border-accent hover:bg-accent/20 [--i:2]"
+        >
+          <Icon name="megaphone" size={14} />
+          {t("studio.makeAd")}
+          <span aria-hidden>→</span>
+        </Link>
       </section>
 
       <section className="mx-auto max-w-4xl" aria-label={t("studio.composer")}>

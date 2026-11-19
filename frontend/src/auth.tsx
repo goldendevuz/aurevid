@@ -54,3 +54,9 @@ export function useAuth(): AuthState {
   if (!ctx) throw new Error("useAuth outside AuthProvider");
   return ctx;
 }
+
+/** Where to go after sign-in: an internal path from router state (`{ next: "/marketing" }`), else "/". */
+export function nextPath(state: unknown): string {
+  const next = (state as { next?: unknown } | null)?.next;
+  return typeof next === "string" && /^\/(?![/\\])/.test(next) ? next : "/";
+}

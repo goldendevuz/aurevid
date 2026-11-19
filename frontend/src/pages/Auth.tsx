@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { api } from "../api";
-import { useAuth } from "../auth";
+import { nextPath, useAuth } from "../auth";
 import { Footer, LanguageSelect, Logo } from "../components/Layout";
 import Turnstile, { turnstileEnabled } from "../components/Turnstile";
 import { Icon, type IconName } from "../components/icons";
@@ -14,6 +14,7 @@ export default function AuthPage({ mode }: { mode: "login" | "register" }) {
   const { t, i18n } = useTranslation();
   const { setUser } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [accept, setAccept] = useState(false);
@@ -32,7 +33,8 @@ export default function AuthPage({ mode }: { mode: "login" | "register" }) {
         : { email, password, turnstile_token: captcha };
       const user = await api<User>(`/api/auth/${mode}`, { method: "POST", body });
       setUser(user);
-      navigate("/");
+      const prefill = (location.state as { prefill?: unknown } | null)?.prefill;
+      navigate(nextPath(location.state), prefill ? { state: { prefill } } : undefined);
     } catch (err) {
       setError(err);
     } finally {
@@ -132,7 +134,7 @@ export default function AuthPage({ mode }: { mode: "login" | "register" }) {
             </form>
             <p className="mt-6 text-center text-xs text-muted">
               {register ? t("auth.haveAccount") : t("auth.noAccount")}{" "}
-              <Link to={register ? "/login" : "/register"} className="font-semibold text-accent hover:underline">
+              <Link to={register ? "/login" : "/register"} state={location.state} className="font-semibold text-accent hover:underline">
                 {register ? t("nav.login") : t("nav.register")}
               </Link>
             </p>

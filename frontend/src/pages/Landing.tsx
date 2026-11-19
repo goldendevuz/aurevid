@@ -97,6 +97,13 @@ const FEATURES: { key: string; icon: IconName }[] = [
 
 const STEPS = ["s1", "s2", "s3"] as const;
 
+/** Marketing flow shown on the landing page: input -> ready ad prompts -> generate. */
+const AD_FLOW: { key: string; icon: IconName }[] = [
+  { key: "ad_step1", icon: "camera" },
+  { key: "ad_step2", icon: "megaphone" },
+  { key: "ad_step3", icon: "sparkle" },
+];
+
 export default function Landing() {
   const { t } = useTranslation();
   const [filter, setFilter] = useState<"all" | "video" | "image">("all");
@@ -112,7 +119,7 @@ export default function Landing() {
         <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3 sm:px-6">
           <Logo />
           <nav aria-label="Main" className="glass ml-4 hidden gap-0.5 rounded-full p-1 md:flex">
-            {(["showcase", "features", "how"] as const).map((id) => (
+            {(["showcase", "marketing", "features", "how"] as const).map((id) => (
               <a
                 key={id}
                 href={`#${id}`}
@@ -332,6 +339,49 @@ export default function Landing() {
                 </div>
               </article>
             ))}
+          </div>
+        </section>
+
+        {/* MARKETING FLOW SECTION */}
+        <section id="marketing" className="mx-auto max-w-7xl scroll-mt-20 px-4 py-16 sm:px-6">
+          <div className="glass ring-aurora spot rounded-[32px] px-5 py-10 sm:px-10">
+            <div className="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent/10 px-3 py-1 text-xs font-semibold text-accent">
+              <Icon name="megaphone" size={13} />
+              {t("landing.adEyebrow")}
+            </div>
+            <h2 className="mt-3 max-w-3xl text-3xl sm:text-5xl">{t("landing.adTitle")}</h2>
+            <p className="mt-2 max-w-2xl text-sm text-muted sm:text-base">{t("landing.adSub")}</p>
+            <ol className="mt-8 grid items-stretch gap-4 md:grid-cols-3">
+              {AD_FLOW.map((s, i) => (
+                <li key={s.key} className="relative rounded-[var(--radius-card)] border border-white/10 bg-bg/50 p-5">
+                  <div className="flex items-center gap-3">
+                    <span className="grid h-10 w-10 place-items-center rounded-2xl border border-white/10 bg-accent/10 text-accent">
+                      <Icon name={s.icon} size={18} />
+                    </span>
+                    <span className="aurora-text font-display text-3xl">{i + 1}</span>
+                  </div>
+                  <h3 className="mt-3 text-lg tracking-[0.02em]">{t(`landing.${s.key}`)}</h3>
+                  <p className="mt-1 text-sm text-muted">{t(`landing.${s.key}_desc`)}</p>
+                  {i === 1 && (
+                    <div className="mt-3 flex items-end gap-2 text-[10px] font-mono text-muted" aria-hidden>
+                      <span className="grid h-12 w-7 place-items-center rounded border border-white/20">9:16</span>
+                      <span className="grid h-9 w-9 place-items-center rounded border border-white/20">1:1</span>
+                    </div>
+                  )}
+                  {i < AD_FLOW.length - 1 && (
+                    <span className="absolute -right-3 top-1/2 hidden -translate-y-1/2 text-accent md:block" aria-hidden>→</span>
+                  )}
+                </li>
+              ))}
+            </ol>
+            <Link
+              to="/register"
+              state={{ next: "/marketing" }}
+              className="btn-aurora mt-8 inline-flex items-center gap-2 rounded-2xl px-6 py-3.5 text-base font-semibold shadow-lg shadow-accent/20"
+            >
+              <Icon name="megaphone" size={18} />
+              {t("landing.adCta")}
+            </Link>
           </div>
         </section>
 

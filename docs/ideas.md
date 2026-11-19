@@ -14,7 +14,7 @@ P3 = keyinroq.
 | # | G'oya | Nimaga kerak | Qayerdan | Ustuvorlik | Hajm | Eslatma |
 |---|---|---|---|---|---|---|
 | 1 | **Payme/Click orqali kredit paketlari** | Raqiblar $8-15/oy va xorijiy karta talab qiladi; mahalliy to'lov eng katta bo'shliq | Raqiblar tahlili | P1 | L | Webhook HMAC tayyor (`webhooks.py`) |
-| 2 | **Marketing yordamchisini asosiy funksiyaga aylantirish** | Higgsfield foydalanuvchilarining ~85% i marketing qiladi | Higgsfield | P1 | M | Landing va Studio'da birinchi o'ringa chiqarish |
+| 2 | ~~**Marketing yordamchisini asosiy funksiyaga aylantirish**~~ **Bajarildi** | Higgsfield foydalanuvchilarining ~85% i marketing qiladi | Higgsfield | P1 | M | Bajarildi: Landing'da reklama bo'limi, Studio'da "Reklama tayyorlash", biznes shablonlari, bir bosishda yaratish va "Hammasini yaratish" (narx oldindan ko'rsatiladi) |
 | 3 | **Telegram bot** | O'zbekistonda asosiy kanal; tarqatish | Reja (SPEC 4.3) | P1 | L | Token asosidagi kirish kerak (`architecture.md`) |
 | 4 | **Bitta prompt, bir nechta model, yonma-yon** | Foydalanuvchi qaysi model yaxshiroq ekanini bir bosishda ko'radi | AI SDK Image Generator | P2 | M | **Bajarildi:** Studio'dagi "Modellarni solishtirish" (2-4 model, har biriga alohida job, umumiy narx oldindan) |
 | 5 | **Natijalarga avtomatik tavsif (alt text)** | Accessibility, galereya qidiruvi, mahsulot uchun reklama matni | AI Alt Text Generator, Vectr | P2 | S | Cloudflare Workers AI'dagi rasm→matn modeli; litsenziyani tekshirish |
