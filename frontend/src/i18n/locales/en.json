@@ -121,7 +121,8 @@
     "audioInsert": "Insert an example",
     "uploadStart": "Upload a start image",
     "uploadHint": "PNG, JPEG or WEBP. Click or drop a file here.",
-    "uploading": "Uploading…"
+    "uploading": "Uploading…",
+    "freeLeft": "{{count}} free left"
   },
   "job": {
     "queued": "Queued",
@@ -285,7 +286,8 @@
     "queue_full": "The server is busy right now. Try again in about {{minutes}} min.",
     "cannot_target_self": "You can't do this to your own account.",
     "job_not_queued": "Only queued jobs can be cancelled.",
-    "job_not_failed": "Only failed jobs can be retried."
+    "job_not_failed": "Only failed jobs can be retried.",
+    "free_share_used": "You have used your free share on the Aurevid key. Add your own key in Settings or try again tomorrow."
   },
   "admin": {
     "title": "Admin panel",

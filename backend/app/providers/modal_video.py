@@ -61,7 +61,7 @@ class ModalVideoProvider(ImageProvider):
         models=[
             ModelInfo(
                 id=WAN,
-                label="Wan 2.2 TI2V-5B text-to-video (your Modal)",
+                label="Wan 2.2 TI2V-5B text-to-video (Modal)",
                 kind="video",
                 license="Apache-2.0",
                 commercial_use="yes",
@@ -72,19 +72,34 @@ class ModalVideoProvider(ImageProvider):
                 has_audio=True,
             )
         ],
-        notes="Runs on a GPU in your own Modal workspace, paid from your Modal credit "
+        notes="Runs on a Modal GPU. Each account gets a few free clips on the Aurevid key; "
+        "after that add your own Modal endpoint, paid from your Modal credit "
         "(see deploy/modal/README.md). The first clip after a pause waits for the GPU to start.",
         key_url="https://modal.com/settings/proxy-auth-tokens",
     )
 
+    def server_credentials(self) -> Credentials:
+        s = get_settings()
+        if s.modal_submit_url and s.modal_token_id and s.modal_token_secret:
+            values = {
+                "submit_url": s.modal_submit_url,
+                "token_id": s.modal_token_id,
+                "token_secret": s.modal_token_secret,
+            }
+            return Credentials(values, "server")
+        return Credentials()
+
     def has_usable_credentials(self, creds: Credentials) -> bool:
-        return creds.source == "user"  # never spend a server key on someone else's video
+        # The owner's key only runs within each user's free allowance (services/allowance.py).
+        v = creds.values
+        complete = bool(v.get("submit_url") and v.get("token_id") and v.get("token_secret"))
+        return creds.source in ("user", "server") and complete
 
     async def generate(self, req: GenerationRequest, creds: Credentials) -> GeneratedMedia:
         values = creds.values
         submit_url = values.get("submit_url")
         token_id, token_secret = values.get("token_id"), values.get("token_secret")
-        if not (submit_url and token_id and token_secret) or creds.source != "user":
+        if not (submit_url and token_id and token_secret) or creds.source == "none":
             raise ProviderError(
                 "Add your Modal endpoint and token in Settings to use this provider"
             )

@@ -123,7 +123,7 @@ kreditlar bor. Pul ishlash modeli hali belgilanmagan. Bu ochiq savol.
 | Nom | Google "Aurevid"ni "ayurvedic"ga tuzatishi mumkin. Sarlavhalarda "AI studio" bilan birga ishlatiladi |
 | Mualliflik huquqi | GTA VI namunalari huquqiy sabab bilan olib tashlangan. Dizaynda faqat kayfiyat olinadi, logo, shrift va nom olinmaydi |
 | Vaqtinchalik dizayn | Neon Coast (quyosh, palmalar, grid) trenddagi kayfiyat uchun prod'ga qo'yilgan vaqtinchalik dizayn; keyingi oy redesign bo'lishi mumkin (`docs/design.md`) |
-| "Unclear" modellar yoqilgan | Pollinations video, Kling, Topaz faqat foydalanuvchi kaliti bilan ishlagani uchun egasining qarori bilan yoqilgan (`MODEL_LICENSES.md`, 3-qoida istisnosi); pullik ishga tushirishdan oldin qayta tekshirish kerak |
+| Faqat tijoriy ruxsatli modellar | 2026-11-20 dan tijoriy foydalanishi noaniq yoki cheklangan modellar (Pollinations video, Kling, Topaz) kodda yashirilgan; prod'da yoqib bo'lmaydi (`MODEL_LICENSES.md`, 3-qoida) |
 
 ## Xulosa
 

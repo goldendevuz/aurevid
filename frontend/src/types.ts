@@ -50,6 +50,7 @@ export interface Provider {
   key_url: string;
   key_guide_url: string;
   quota: QuotaView | null;
+  free_left: number | null; // free outputs left on the Aurevid key
 }
 
 export interface Preset {

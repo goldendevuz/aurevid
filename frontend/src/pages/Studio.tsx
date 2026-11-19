@@ -489,6 +489,7 @@ export default function Studio() {
                   {provider.tier === "free" ? t("studio.free") : t("studio.paid")}
                 </Badge>
                 {provider.key_source === "user" && <Badge tone="muted">{t("studio.byok")}</Badge>}
+                {provider.key_source === "server" && provider.free_left !== null && <Badge tone="free">{t("studio.freeLeft", { count: provider.free_left })}</Badge>}
                 <Badge tone={model.commercial_use === "yes" ? "ok" : "muted"}>{t(`studio.commercial_${model.commercial_use}`)}</Badge>
                 <QuotaLine provider={provider} />
               </div>

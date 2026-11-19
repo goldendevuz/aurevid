@@ -115,14 +115,17 @@ def test_deadline_stops_long_runs(monkeypatch):
         upscaler.ai_x4(_photo(64, 64), deadline=0.0)
 
 
-def test_video_upscale_on_by_default_and_switchable():
+def test_video_upscale_off_by_default_because_terms_unclear():
     from app.config import Settings, get_settings
     from app.providers.fal import FalProvider
     from app.providers.registry import allowed_upscales
 
-    assert Settings.model_fields["fal_video_upscale_enabled"].default is True
+    assert Settings.model_fields["fal_video_upscale_enabled"].default is False
     assert Settings.model_fields["fal_enabled"].default is True
     t2v = FalProvider().model("fal-ai/wan/v2.2-5b/text-to-video")
-    assert allowed_upscales(t2v) == ["4k", "8k"]
-    get_settings().fal_video_upscale_enabled = False
     assert allowed_upscales(t2v) == []
+    s = get_settings()
+    s.fal_video_upscale_enabled = True
+    assert allowed_upscales(t2v) == []  # still off: Topaz output terms are unclear
+    s.allow_unclear_models = True  # personal testing only; refused in prod
+    assert allowed_upscales(t2v) == ["4k", "8k"]

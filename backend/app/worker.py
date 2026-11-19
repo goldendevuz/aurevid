@@ -32,7 +32,7 @@ from app.images import (
 from app.models import Asset, Job, JobStatus, WorkerHeartbeat
 from app.providers.base import GenerationRequest, ProviderError
 from app.providers.registry import get_provider, resolve_credentials
-from app.services import credits, queue, quota
+from app.services import allowance, credits, queue, quota
 
 log = logging.getLogger("aurevid.worker")
 
@@ -218,6 +218,25 @@ async def _process_local_upscale(job: Job) -> None:
     await _finish(job.id, 1 if stored else 0, error)
 
 
+async def _server_fallback(provider, job: Job, creds, remaining: int):
+    """Server credentials when the user's own key failed and their free share covers the rest."""
+    if creds.source != "user":
+        return None
+    server = provider.server_credentials()
+    if server.source != "server" or not provider.has_usable_credentials(server):
+        return None
+    async with db.session_factory()() as session:
+        row = await session.get(Job, job.id)
+        if row is None:
+            return None
+        left = await allowance.server_left(session, provider, job.user_id, exclude_job_id=job.id)
+        if left is not None and remaining > left:
+            return None
+        row.key_source = "server"  # from now on this job counts against the free share
+        await session.commit()
+    return server
+
+
 async def process(job: Job) -> None:
     if job.provider == LOCAL_UPSCALE_PROVIDER:
         await _process_local_upscale(job)
@@ -258,7 +277,16 @@ async def process(job: Job) -> None:
             workdir=tmp_dir(),
         )
         try:
-            media = await _generate_with_retry(provider, req, creds)
+            try:
+                media = await _generate_with_retry(provider, req, creds)
+            except ProviderError:
+                fallback = await _server_fallback(provider, job, creds, job.count - produced)
+                if fallback is None:
+                    raise
+                # The user's own key failed: finish on the owner's key within their free share.
+                log.info("job=%s user key failed, using server key", job.id)
+                creds, scope = fallback, quota.scope_for("server", job.user_id)
+                media = await _generate_with_retry(provider, req, creds)
             stored = await _store_output(media, req, params.get("upscale"))
         except ProviderError as exc:
             if exc.quota:

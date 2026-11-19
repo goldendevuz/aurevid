@@ -19,7 +19,7 @@ from app.providers.base import UPSCALE_CREDITS, dimensions
 from app.providers.registry import allowed_upscales, get_provider, resolve_credentials
 from app.ratelimit import hit
 from app.schemas import AssetOut, JobCreateIn, JobOut
-from app.services import credits, queue, quota
+from app.services import allowance, credits, queue, quota
 from app.services.presets import load_presets
 
 router = APIRouter(prefix="/api/jobs", tags=["jobs"])
@@ -152,6 +152,11 @@ async def create_job(
     creds = await resolve_credentials(session, provider, user.id)
     if not provider.has_usable_credentials(creds):
         raise _bad("provider_key_required")
+    if creds.source == "server":
+        # The owner's key is shared: each user gets a fair free share (services/allowance.py).
+        left = await allowance.server_left(session, provider, user.id)
+        if left is not None and body.count > left:
+            raise _bad("free_share_used", status.HTTP_429_TOO_MANY_REQUESTS)
     if provider.info.track_quota:
         q = await quota.view(
             session,
@@ -197,6 +202,7 @@ async def create_job(
         preset_id=body.preset_id,
         count=body.count,
         cost=cost,
+        key_source=creds.source,
         params={
             "aspect_ratio": body.aspect_ratio,
             "size": body.size,
