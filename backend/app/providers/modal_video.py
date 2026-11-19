@@ -76,6 +76,7 @@ class ModalVideoProvider(ImageProvider):
         "after that add your own Modal endpoint, paid from your Modal credit "
         "(see deploy/modal/README.md). The first clip after a pause waits for the GPU to start.",
         key_url="https://modal.com/settings/proxy-auth-tokens",
+        key_guide_url="https://github.com/goldendevuz/aurevid/blob/main/deploy/modal/README.uz.md",
     )
 
     def server_credentials(self) -> Credentials:
