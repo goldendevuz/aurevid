@@ -143,6 +143,8 @@ export interface JobFacets {
   statuses: Facet[];
   providers: Facet[];
   models: Facet[];
+}
+
 export interface CreditPack {
   id: string;
   credits: number;
