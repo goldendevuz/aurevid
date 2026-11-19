@@ -32,7 +32,7 @@ from app.images import (
 from app.models import Asset, Job, JobStatus, WorkerHeartbeat
 from app.providers.base import GenerationRequest, ProviderError
 from app.providers.registry import get_provider, resolve_credentials
-from app.services import allowance, credits, queue, quota
+from app.services import allowance, credits, queue, quota, recipes
 
 log = logging.getLogger("aurevid.worker")
 
@@ -91,6 +91,10 @@ async def _finish(job_id: str, produced: int, error: str | None) -> None:
         job.error = error  # kept for partial results too, so the UI can explain the refund
         job.finished_at = datetime.now(UTC)
         await session.commit()
+    try:
+        await recipes.advance(job_id)  # next step of a recipe chain, if any
+    except Exception:  # noqa: BLE001 - a broken chain must not stop the worker
+        log.exception("recipe advance failed job=%s", job_id)
 
 
 RETRY_DELAY_SECONDS = 6.0  # free tiers (e.g. Pollinations) throttle back-to-back requests

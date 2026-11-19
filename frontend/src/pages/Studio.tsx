@@ -9,11 +9,24 @@ import JobCard from "../components/JobCard";
 import { retryJob, watchJob } from "../jobs";
 import ModelPicker, { ModelSwatch } from "../components/ModelPicker";
 import { Badge, Button, EmptyState, ErrorText, Segmented } from "../components/ui";
+import { onFreeShare, priceOf } from "../pricing";
 import type { Asset, Job, ModelInfo, Preset, Provider } from "../types";
 
 const MAX_PROMPT = 1000;
 const SIZES = ["small", "medium", "large"] as const;
+const ALL_RATIOS = ["1:1", "16:9", "9:16", "4:3", "3:4"];
+const RECIPE_ID = "image-animate-4k";
+const MAX_COMPARE = 4;
 type Mode = "image" | "video";
+type Tool = "single" | "compare" | "recipe";
+
+interface CompareEntry {
+  key: string;
+  label: string;
+  cost: number;
+  jobId?: string;
+  error?: unknown;
+}
 
 export function QuotaLine({ provider }: { provider: Provider }) {
   const { t } = useTranslation();
@@ -48,6 +61,11 @@ export default function Studio() {
   const [presets, setPresets] = useState<Preset[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [mode, setMode] = useState<Mode>("image");
+  const [tool, setTool] = useState<Tool>("single");
+  const [compareKeys, setCompareKeys] = useState<string[]>([]);
+  const [compareRun, setCompareRun] = useState<CompareEntry[] | null>(null);
+  const [videoKey, setVideoKey] = useState("");
+  const [recipe4k, setRecipe4k] = useState(false);
   const [prompt, setPrompt] = useState("");
   const [modelKey, setModelKey] = useState("");
   const [aspect, setAspect] = useState("1:1");
@@ -65,6 +83,7 @@ export default function Studio() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const watchers = useRef(new Map<string, () => void>());
+  const followRecipe = useRef<(id: string) => void>(() => undefined);
 
   const loadProviders = useCallback(async () => setProviders(await api<Provider[]>("/api/providers")), []);
 
@@ -79,6 +98,8 @@ export default function Studio() {
         watchers.current.delete(job.id);
         void reload(); // credit balance (refunds)
         void loadProviders(); // learned quota estimates
+        const r = job.params.recipe;
+        if (r?.next?.length && !r.next_job_id && !r.error) followRecipe.current(job.id);
       }
     },
     [reload, loadProviders],
@@ -90,6 +111,32 @@ export default function Studio() {
     },
     [upsertJob],
   );
+
+  // A recipe step finished: the worker queues the next one (or records why it stopped). Follow it.
+  useEffect(() => {
+    followRecipe.current = (id: string) => {
+      let tries = 0;
+      const check = async () => {
+        try {
+          const parent = await api<Job>(`/api/jobs/${id}`);
+          const r = parent.params.recipe;
+          if (r?.next_job_id || r?.error) {
+            setJobs((prev) => prev.map((j) => (j.id === parent.id ? parent : j)));
+            if (r.next_job_id) {
+              upsertJob(await api<Job>(`/api/jobs/${r.next_job_id}`));
+              watch(r.next_job_id);
+              void reload();
+            }
+            return;
+          }
+        } catch {
+          /* transient */
+        }
+        if (++tries < 10) setTimeout(() => void check(), 1500);
+      };
+      setTimeout(() => void check(), 500);
+    };
+  }, [upsertJob, watch, reload]);
 
   useEffect(() => {
     void (async () => {
@@ -128,7 +175,35 @@ export default function Studio() {
     setModelKey(`${pick.p.id}|${pick.m.id}`);
   }, [choices, selected, startImage, wantAspect]);
 
-  const ratios = useMemo(() => model?.aspect_ratios ?? ["1:1"], [model]);
+  // Compare and recipe tools work on image models; recipes animate with an image-capable video model.
+  const imageChoices = useMemo(
+    () => providers.flatMap((p) => p.models.filter((m) => m.kind === "image").map((m) => ({ p, m }))),
+    [providers],
+  );
+  const animateChoices = useMemo(
+    () => providers.flatMap((p) => p.models.filter((m) => m.kind === "video" && m.accepts_image && p.available).map((m) => ({ p, m }))),
+    [providers],
+  );
+  const compared = useMemo(
+    () => compareKeys.map((k) => imageChoices.find(({ p, m }) => `${p.id}|${m.id}` === k)).filter((c) => c !== undefined),
+    [compareKeys, imageChoices],
+  );
+  const videoChoice = animateChoices.find(({ p, m }) => `${p.id}|${m.id}` === videoKey);
+  useEffect(() => {
+    if (tool === "recipe" && !videoChoice && animateChoices.length > 0) {
+      setVideoKey(`${animateChoices[0].p.id}|${animateChoices[0].m.id}`);
+    }
+  }, [tool, videoChoice, animateChoices]);
+  useEffect(() => {
+    if (recipe4k && !videoChoice?.m.upscale_targets.includes("4k")) setRecipe4k(false);
+  }, [recipe4k, videoChoice]);
+
+  const ratios = useMemo(() => {
+    const base = tool === "compare" && compared.length > 0 ? compared.map(({ m }) => m.aspect_ratios) : [model?.aspect_ratios ?? ["1:1"]];
+    if (tool === "recipe" && videoChoice) base.push(videoChoice.m.aspect_ratios);
+    const shared = ALL_RATIOS.filter((r) => base.every((list) => list.includes(r)));
+    return shared.length > 0 ? shared : (model?.aspect_ratios ?? ["1:1"]);
+  }, [tool, compared, model, videoChoice]);
   useEffect(() => {
     if (!selected) return; // wait until a model is chosen (keeps a prefilled format)
     if (!ratios.includes(aspect)) setAspect(ratios[0]);
@@ -218,8 +293,12 @@ export default function Studio() {
   const switchMode = (next: Mode) => {
     setMode(next);
     setModelKey("");
+    setTool("single");
     if (next === "image") setStartImage(null);
   };
+
+  const toggleCompare = (key: string) =>
+    setCompareKeys((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : prev.length < MAX_COMPARE ? [...prev, key] : prev));
 
   const choosePreset = (id: string) => {
     setPresetId(id);
@@ -227,7 +306,66 @@ export default function Studio() {
     if (wanted && ratios.includes(wanted)) setAspect(wanted);
   };
 
+  // One job per model through the normal endpoint; each model's refusal is shown in its own cell.
+  const submitCompare = async () => {
+    setBusy(true);
+    setError(null);
+    const run: CompareEntry[] = [];
+    for (const { p, m } of compared) {
+      const entry: CompareEntry = { key: `${p.id}|${m.id}`, label: m.label, cost: priceOf(m).total };
+      try {
+        const job = await api<Job>("/api/jobs", {
+          method: "POST",
+          headers: { "Idempotency-Key": crypto.randomUUID() },
+          body: { prompt, provider: p.id, model: m.id, aspect_ratio: aspect, size, count: 1, preset_id: presetId || null },
+        });
+        entry.jobId = job.id;
+        upsertJob(job);
+        watch(job.id);
+      } catch (err) {
+        entry.error = err;
+      }
+      run.push(entry);
+      setCompareRun([...run]);
+    }
+    void reload();
+    void loadProviders();
+    setBusy(false);
+  };
+
+  const submitRecipe = async () => {
+    if (!provider || !model || !videoChoice) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const job = await api<Job>(`/api/recipes/${RECIPE_ID}/run`, {
+        method: "POST",
+        body: {
+          prompt,
+          provider: provider.id,
+          model: model.id,
+          aspect_ratio: aspect,
+          size,
+          preset_id: presetId || null,
+          video_provider: videoChoice.p.id,
+          video_model: videoChoice.m.id,
+          upscale: recipe4k ? "4k" : null,
+        },
+      });
+      upsertJob(job);
+      watch(job.id);
+      void reload();
+    } catch (err) {
+      setError(err);
+      void loadProviders();
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const submit = async () => {
+    if (tool === "compare" && !isVideo) return submitCompare();
+    if (tool === "recipe" && !isVideo) return submitRecipe();
     if (!provider || !model) return;
     setBusy(true);
     setError(null);
@@ -261,14 +399,26 @@ export default function Studio() {
   };
 
   const isVideo = mode === "video";
-  const extra = resolution === "native" ? 0 : (model?.upscale_credits[resolution] ?? 0);
-  const cost = ((model?.credit_cost ?? 1) + extra) * (isVideo ? 1 : count);
+  const activeTool: Tool = isVideo ? "single" : tool;
+  const single = activeTool === "single";
+  // Upfront price of exactly what will be sent (same formula as the backend).
+  const price = priceOf(model, isVideo ? 1 : count, resolution);
+  const total =
+    activeTool === "compare"
+      ? compared.reduce((sum, { m }) => sum + priceOf(m).total, 0)
+      : activeTool === "recipe"
+        ? priceOf(model).total + priceOf(videoChoice?.m, 1, recipe4k ? "4k" : null).total
+        : price.total;
   const needsImage = Boolean(model?.requires_image && !startImage);
   const chip =
     "flex items-center gap-1.5 rounded-xl border border-line bg-bg/60 px-3 py-2 text-xs font-medium text-ink transition hover:border-white/20 focus-within:border-white/50";
   const selectChip = "cursor-pointer appearance-none bg-transparent pr-1 text-xs font-medium text-ink focus:outline-none [&>option]:bg-surface";
   const examples = (isVideo ? (["v1", "v2", "v3"] as const) : (["i1", "i2", "i3", "i4"] as const)).map((k) => t(`studio.example_${k}`));
-  const canGenerate = !(busy || prompt.trim().length < 3 || !provider?.available || needsImage);
+  const canGenerate =
+    !(busy || prompt.trim().length < 3) &&
+    (activeTool === "compare"
+      ? compared.length >= 2 && compared.every(({ p }) => p.available)
+      : Boolean(provider?.available) && !needsImage && (activeTool !== "recipe" || Boolean(videoChoice)));
 
   return (
     <div>
@@ -296,6 +446,20 @@ export default function Studio() {
             ]}
           />
         </div>
+        {!isVideo && (
+          <div className="mb-3 flex justify-center">
+            <Segmented
+              label={t("tools.label")}
+              value={tool}
+              onChange={setTool}
+              options={[
+                { value: "single", label: t("tools.single") },
+                { value: "compare", label: t("tools.compare") },
+                { value: "recipe", label: t("tools.recipe") },
+              ]}
+            />
+          </div>
+        )}
 
         <div className="glass ring-aurora spot rise rounded-[28px] p-3 [--i:3] sm:p-4">
           {isVideo && startImage && (
@@ -351,6 +515,66 @@ export default function Studio() {
             </label>
           )}
 
+          {activeTool === "compare" && (
+            <div className="mb-3 rounded-2xl border border-line bg-bg/60 p-3">
+              <p className="mb-2 text-xs font-semibold">{t("compare.pick", { count: compared.length, max: MAX_COMPARE })}</p>
+              <div className="flex flex-wrap gap-2">
+                {imageChoices.map(({ p, m }) => {
+                  const key = `${p.id}|${m.id}`;
+                  const on = compareKeys.includes(key);
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      aria-pressed={on}
+                      disabled={!p.available || (!on && compareKeys.length >= MAX_COMPARE)}
+                      onClick={() => toggleCompare(key)}
+                      className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${
+                        on ? "border-white/60 bg-white/10 text-ink" : "border-line text-muted hover:border-white/20 hover:text-ink"
+                      }`}
+                    >
+                      <ModelSwatch seed={key} size={14} />
+                      {m.label}
+                      <span className="opacity-70">· {t("price.selection", { count: priceOf(m).total })}</span>
+                      {onFreeShare(p) && <span className="text-ok">· {t("price.free")}</span>}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-2 text-[11px] text-muted">{t("compare.hint")}</p>
+            </div>
+          )}
+
+          {activeTool === "recipe" && (
+            <div className="mb-3 rounded-2xl border border-line bg-bg/60 p-3 text-xs">
+              <p className="font-semibold">{t("recipe.title")}</p>
+              <p className="mt-0.5 text-[11px] text-muted">{t("recipe.desc")}</p>
+              {animateChoices.length === 0 ? (
+                <p className="mt-2 text-danger">{t("errors.recipe_step_unavailable")}</p>
+              ) : (
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <label className={chip}>
+                    <Icon name="video" size={15} className="text-muted" />
+                    <span className="sr-only">{t("recipe.videoModel")}</span>
+                    <select value={videoKey} onChange={(e) => setVideoKey(e.target.value)} className={selectChip}>
+                      {animateChoices.map(({ p, m }) => (
+                        <option key={`${p.id}|${m.id}`} value={`${p.id}|${m.id}`}>
+                          {m.label} ({t("price.selection", { count: m.credit_cost })})
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  {videoChoice?.m.upscale_targets.includes("4k") && (
+                    <label className={`${chip} cursor-pointer`}>
+                      <input type="checkbox" checked={recipe4k} onChange={(e) => setRecipe4k(e.target.checked)} />
+                      {t("recipe.upscale4k")} ({t("studio.resCost", { count: videoChoice.m.upscale_credits["4k"] ?? 0 })})
+                    </label>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           <label htmlFor="prompt" className="sr-only">{isVideo ? t("studio.videoPromptLabel") : t("studio.promptLabel")}</label>
           <textarea
             id="prompt"
@@ -364,7 +588,7 @@ export default function Studio() {
 
           <div className="flex flex-wrap items-end justify-between gap-3 px-1 pt-2">
            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-            {choices.length === 0 ? (
+            {activeTool === "compare" ? null : choices.length === 0 ? (
               <p className="text-xs text-muted">
                 {t("studio.noVideoModels")}{" "}
                 <Link to="/settings" className="underline hover:text-ink">{t("nav.settings")}</Link>
@@ -388,7 +612,7 @@ export default function Studio() {
               <Icon name="ratio" size={15} className="text-muted" />
               <span className="sr-only">{t("studio.aspect")}</span>
               <select value={aspect} onChange={(e) => setAspect(e.target.value)} className={selectChip}>
-                {["1:1", "16:9", "9:16", "4:3", "3:4"].map((r) => (
+                {ALL_RATIOS.map((r) => (
                   <option key={r} value={r} disabled={!ratios.includes(r)}>{r}</option>
                 ))}
               </select>
@@ -415,7 +639,7 @@ export default function Studio() {
                 </select>
               </label>
             ) : (
-              <label className={chip}>
+              single && <label className={chip}>
                 <Icon name="layers" size={15} className="text-muted" />
                 <span className="sr-only">{t("studio.count")}</span>
                 <select value={count} onChange={(e) => setCount(Number(e.target.value))} className={selectChip}>
@@ -426,7 +650,7 @@ export default function Studio() {
               </label>
             )}
 
-            {model && model.upscale_targets.length > 0 && (
+            {single && model && model.upscale_targets.length > 0 && (
               <label className={chip}>
                 <Icon name="wand" size={15} className="text-muted" />
                 <span className="sr-only">{t("studio.resolution")}</span>
@@ -444,15 +668,18 @@ export default function Studio() {
            </div>
            <Button className="w-full min-w-32 py-2.5 sm:w-auto" disabled={!canGenerate} onClick={() => void submit()}>
              <Icon name="sparkle" size={17} />
-             {busy ? t("studio.generating") : t("studio.generate")}
+             {busy ? t("studio.generating") : activeTool === "compare" ? t("compare.send", { count: compared.length }) : t("studio.generate")}
            </Button>
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-2 pt-3 text-[11px] text-muted">
             <p>
-              {t("studio.cost", { count: cost })} · <span className="tabular-nums">{t("studio.chars", { count: prompt.length, max: MAX_PROMPT })}</span>
+              <span className="font-medium text-ink/90">
+                {price.count > 1 && single ? t("price.selectionMany", { count: total, n: price.count, each: price.each }) : t("studio.cost", { count: total })}
+              </span>
+              {single && onFreeShare(provider) && <span className="text-ok"> · {t("price.freeShare")}</span>} · <span className="tabular-nums">{t("studio.chars", { count: prompt.length, max: MAX_PROMPT })}</span>
             </p>
-            {provider && model && (
+            {single && provider && model && (
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
                 <Badge tone={provider.tier === "free" ? "free" : "paid"}>
                   {provider.tier === "free" ? t("studio.free") : t("studio.paid")}
@@ -480,7 +707,7 @@ export default function Studio() {
           )}
           {isVideo && !startImage && <p className="px-2 pt-2 text-[11px] text-muted">{t("studio.startImageHint")}</p>}
           {needsImage && <p className="px-2 pt-2 text-[11px] text-danger">{t("studio.needsImage")}</p>}
-          {resolution !== "native" && (
+          {single && resolution !== "native" && (
             <p className="px-2 pt-2 text-[11px] text-muted">{isVideo ? t("studio.resHintVideo") : t("studio.resHintImage")}</p>
           )}
           {choices.some(({ p }) => !p.available) && (
@@ -496,6 +723,40 @@ export default function Studio() {
           )}
           <ErrorText error={error} />
         </div>
+
+        {compareRun && compareRun.length > 0 && (
+          <div className="mt-6" aria-live="polite">
+            <div className="mb-2 flex items-center justify-between">
+              <h2 className="text-lg tracking-[0.02em]">{t("compare.results")}</h2>
+              <button type="button" onClick={() => setCompareRun(null)} className="text-xs text-muted hover:text-ink">{t("studio.close")}</button>
+            </div>
+            <div className={`grid gap-3 ${compareRun.length > 2 ? "grid-cols-2 lg:grid-cols-4" : "grid-cols-2"}`}>
+              {compareRun.map((c) => {
+                const job = jobs.find((j) => j.id === c.jobId);
+                const asset = job?.assets[0];
+                return (
+                  <figure key={c.key} className="overflow-hidden rounded-2xl border border-line bg-raised/40">
+                    <div className="grid aspect-square place-items-center bg-bg/60">
+                      {asset ? (
+                        <img src={asset.preview_url || asset.url} alt={job?.prompt ?? ""} className="h-full w-full object-cover" />
+                      ) : (
+                        <span className="px-2 text-center text-[11px] text-muted">
+                          {c.error ? "" : job ? t(`job.${job.status}`) : t("job.queued")}
+                        </span>
+                      )}
+                    </div>
+                    <figcaption className="p-2 text-[11px]">
+                      <p className="truncate font-semibold text-ink">{c.label}</p>
+                      <p className="text-muted">{t("price.selection", { count: c.cost })}</p>
+                      {job?.status === "failed" && <p className="text-danger">{job.error}</p>}
+                      {c.error ? <ErrorText error={c.error} /> : null}
+                    </figcaption>
+                  </figure>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {presets.length > 0 && (
           <div className="mt-4">
@@ -580,7 +841,15 @@ export default function Studio() {
       </section>
 
       {picking && (
-        <ModelPicker choices={choices} value={modelKey} mode={mode} onSelect={setModelKey} onClose={closePicker} />
+        <ModelPicker
+          choices={choices}
+          value={modelKey}
+          mode={mode}
+          onSelect={setModelKey}
+          onClose={closePicker}
+          count={isVideo ? 1 : count}
+          upscale={resolution === "native" ? null : resolution}
+        />
       )}
     </div>
   );

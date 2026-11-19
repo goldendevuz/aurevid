@@ -77,6 +77,14 @@ class ProviderKeyOut(BaseModel):
     updated_at: UTCDateTime | None = None
 
 
+def check_prompt(v: str) -> str:
+    if len(v) > get_settings().max_prompt_chars:
+        raise ValueError("prompt too long")
+    if any(ord(c) < 32 and c not in "\n\t" for c in v):
+        raise ValueError("prompt contains control characters")
+    return v
+
+
 class JobCreateIn(_In):
     prompt: str = Field(min_length=3)
     provider: str = Field(max_length=32)
@@ -93,11 +101,28 @@ class JobCreateIn(_In):
     @field_validator("prompt")
     @classmethod
     def _prompt_len(cls, v: str) -> str:
-        if len(v) > get_settings().max_prompt_chars:
-            raise ValueError("prompt too long")
-        if any(ord(c) < 32 and c not in "\n\t" for c in v):
-            raise ValueError("prompt contains control characters")
-        return v
+        return check_prompt(v)
+
+
+class RecipeRunIn(_In):
+    """First step (an image job) plus the settings of the follow-up video step."""
+
+    prompt: str = Field(min_length=3)
+    provider: str = Field(max_length=32)
+    model: str = Field(max_length=64)
+    aspect_ratio: AspectRatio = "1:1"
+    size: SizeName = "large"
+    preset_id: str | None = Field(default=None, max_length=64)
+    seed: int | None = Field(default=None, ge=0, le=2**31 - 1)
+    video_provider: str = Field(max_length=32)
+    video_model: str = Field(max_length=64)
+    duration: int | None = Field(default=None, ge=1, le=20)
+    upscale: UpscaleTarget | None = None  # final video resolution (optional)
+
+    @field_validator("prompt")
+    @classmethod
+    def _prompt_len(cls, v: str) -> str:
+        return check_prompt(v)
 
 
 class AssetOut(BaseModel):

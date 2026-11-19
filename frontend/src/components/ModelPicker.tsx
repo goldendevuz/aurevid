@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
+import { onFreeShare, priceOf } from "../pricing";
 import type { ModelInfo, Provider } from "../types";
 import { Icon } from "./icons";
 import { Badge, Segmented } from "./ui";
@@ -35,10 +36,14 @@ export default function ModelPicker({
   mode,
   onSelect,
   onClose,
+  count = 1,
+  upscale = null,
 }: {
   choices: ModelChoice[];
   value: string;
   mode: "image" | "video";
+  count?: number; // outputs in the current selection, for the upfront price
+  upscale?: string | null;
   onSelect: (key: string) => void;
   onClose: () => void;
 }) {
@@ -168,6 +173,16 @@ export default function ModelPicker({
                   )}
                   <li className="flex items-center gap-1"><Icon name="bolt" size={12} />{t("studio.perImage", { count: m.credit_cost })}</li>
                 </ul>
+                <p className="mt-2 text-[11px] font-medium text-ink/90">
+                  {(() => {
+                    const target = upscale && m.upscale_targets.includes(upscale as "4k" | "8k") ? upscale : null;
+                    const price = priceOf(m, m.kind === "video" ? 1 : Math.min(count, m.max_count), target);
+                    return price.count > 1
+                      ? t("price.selectionMany", { count: price.total, n: price.count, each: price.each })
+                      : t("price.selection", { count: price.total });
+                  })()}
+                  {onFreeShare(p) && <span className="ml-1 font-normal text-ok">· {t("price.freeShare")}</span>}
+                </p>
                 {locked && (
                   <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
                     <span className="flex items-center gap-1 text-muted"><Icon name="lock" size={12} />{t("studio.needsKey")}</span>
