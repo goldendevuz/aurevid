@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api";
+import { isUpscaleJob as isUpscale } from "../jobs";
 import type { Asset, Job } from "../types";
 import { Icon } from "./icons";
 import { Badge, Button, ErrorText, inputClass } from "./ui";
@@ -104,6 +105,10 @@ function Chips({ job }: { job: Job }) {
 
 interface Handlers {
   onChange: (job: Job) => void;
+  /** Start a new job with the same settings (failed jobs). Throws ApiError on failure. */
+  onRetry?: (job: Job) => Promise<void>;
+  /** Remove the whole finished job and its files. Throws ApiError on failure. */
+  onDelete?: (job: Job) => Promise<void>;
   onRemix?: (job: Job) => void;
   onAnimate?: (asset: Asset) => void;
   onUpscale?: (asset: Asset, target: "4k" | "8k") => void;
@@ -253,6 +258,67 @@ function JobDialog({ job, onClose, onChange, onRemix, onAnimate, onUpscale }: Ha
   );
 }
 
+/** A finished job without pictures (failed, or all its files deleted): details, error, Retry and Delete. */
+function EmptyJobCard({ job, title, style, onRetry, onDelete, onRemix }: Handlers & { job: Job; title: string; style: React.CSSProperties }) {
+  const { t } = useTranslation();
+  const [busy, setBusy] = useState<"retry" | "delete" | null>(null);
+  const [error, setError] = useState<unknown>(null);
+  const failed = job.status === "failed";
+  const run = async (what: "retry" | "delete", fn: (job: Job) => Promise<void>) => {
+    if (what === "delete" && !window.confirm(t("job.deleteJobConfirm"))) return;
+    setBusy(what);
+    setError(null);
+    try {
+      await fn(job);
+    } catch (err) {
+      setError(err);
+    } finally {
+      setBusy(null);
+    }
+  };
+  return (
+    <article className="rise glass rounded-[var(--radius-card)] p-4" style={style}>
+      <div className="flex items-start justify-between gap-3">
+        <p className="line-clamp-3 text-sm text-ink" title={job.prompt}>{title}</p>
+        <Badge tone={failed ? "danger" : "muted"}>{t(`job.${job.status}`)}</Badge>
+      </div>
+      <div className="mt-3">
+        <Chips job={job} />
+      </div>
+      {failed && (
+        <p className="mt-3 text-xs text-danger">
+          {job.error && <span className="break-words">{job.error} </span>}
+          {job.cost > 0 && t("job.refunded")}
+        </p>
+      )}
+      {!failed && <p className="mt-3 text-xs text-muted">{t("job.noFiles")}</p>}
+      {(onRetry || onDelete || onRemix) && (
+        <div className="mt-3 flex flex-wrap gap-2">
+          {onRetry && failed && (
+            <Button size="sm" disabled={busy !== null} onClick={() => void run("retry", onRetry)}>
+              <Icon name="retry" size={14} />
+              {busy === "retry" ? t("job.retrying") : t("job.retry")}
+            </Button>
+          )}
+          {onRemix && !isUpscale(job) && (
+            <Button size="sm" variant="ghost" disabled={busy !== null} onClick={() => onRemix(job)}>
+              <Icon name="sparkle" size={14} />
+              {t("job.remix")}
+            </Button>
+          )}
+          {onDelete && (
+            <Button size="sm" variant="danger" disabled={busy !== null} onClick={() => void run("delete", onDelete)}>
+              <Icon name="trash" size={14} />
+              {t("job.delete")}
+            </Button>
+          )}
+        </div>
+      )}
+      <ErrorText error={error} />
+    </article>
+  );
+}
+
 export default function JobCard({ job, index = 0, ...handlers }: Handlers & { job: Job; index?: number }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -312,19 +378,7 @@ export default function JobCard({ job, index = 0, ...handlers }: Handlers & { jo
   }
 
   if (!first) {
-    return (
-      <article className="rise glass rounded-[var(--radius-card)] p-4" style={style}>
-        <div className="flex items-start justify-between gap-3">
-          <p className="line-clamp-3 text-sm text-ink">{title}</p>
-          <Badge tone={job.status === "failed" ? "danger" : "muted"}>{t(`job.${job.status}`)}</Badge>
-        </div>
-        {job.status === "failed" && (
-          <p className="mt-2 text-xs text-danger">
-            {job.error} {t("job.refunded")}
-          </p>
-        )}
-      </article>
-    );
+    return <EmptyJobCard job={job} title={title} style={style} {...handlers} />;
   }
 
   return (

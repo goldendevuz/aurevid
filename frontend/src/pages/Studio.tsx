@@ -6,6 +6,7 @@ import { api } from "../api";
 import { useAuth } from "../auth";
 import { Icon } from "../components/icons";
 import JobCard from "../components/JobCard";
+import { retryJob, watchJob } from "../jobs";
 import ModelPicker, { ModelSwatch } from "../components/ModelPicker";
 import { Badge, Button, EmptyState, ErrorText, Segmented } from "../components/ui";
 import type { Asset, Job, ModelInfo, Preset, Provider } from "../types";
@@ -13,38 +14,6 @@ import type { Asset, Job, ModelInfo, Preset, Provider } from "../types";
 const MAX_PROMPT = 1000;
 const SIZES = ["small", "medium", "large"] as const;
 type Mode = "image" | "video";
-
-function watchJob(id: string, onUpdate: (job: Job) => void): () => void {
-  // Server-Sent Events first; fall back to polling if the stream is unavailable.
-  let closed = false;
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const poll = async () => {
-    if (closed) return;
-    try {
-      const job = await api<Job>(`/api/jobs/${id}`);
-      onUpdate(job);
-      if (job.status === "done" || job.status === "failed") return;
-    } catch {
-      /* transient */
-    }
-    timer = setTimeout(poll, 3000);
-  };
-  const es = new EventSource(`/api/jobs/${id}/events`);
-  es.addEventListener("job", (e) => {
-    const job = JSON.parse((e as MessageEvent).data) as Job;
-    onUpdate(job);
-    if (job.status === "done" || job.status === "failed") es.close();
-  });
-  es.onerror = () => {
-    es.close();
-    void poll();
-  };
-  return () => {
-    closed = true;
-    es.close();
-    if (timer) clearTimeout(timer);
-  };
-}
 
 export function QuotaLine({ provider }: { provider: Provider }) {
   const { t } = useTranslation();
@@ -592,6 +561,16 @@ export default function Studio() {
                 index={i}
                 onChange={upsertJob}
                 onRemix={remix}
+                onRetry={async (job) => {
+                  const created = await retryJob(job);
+                  upsertJob(created);
+                  watch(created.id);
+                  void reload();
+                }}
+                onDelete={async (job) => {
+                  await api(`/api/jobs/${job.id}`, { method: "DELETE" });
+                  setJobs((prev) => prev.filter((x) => x.id !== job.id));
+                }}
                 onAnimate={animate}
                 onUpscale={(a, target) => void upscaleAsset(a, target)}
               />

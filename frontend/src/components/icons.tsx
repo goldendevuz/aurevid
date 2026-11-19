@@ -34,6 +34,8 @@ const PATHS = {
   arrow: "M5 12h14m0 0-5-5m5 5-5 5",
   sound: "M4 10v4a1 1 0 0 0 1 1h2.5l4.5 3.5v-13L7.5 9H5a1 1 0 0 0-1 1ZM16 9.5a3.5 3.5 0 0 1 0 5M18.5 7a7 7 0 0 1 0 10",
   bolt: "M13 3.5 5.5 13H11l-1 7.5L18.5 11H13l0-7.5Z",
+  retry: "M19.5 12a7.5 7.5 0 1 1-2.2-5.3M19.5 4.5v4.5H15",
+  filter: "M4 6h16M7 12h10M10 18h4",
 } as const;
 
 export type IconName = keyof typeof PATHS;

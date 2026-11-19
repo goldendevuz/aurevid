@@ -152,14 +152,45 @@
     "remix": "Qayta yaratish",
     "copied": "Nusxalandi",
     "close": "Yopish",
-    "prompt": "Prompt"
+    "prompt": "Prompt",
+    "retry": "Qayta urinish",
+    "retrying": "Qayta urinilmoqda…",
+    "deleteJobConfirm": "Bu natija va uning barcha fayllari o'chirilsinmi? Buni qaytarib bo'lmaydi.",
+    "noFiles": "Bu natijaning barcha fayllari o'chirilgan."
   },
   "history": {
     "title": "Tarix",
     "all": "Hammasi",
     "favorites": "Sevimlilar",
     "empty": "Hozircha hech narsa yo'q.",
-    "loadMore": "Yana yuklash"
+    "loadMore": "Yana yuklash",
+    "total": "Jami yaratilganlar: {{count}}",
+    "filters": "Filtrlar",
+    "search": "Qidirish",
+    "searchPlaceholder": "Promptlaringizdan qidiring…",
+    "period": "Davr",
+    "period_all": "Barcha vaqt",
+    "period_today": "Bugun",
+    "period_7d": "Oxirgi 7 kun",
+    "period_30d": "Oxirgi 30 kun",
+    "kind": "Turi",
+    "anyKind": "Barcha turlar",
+    "kind_image": "Rasmlar",
+    "kind_video": "Videolar",
+    "kind_upscale": "Kattalashtirishlar",
+    "status": "Holati",
+    "anyStatus": "Har qanday holat",
+    "status_done": "Tayyor",
+    "status_failed": "Xato",
+    "status_active": "Jarayonda",
+    "provider": "Xizmat",
+    "anyProvider": "Barcha xizmatlar",
+    "model": "Model",
+    "anyModel": "Barcha modellar",
+    "hideFailed": "Xatolarni yashirish",
+    "clearFilters": "Filtrlarni tozalash",
+    "noMatch": "Bu filtrlarga mos natija yo'q.",
+    "localUpscaler": "Ichki kattalashtirgich"
   },
   "usage": {
     "title": "Kreditlar va foydalanish",
@@ -287,7 +318,8 @@
     "cannot_target_self": "Buni o'z hisobingizga qilib bo'lmaydi.",
     "job_not_queued": "Faqat navbatdagi jobni bekor qilish mumkin.",
     "job_not_failed": "Faqat xato bo'lgan jobni qayta ishga tushirish mumkin.",
-    "free_share_used": "Aurevid kalitidagi bepul ulushingiz tugadi. Sozlamalarda o'z kalitingizni qo'shing yoki ertaga qayta urining."
+    "free_share_used": "Aurevid kalitidagi bepul ulushingiz tugadi. Sozlamalarda o'z kalitingizni qo'shing yoki ertaga qayta urining.",
+    "job_not_finished": "Bu natija hali tayyorlanmoqda. Tugashini kuting."
   },
   "admin": {
     "title": "Admin panel",
