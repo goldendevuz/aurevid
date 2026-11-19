@@ -78,12 +78,14 @@ class ProviderKeyOut(BaseModel):
 
 
 def check_prompt(v: str) -> str:
-def check_prompt_text(v: str) -> str:
     if len(v) > get_settings().max_prompt_chars:
         raise ValueError("prompt too long")
     if any(ord(c) < 32 and c not in "\n\t" for c in v):
         raise ValueError("prompt contains control characters")
     return v
+
+
+check_prompt_text = check_prompt  # name used by the edit/voice schemas
 
 
 class JobCreateIn(_In):
@@ -180,6 +182,8 @@ class JobFacetsOut(BaseModel):
     statuses: list[FacetOut]
     providers: list[FacetOut]
     models: list[FacetOut]
+
+
 class EditIn(_In):
     """'Edit with text': an instruction applied to one of the caller's own images."""
 

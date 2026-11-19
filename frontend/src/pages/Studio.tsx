@@ -607,12 +607,11 @@ export default function Studio() {
 
           <div className="flex flex-wrap items-end justify-between gap-3 px-1 pt-2">
            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-            {activeTool === "compare" ? null : choices.length === 0 ? (
             <VoiceButton
               onError={setError}
               onText={(text) => setPrompt((p) => (p.trim() ? `${p.trim()} ${text}` : text).slice(0, MAX_PROMPT))}
             />
-            {choices.length === 0 ? (
+            {activeTool === "compare" ? null : choices.length === 0 ? (
               <p className="text-xs text-muted">
                 {t("studio.noVideoModels")}{" "}
                 <Link to="/settings" className="underline hover:text-ink">{t("nav.settings")}</Link>

@@ -32,9 +32,8 @@ from app.images import (
 from app.models import Asset, Job, JobStatus, WorkerHeartbeat
 from app.providers.base import GenerationRequest, ProviderError
 from app.providers.registry import get_provider, resolve_credentials
-from app.services import allowance, credits, queue, quota, recipes
+from app.services import allowance, credits, describe, queue, quota, recipes
 from app.services.payments import orders as payment_orders
-from app.services import allowance, credits, describe, queue, quota
 
 log = logging.getLogger("aurevid.worker")
 
