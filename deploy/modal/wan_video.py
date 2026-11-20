@@ -7,7 +7,7 @@ Deploy (see README.md next to this file):
 
 Two web endpoints, both behind Modal's proxy auth (headers `Modal-Key` and `Modal-Secret` of a proxy auth token
 made in the workspace settings), so there is no secret in this file:
-    POST .../submit  {prompt, width, height, frames, seed}  ->  {"call_id": "..."}
+    POST .../submit  {prompt, width, height, frames, seed[, model]}  ->  {"call_id": "..."}
     GET  .../result?call_id=...                             ->  202 while running, else the mp4
 
 Videos take minutes, so the work is spawned and polled instead of held on one HTTP request.
@@ -15,6 +15,7 @@ Videos take minutes, so the work is spawned and polled instead of held on one HT
 
 import modal
 
+MODEL = "wan-2.2-ti2v-5b"  # the id Aurevid sends
 MODEL_ID = "Wan-AI/Wan2.2-TI2V-5B-Diffusers"  # Apache-2.0 weights
 GPU = "L40S"
 STEPS = 20  # 30 -> 20 (2026-11-20): ~30% less GPU time per clip
@@ -91,7 +92,9 @@ def submit(item: dict):
     prompt = str(item.get("prompt", ""))[:1000]
     width, height, frames = int(item["width"]), int(item["height"]), int(item["frames"])
     # Wan 2.2 5B: sizes in multiples of 32, and 4k+1 frames (121 is five seconds at 24 fps)
-    if not prompt or width % 32 or height % 32 or (frames - 1) % 4 or not 5 <= frames <= 121:
+    bad_size = width % 32 or height % 32 or (frames - 1) % 4 or not 5 <= frames <= 121
+    # `model` is optional (older Aurevid versions omit it); a different model means a wrong URL
+    if item.get("model", MODEL) != MODEL or not prompt or bad_size:
         raise HTTPException(status_code=422)
     call = Wan().generate.spawn(prompt, width, height, frames, int(item.get("seed", 0)))
     return {"call_id": call.object_id}

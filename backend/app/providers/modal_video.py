@@ -26,10 +26,14 @@ from app.providers.base import (
 )
 
 WAN = "wan-2.2-ti2v-5b"
+# Optional, hidden: conditional licence (MODEL_LICENSES.md); endpoint in deploy/modal/ltx_video.py
+LTX = "ltx-2.3"
 POLL_SECONDS = 5.0
 # (width, height) per ratio: multiples of 32 for Wan 2.2 5B, small so a clip stays cheap.
 _SIZES = {"16:9": (832, 480), "9:16": (480, 832), "1:1": (640, 640)}
-_FRAMES = {5: 121, 3: 73}  # 24 fps, 4k+1 frames
+# LTX-2.3: multiples of 32 too, a bit smaller (a 22B model costs more per second of GPU time).
+_LTX_SIZES = {"16:9": (768, 448), "9:16": (448, 768), "1:1": (640, 640)}
+_FRAMES = {5: 121, 3: 73}  # 24 fps; 4k+1 frames (Wan) and 8k+1 (LTX) both hold for 121 and 73
 
 
 def _http(timeout: float) -> httpx.AsyncClient:
@@ -52,7 +56,7 @@ def endpoints(submit_url: str) -> tuple[str, str]:
 class ModalVideoProvider(ImageProvider):
     info = ProviderInfo(
         id="modal_video",
-        name="Modal (your own Wan 2.2)",
+        name="Modal (your own video model)",
         tier="paid",
         byok=True,
         byok_fields=["submit_url", "token_id", "token_secret"],
@@ -70,7 +74,19 @@ class ModalVideoProvider(ImageProvider):
                 max_count=1,
                 durations=[5, 3],
                 has_audio=False,  # Wan 2.2 TI2V-5B makes silent clips
-            )
+            ),
+            ModelInfo(
+                id=LTX,
+                label="LTX-2.3 text-to-video with audio (Modal)",
+                kind="video",
+                license="LTX-2 Community License (free below USD 10M annual revenue)",
+                commercial_use="unclear",  # conditional licence: the registry hides it
+                aspect_ratios=list(_LTX_SIZES),
+                credit_cost=10,
+                max_count=1,
+                durations=[5, 3],
+                has_audio=True,
+            ),
         ],
         notes="Runs on a Modal GPU. Each account gets a few free clips on the Aurevid key; "
         "after that add your own Modal endpoint, paid from your Modal credit "
@@ -104,12 +120,14 @@ class ModalVideoProvider(ImageProvider):
             raise ProviderError(
                 "Add your Modal endpoint and token in Settings to use this provider"
             )
-        if req.kind != "video" or req.model != WAN:
+        if req.kind != "video" or req.model not in (WAN, LTX):
             raise ProviderError("Unknown Modal video model")
         submit, result = endpoints(submit_url)
         headers = {"Modal-Key": token_id, "Modal-Secret": token_secret}
-        width, height = _SIZES.get(req.aspect_ratio, _SIZES["16:9"])
+        sizes = _LTX_SIZES if req.model == LTX else _SIZES
+        width, height = sizes.get(req.aspect_ratio, sizes["16:9"])
         body = {
+            "model": req.model,  # the LTX endpoint refuses a payload for another model
             "prompt": req.prompt,
             "width": width,
             "height": height,

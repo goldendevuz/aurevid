@@ -14,6 +14,7 @@ This is an engineering record, not legal advice.
 | fal.ai (`fal`) | `fal-ai/wan/v2.2-a14b/image-to-video` | Apache-2.0 (Wan 2.2 I2V-A14B weights) | **Yes** by model licence | fal.ai terms; **paid**, $0.04-0.08 per video second by resolution | **On**, BYOK only |
 | fal.ai (`fal`) | `fal-ai/kling-video/v2.6/pro/text-to-video` | Proprietary hosted API (Kling, via fal.ai); no weights are distributed or used by us | **Unclear**: check Kling/fal.ai terms before commercial use | fal.ai terms; **paid**, fal lists about $0.07/s audio off and $0.14/s audio on (third-party and fal page figures, not verified); generates native audio | **Hidden** (commercial use unclear, rule 3) |
 | Modal (`modal_video`) | `wan-2.2-ti2v-5b` | Apache-2.0 (Wan 2.2 TI2V-5B weights, Wan-AI/Wan2.2-TI2V-5B-Diffusers) | **Yes** by model licence | Runs in the user's own Modal workspace, paid from their Modal credit; no third party sees prompts except Modal | **On** (`MODAL_VIDEO_ENABLED`), BYOK only |
+| Modal (`modal_video`) | `ltx-2.3` (LTX-2.3 22B distilled, video **with audio**) | **LTX-2 Community License Agreement** (Lightricks, 2026-01-05) for the weights; repo code is Apache-2.0; the Gemma text encoder stays under Google's Gemma terms | **Unclear (conditional)**: free only for entities with annual revenue below USD 10,000,000 (incl. affiliates); at or above it a paid commercial licence from Lightricks is required; outputs: "Licensor claims no rights in the Output" but you are accountable for input and use | Runs in the user's own Modal workspace (same terms as Wan above); hosting for third parties (SaaS) is allowed only if the licence text and Attachment A use restrictions are passed on to users; ~32 GB+ VRAM | **Off / hidden** (`commercial_use="unclear"`, rule 3), not enabled; see Evidence |
 | Pollinations (`pollinations_video`) | `alibaba/wan-2.2-fast` | Apache-2.0 (Wan 2.2 weights); hosted by Pollinations | **Unclear**: check Pollinations terms | Billed to the user's own Pollinations key (pollen); cost per clip not verified; model list read from the API 2026-11-18 | **Off** (`POLLINATIONS_VIDEO_ENABLED=false`), hidden (rule 3) |
 | Pollinations (`pollinations_video`) | `bytedance/seedance-2.0-mini` | Proprietary hosted API (ByteDance, via Pollinations) | **Unclear**: check Pollinations and ByteDance terms | Billed to the user's own Pollinations key; cost not verified | **Hidden** (commercial use unclear, rule 3) |
 | fal.ai (`fal`) | `fal-ai/kling-video/v2.6/pro/image-to-video` | Proprietary hosted API (Kling, via fal.ai); no weights are distributed or used by us | **Unclear**: check Kling/fal.ai terms before commercial use | fal.ai terms; **paid**, same pricing as above; generates native audio | **Hidden** (commercial use unclear, rule 3) |
@@ -49,9 +50,21 @@ This is an engineering record, not legal advice.
 - **Not used:** MMAudio (video-to-audio). Code is MIT but the checkpoints are CC-BY-NC 4.0
   (README of hkchengrex/MMAudio, read 2026-11-20), so outputs cannot be used commercially.
   Its Modal script was removed; Modal clips are silent.
-- **Not used:** LTX-2 / LTX-2.x (native 4K video). Its *LTX-2 Community License* allows free
-  commercial use only below USD 10M annual revenue and output ownership is not clearly stated, so
-  it is conditional, not permissive.
+- **Prepared, NOT enabled:** LTX-2.3 (Lightricks, 22B, video + audio) as an optional second Modal
+  model (`deploy/modal/ltx_video.py`, `ltx-2.3`). Licence file read 2026-11-21
+  (github.com/Lightricks/LTX-2/blob/main/LICENSE-2, "LTX-2 Community License Agreement", 2026-01-05):
+  free use for any purpose subject to Attachment A (use restrictions); entities with annual revenue of
+  at least USD 10,000,000 (affiliates counted together) need a paid Commercial Use Agreement, otherwise
+  breach with liquidated damages of double the fees; hosting for third parties (SaaS) is allowed if
+  the use restrictions are made enforceable in our terms and users get a copy of the licence;
+  "Licensor claims no rights in the Output" (section 5); Lightricks may update/restrict remotely
+  (section 6). The Gemma text encoder keeps Google's licence. Official need: 32 GB+ VRAM. Because the
+  right to use it depends on the operator's revenue, it is recorded as `commercial_use="unclear"`
+  (conditional), so the registry hides it (rule 3) and only `ALLOW_UNCLEAR_MODELS=true` (local testing,
+  refused in prod) shows it. **Owner exception:** the owner may record a documented, dated exception
+  here (the entity is under the revenue threshold, Attachment A is passed on to users, Gemma terms
+  checked) and then change `commercial_use` to `yes` in code; until then it stays off. Previously this
+  line said "not used"; the licence is conditional, not permissive, which is why it stays unclear.
 - fal image-to-video sends the start frame as a base64 data URI. fal documents data URIs as accepted
   by *some* models; this was not verified live for Wan 2.2 I2V (no key in CI).
 - Pollinations: no first-party terms found in search. **Rule applied: unclear licence → disabled by
@@ -91,5 +104,5 @@ This is an engineering record, not legal advice.
    licence *and* service terms clearly allow commercial use are offered, whoever pays. The
    registry hides every model with `commercial_use` other than `yes`; `ALLOW_UNCLEAR_MODELS=true`
    exists for local testing only and the app refuses to start with it in prod. Currently hidden:
-   Pollinations video (Wan 2.2 fast, Seedance 2.0 mini), Kling 2.6 on fal, Topaz video upscaling.
+   Pollinations video (Wan 2.2 fast, Seedance 2.0 mini), Kling 2.6 on fal, Topaz video upscaling, LTX-2.3 on Modal (conditional licence).
 4. Never add a model whose licence forbids the hosted use we make of it.

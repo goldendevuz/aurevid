@@ -39,3 +39,20 @@ Sizga kerak: kompyuter (Windows, macOS yoki Linux), Python 3.10+ va 15–20 daqi
 - Modal → Settings → Usage & Billing bo'limida **xarajat chegarasini** bepul kredit miqdoriga
   qo'ying, shunda kartangizdan pul yechilmaydi.
 - GPU uzoq turib qolgan bo'lsa, birinchi klip uni ishga tushirish uchun biroz ko'proq kutadi.
+
+## Ixtiyoriy: LTX-2.3 (ovozli video), hozircha O'CHIQ
+
+`deploy/modal/ltx_video.py` ovozli (audio trekli mp4) video yaratadigan LTX-2.3 modelini tayyorlaydi.
+Bu **ixtiyoriy** va Aurevid'da standart bo'yicha **yashirin**. Sababi, litsenziya shartli:
+
+- Og'irliklar **LTX-2 Community License** ostida (Apache-2.0 emas): yillik daromadi **10 000 000 USD dan
+  kam** tashkilotlar uchun bepul, undan yuqori bo'lsa Lightricks'dan pullik litsenziya kerak.
+- Gemma matn kodlovchisi Google shartlari ostida qoladi; foydalanuvchilarga litsenziya matni va
+  foydalanish cheklovlari (Attachment A) yetkazilishi shart.
+- Shuning uchun `MODEL_LICENSES.md` da `commercial_use="unclear"`. Egasi hujjatlashtirilgan istisno
+  kiritmaguncha u ko'rinmaydi (`ALLOW_UNCLEAR_MODELS` faqat mahalliy sinov uchun).
+
+Qo'llanma bosqichlari Wan bilan bir xil, faqat fayl nomi boshqa:
+`modal run deploy/modal/ltx_video.py::download`, so'ng `modal deploy deploy/modal/ltx_video.py`.
+Model katta (22B), shuning uchun 80 GB li GPU (A100-80GB yoki H100) ishlatiladi. Bitta klip narxi Wan'dan
+**yuqori** bo'lishi kutiladi, lekin **o'lchanmagan**. Fayl hali hech qachon ishga tushirilmagan.

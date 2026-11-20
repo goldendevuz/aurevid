@@ -107,3 +107,41 @@ async def test_needs_all_three_user_values():
     assert provider.has_usable_credentials(Credentials({}, "server")) is False
     with pytest.raises(ProviderError):
         await provider.generate(_req(), Credentials({"submit_url": SUBMIT}, "user"))
+
+
+def _modal_models(**flags):
+    from app.config import get_settings
+    from app.providers.registry import enabled_providers
+
+    s = get_settings()
+    s.modal_video_enabled = True
+    for k, v in flags.items():
+        setattr(s, k, v)
+    return [m.id for m in enabled_providers()["modal_video"].info.models]
+
+
+def test_ltx_is_hidden_by_default_and_wan_is_unchanged():
+    assert _modal_models() == [mv.WAN]
+
+
+def test_ltx_is_visible_only_with_allow_unclear_models():
+    assert _modal_models(allow_unclear_models=True) == [mv.WAN, mv.LTX]
+    ltx = mv.ModalVideoProvider().model(mv.LTX)
+    assert ltx.commercial_use == "unclear" and ltx.has_audio is True
+    assert mv.ModalVideoProvider().model(mv.WAN).has_audio is False
+
+
+async def test_payload_carries_the_model_and_ltx_uses_its_own_sizes(monkeypatch):
+    import dataclasses
+    import json
+
+    seen = []
+    _install(monkeypatch, _workspace(seen, pending=0))
+    ltx_req = dataclasses.replace(_req(aspect="9:16", duration=3), model=mv.LTX)
+    await mv.ModalVideoProvider().generate(ltx_req, KEY)
+    await mv.ModalVideoProvider().generate(_req(), KEY)
+    ltx_body, wan_body = json.loads(seen[0].content), json.loads(seen[2].content)
+    assert ltx_body["model"] == mv.LTX
+    assert (ltx_body["width"], ltx_body["height"], ltx_body["frames"]) == (448, 768, 73)
+    assert (ltx_body["frames"] - 1) % 8 == 0 and ltx_body["width"] % 32 == 0
+    assert wan_body["model"] == mv.WAN and (wan_body["width"], wan_body["height"]) == (832, 480)
