@@ -46,6 +46,7 @@ async def test_share_lifecycle(alice, anon):
     pub = await anon.get(f"/api/s/{token}")  # no login
     assert pub.status_code == 200
     assert pub.headers["content-type"] == "video/mp4"
+    assert "media-src 'self'" in pub.headers["content-security-policy"]
 
     assert (await alice.delete(f"/api/admin/assets/{aid}/share", headers=h)).status_code == 204
     assert (await anon.get(f"/api/s/{token}")).status_code == 404
