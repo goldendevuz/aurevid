@@ -41,7 +41,7 @@ log = logging.getLogger("aurevid.worker")
 async def claim_next() -> Job | None:
     """Claim the next job in fair order that fits the resource caps (see services/queue.py)."""
     async with db.session_factory()() as session:
-        queued = await queue.load(session, JobStatus.queued, limit=200)
+        queued = await queue.load(session, JobStatus.queued, limit=200, server_only=True)
         if not queued:
             return None
         running = await queue.load(session, JobStatus.running)
@@ -72,7 +72,7 @@ async def claim_next() -> Job | None:
         return job
 
 
-async def _finish(job_id: str, produced: int, error: str | None) -> None:
+async def finish_job(job_id: str, produced: int, error: str | None) -> None:
     async with db.session_factory()() as session:
         job = await session.get(Job, job_id)
         if job is None:
@@ -220,7 +220,7 @@ async def _process_local_upscale(job: Job) -> None:
                 )
             )
             await session.commit()
-    await _finish(job.id, 1 if stored else 0, error)
+    await finish_job(job.id, 1 if stored else 0, error)
 
 
 async def _server_fallback(provider, job: Job, creds, remaining: int):
@@ -248,7 +248,7 @@ async def process(job: Job) -> None:
         return
     provider = get_provider(job.provider)
     if provider is None:
-        await _finish(job.id, 0, "Provider is not available")
+        await finish_job(job.id, 0, "Provider is not available")
         return
     params = job.params or {}
     async with db.session_factory()() as session:
@@ -257,7 +257,7 @@ async def process(job: Job) -> None:
     try:
         start_frame = await _start_frame(job)
     except ProviderError as exc:
-        await _finish(job.id, 0, exc.public)
+        await finish_job(job.id, 0, exc.public)
         return
     produced = 0
     described: list[str] = []
@@ -333,7 +333,7 @@ async def process(job: Job) -> None:
             if stored.mime.startswith("image/"):
                 described.append(asset.id)
         produced += 1
-    await _finish(job.id, produced, error)
+    await finish_job(job.id, produced, error)
     for asset_id in described:  # after the job is done, so alt text never delays results
         await describe.describe_asset(asset_id)
     log.info("job=%s produced=%d status=%s", job.id, produced, "ok" if produced else "failed")
@@ -348,14 +348,50 @@ async def recover_stale() -> None:
         stale = (
             (
                 await session.execute(
-                    select(Job.id).where(Job.status == JobStatus.running, Job.started_at < cutoff)
+                    select(Job.id).where(
+                        Job.status == JobStatus.running,
+                        Job.started_at < cutoff,
+                        Job.provider.not_in(queue.REMOTE_PROVIDERS),  # these have leases
+                    )
                 )
             )
             .scalars()
             .all()
         )
     for job_id in stale:
-        await _finish(job_id, 0, "Interrupted, credits refunded")
+        await finish_job(job_id, 0, "Interrupted, credits refunded")
+
+
+async def requeue_expired_leases() -> int:
+    """Remote (GPU worker) jobs whose lease ran out go back to the queue; after too many claims
+    they fail instead (credits refunded), so a job that crashes every worker cannot loop."""
+    s = get_settings()
+    cutoff = datetime.now(UTC) - timedelta(seconds=s.gpu_worker_lease_seconds)
+    async with db.session_factory()() as session:
+        expired = (
+            await session.execute(
+                select(Job.id, Job.attempts).where(
+                    Job.status == JobStatus.running,
+                    Job.provider.in_(queue.REMOTE_PROVIDERS),
+                    Job.started_at < cutoff,
+                )
+            )
+        ).all()
+        requeued = 0
+        for job_id, attempts in expired:
+            if attempts >= s.gpu_worker_max_attempts:
+                continue
+            result = await session.execute(
+                update(Job)
+                .where(Job.id == job_id, Job.status == JobStatus.running, Job.started_at < cutoff)
+                .values(status=JobStatus.queued, started_at=None)
+            )
+            requeued += result.rowcount
+        await session.commit()
+    for job_id, attempts in expired:
+        if attempts >= s.gpu_worker_max_attempts:
+            await finish_job(job_id, 0, "The GPU worker did not finish, credits refunded")
+    return requeued
 
 
 async def run_once() -> bool:
@@ -383,7 +419,8 @@ async def _slot(stop: asyncio.Event | None, poll: float) -> None:
 
 
 async def _janitor(stop: asyncio.Event | None) -> None:
-    """Every minute: reconcile payment orders; every 5 minutes: recover stale jobs."""
+    """Every minute: reconcile payment orders, requeue expired GPU leases; every 5 minutes:
+    recover stale jobs."""
     tick = 0
     while not (stop and stop.is_set()):
         await asyncio.sleep(60)
@@ -392,6 +429,10 @@ async def _janitor(stop: asyncio.Event | None) -> None:
             await payment_orders.reconcile()
         except Exception:  # noqa: BLE001
             log.exception("payment reconciliation failed")
+        try:
+            await requeue_expired_leases()
+        except Exception:  # noqa: BLE001
+            log.exception("GPU lease requeue failed")
         if tick % 5:
             continue
         try:

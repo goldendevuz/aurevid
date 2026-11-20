@@ -28,6 +28,9 @@ from app.security import as_utc
 
 CPU, NET = "cpu", "net"
 LOCAL_PROVIDER = "local"
+# Providers whose jobs run on a remote machine that claims them over the API
+# (routers/gpu_worker.py); the server's own worker never picks these up.
+REMOTE_PROVIDERS = frozenset({"gpu_worker"})
 # Fallback durations (seconds) until we have history for a provider.
 DEFAULT_SECONDS = {"image": 20, "video": 150, "upscale": 45}
 
@@ -73,10 +76,13 @@ def over_capacity(job: Job, running: Sequence[Job]) -> bool:
     return False
 
 
-async def load(session: AsyncSession, state: JobStatus, limit: int = 500) -> list[Job]:
-    rows = await session.execute(
-        select(Job).where(Job.status == state).order_by(Job.created_at).limit(limit)
-    )
+async def load(
+    session: AsyncSession, state: JobStatus, limit: int = 500, *, server_only: bool = False
+) -> list[Job]:
+    stmt = select(Job).where(Job.status == state)
+    if server_only:
+        stmt = stmt.where(Job.provider.not_in(REMOTE_PROVIDERS))
+    rows = await session.execute(stmt.order_by(Job.created_at).limit(limit))
     return list(rows.scalars().all())
 
 

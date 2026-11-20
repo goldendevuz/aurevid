@@ -89,6 +89,7 @@ rests on the owner's brief, not on the reference product's features.
 | Pollinations | free (anonymous) | none | **off**, terms unclear | user (fallback) / assumption (off) |
 | fal.ai (FLUX image, Wan 2.2 video + image-to-video, Kling 2.6, Topaz 4K/8K video) | paid | BYOK only | on (owner decision 2026-11-17) for FLUX and Wan 2.2; Kling and Topaz hidden (commercial use unclear) | user |
 | Modal (own Wan 2.2 TI2V-5B on the user's Modal GPU, `deploy/modal/`) | paid from the user's Modal credit | BYOK only | on | assumption |
+| GPU worker (Wan 2.2 TI2V-5B on the owner's own GPU, `deploy/gpu-worker/`) | free for users (0 credits) | worker bearer token (`GPU_WORKER_TOKEN`) | **off** until the token is set; only the owner's worker is trusted | assumption |
 | Pollinations video (Wan 2.2 fast, Seedance 2.0 mini) | paid, user's own Pollinations key | BYOK only | off and hidden: commercial-use status unclear (MODEL_LICENSES.md rule 3) | assumption |
 | Replicate | paid | BYOK | not built | user |
 | Offline demo | free | none | dev only | assumption |

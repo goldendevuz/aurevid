@@ -64,6 +64,7 @@
     "generate": "Generate",
     "generating": "Sending…",
     "cost": "Costs {{count}} credits",
+    "cost_zero": "Free",
     "recent": "Recent results",
     "empty": "Your generations will appear here.",
     "presetHint": "Presets add composition and camera cues to your prompt.",
@@ -114,6 +115,7 @@
     "upToImages": "up to {{count}} images",
     "acceptsImage": "image input",
     "perImage": "{{count}} credits",
+    "perImage_zero": "Free",
     "videoWait": "Videos take a few minutes, sometimes longer when the provider is busy. You can leave this page: it keeps generating and the result appears in History.",
     "withAudio": "with sound",
     "audioHint": "Sound: describe it in the prompt (music, noise, speech in quotes). A vague prompt gives a nearly silent track.",
@@ -653,6 +655,7 @@
   },
   "price": {
     "selection": "{{count}} credits",
+    "selection_zero": "Free",
     "selectionMany": "{{count}} credits ({{n}} × {{each}})",
     "freeShare": "runs on the Aurevid key: free within your share",
     "free": "free share"
