@@ -799,6 +799,12 @@ async def shared_file(token: str, session: Session):
         content_disposition_type="inline",
         headers={
             "Cache-Control": "public, max-age=3600",
+            # The global `default-src 'none'` blocks the browser's own media player when the
+            # file is opened as a page; allow just that (nothing scriptable).
+            "Content-Security-Policy": (
+                "default-src 'none'; media-src 'self'; img-src 'self'; "
+                "style-src 'unsafe-inline'; frame-ancestors 'none'"
+            ),
             "X-Content-Type-Options": "nosniff",
             "Referrer-Policy": "no-referrer",
         },
