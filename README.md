@@ -43,6 +43,7 @@ Uzbek, Russian.
 | Cloudflare Workers AI (FLUX.1 schnell, FLUX.2 klein 4B incl. edit with text; Apache-2.0; plus alt text and voice prompts) | Yes, daily free allocation | Cloudflare account ID + API token (server-wide or per user) | Yes |
 | fal.ai (FLUX.1 schnell image; Wan 2.2 video and image-to-video, Apache-2.0) | **Paid** (user's own key) | fal.ai key | Yes (BYOK only) |
 | Modal (your own Wan 2.2 TI2V-5B on a Modal GPU, Apache-2.0; see `deploy/modal/`) | **Paid** from your Modal credit | Modal token | Yes (BYOK only) |
+| GPU worker (Wan 2.2 TI2V-5B on **your own** NVIDIA GPU, Apache-2.0; see `deploy/gpu-worker/`) | **Free** for users (0 credits; you pay only electricity) | `GPU_WORKER_TOKEN` + a GPU machine with 24 GB VRAM | **No** (off until the token is set) |
 | Pollinations | Yes, anonymous | nothing | **No**: its terms could not be verified, see [MODEL_LICENSES.md](MODEL_LICENSES.md) |
 | Offline demo (image + short video clip) | Yes | nothing | Dev only |
 

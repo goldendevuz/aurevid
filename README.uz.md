@@ -10,7 +10,8 @@
 - Nisbat, o'lcham va rasmlar soni (1-4)
 - Video: matndan video va **Jonlantirish** (istalgan rasmingizdan video). Video uchun bepul servis
   topilmadi: o'z kalitingiz bilan fal.ai (Wan 2.2 5B, 5 soniyalik klip ≈ $0.15)
-  yoki Modal (o'z GPU'ingizdagi Wan 2.2) orqali ishlaydi. Faqat tijoriy foydalanishga aniq ruxsat
+  yoki Modal (o'z GPU'ingizdagi Wan 2.2) orqali ishlaydi. O'zingizning videokartangiz bo'lsa,
+  **GPU worker** (`deploy/gpu-worker/`) videoni bepul (0 kredit) tayyorlaydi: `GPU_WORKER_TOKEN` bilan yoqiladi. Faqat tijoriy foydalanishga aniq ruxsat
   berilgan modellar taklif qilinadi
 - **4K / 8K rasmlar bepul**: serveringizning o'z CPU'sida ishlaydigan AI kattalashtirish
   (Real-ESRGAN, BSD-3). API ham, GPU ham kerak emas (8 yadroda o'lchangan: 4K ≈30 s, 8K ≈100 s, xotira ≈780 MB)

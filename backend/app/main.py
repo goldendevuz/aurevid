@@ -18,6 +18,7 @@ from app.routers import (
     auth,
     catalog,
     credits,
+    gpu_worker,
     jobs,
     marketing,
     me,
@@ -32,6 +33,8 @@ log = logging.getLogger("aurevid")
 UNSAFE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
 # Server-to-server callbacks: no cookies, no Origin. Exact paths only; they trust nothing sent.
 CSRF_EXEMPT_PATHS = frozenset({payments.CALLBACK_PATH})
+# The GPU worker sends no cookies; it authenticates with a bearer token (routers/gpu_worker.py).
+CSRF_EXEMPT_PREFIXES = (gpu_worker.PREFIX + "/",)
 
 
 @asynccontextmanager
@@ -68,6 +71,7 @@ def create_app() -> FastAPI:
             request.method in UNSAFE_METHODS
             and request.url.path.startswith("/api/")
             and request.url.path not in CSRF_EXEMPT_PATHS
+            and not request.url.path.startswith(CSRF_EXEMPT_PREFIXES)
         ):
             origin = request.headers.get("origin")
             if origin and origin not in s.cors_origins:
@@ -114,6 +118,7 @@ def create_app() -> FastAPI:
         admin.public,
         marketing.router,
         payments.router,
+        gpu_worker.router,
         voice.router,
     ):
         app.include_router(router)

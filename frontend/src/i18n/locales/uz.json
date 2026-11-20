@@ -64,6 +64,7 @@
     "generate": "Yaratish",
     "generating": "Yuborilmoqda…",
     "cost": "Narxi: {{count}} kredit",
+    "cost_zero": "Bepul",
     "recent": "So'nggi natijalar",
     "empty": "Yaratgan rasmlaringiz shu yerda chiqadi.",
     "presetHint": "Presetlar promptga kompozitsiya va kamera ko'rsatmalarini qo'shadi.",
@@ -114,6 +115,7 @@
     "upToImages": "{{count}} tagacha rasm",
     "acceptsImage": "rasm kiritish",
     "perImage": "{{count}} kredit",
+    "perImage_zero": "Bepul",
     "videoWait": "Video bir necha daqiqa oladi, provayder band bo'lsa ko'proq. Sahifadan chiqib ketishingiz mumkin: yaratish davom etadi va natija Tarix bo'limida paydo bo'ladi.",
     "withAudio": "ovoz bilan",
     "audioHint": "Ovoz: promptda tasvirlang (musiqa, shovqin, tirnoq ichida gap). Noaniq prompt deyarli jimjit ovoz beradi.",
@@ -653,6 +655,7 @@
   },
   "price": {
     "selection": "{{count}} kredit",
+    "selection_zero": "Bepul",
     "selectionMany": "{{count}} kredit ({{n}} × {{each}})",
     "freeShare": "Aurevid kalitida ishlaydi: ulushingiz doirasida bepul",
     "free": "bepul ulush"

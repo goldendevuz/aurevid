@@ -46,6 +46,9 @@ class Settings(BaseSettings):
     modal_submit_url: str = Field(default="", repr=False)
     modal_token_id: str = Field(default="", repr=False)
     modal_token_secret: str = Field(default="", repr=False)
+    # Bring-your-own-GPU: a remote worker (deploy/gpu-worker) logs in with this bearer token.
+    # Empty = the gpu_worker provider and /api/gpu-worker/* are off.
+    gpu_worker_token: str = Field(default="", repr=False)
     inpay_merchant_id: str = Field(default="", repr=False)
     inpay_merchant_token: str = Field(default="", repr=False)
 
@@ -116,6 +119,8 @@ class Settings(BaseSettings):
     worker_poll_seconds: float = 1.0
     job_timeout_seconds: int = 180
     video_timeout_seconds: int = 600
+    gpu_worker_lease_seconds: int = 900  # a claimed job returns to the queue after this long
+    gpu_worker_max_attempts: int = 3  # claims per job before it fails (a crashing worker)
 
     @field_validator("cors_origins")
     @classmethod
@@ -144,6 +149,8 @@ class Settings(BaseSettings):
                 raise ValueError("MOCK_PROVIDER_ENABLED must be false in prod")
             if self.allow_unclear_models:
                 raise ValueError("ALLOW_UNCLEAR_MODELS must be false in prod (commercial-use rule)")
+            if self.gpu_worker_token and len(self.gpu_worker_token) < 32:
+                raise ValueError("GPU_WORKER_TOKEN must be at least 32 characters in prod")
             if self.payments_provider == "fake":
                 raise ValueError("PAYMENTS_PROVIDER=fake is not allowed in prod")
             if self.payments_provider != "none" and not self.public_base_url.startswith("https://"):

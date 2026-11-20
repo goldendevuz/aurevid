@@ -10,6 +10,7 @@ from app.models import ProviderKey
 from app.providers.base import Credentials, ImageProvider, ModelInfo
 from app.providers.cloudflare import CloudflareProvider
 from app.providers.fal import FalProvider
+from app.providers.gpu_worker import GpuWorkerProvider
 from app.providers.mock import MockProvider
 from app.providers.modal_video import ModalVideoProvider
 from app.providers.pollinations import PollinationsProvider
@@ -29,6 +30,8 @@ def enabled_providers() -> dict[str, ImageProvider]:
         providers.append(ModalVideoProvider())
     if s.fal_enabled:
         providers.append(FalProvider())
+    if s.gpu_worker_token:
+        providers.append(GpuWorkerProvider())
     if s.mock_provider_enabled:
         providers.append(MockProvider())
     out: dict[str, ImageProvider] = {}

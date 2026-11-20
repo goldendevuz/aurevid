@@ -33,6 +33,7 @@ P3 = keyinroq.
 | 13 | **Jamoa tarifi (agentliklar uchun)** | Higgsfield B2B daromadi 10 barobar o'sgan | Higgsfield | P3 | L | Umumiy kredit, bir nechta a'zo |
 | 14 | **Brend va mashhur shaxsga o'xshashlikni tekshirish** | Huquqiy xavfni kamaytiradi (GTA VI holati kabi) | Higgsfield Similarity Scoring | P3 | L | Chiqish moderatsiyasi bilan birga (`threat-model` "Known gaps") |
 | 15 | **Ovozli video: litsenziyasiz (CC0) musiqa kutubxonasi** | Modal kliplari ovozsiz; MMAudio tijoriy emas (CC-BY-NC) | To'y videosi tahlili | P2 | M | Faqat CC0/public-domain treklar; ffmpeg bilan videoga ulash (imijga ffmpeg qo'shish yoki Modal'da) |
+| 16 | **Hamjamiyat GPU worker'lari** (ishonchli odamlar o'z GPU'sida video tayyorlaydi) | Bulut narxisiz bepul video; foydalanuvchilar GPU'sini ulashadi | Egasining GPU worker'i (`deploy/gpu-worker/`) | P2 | M | 1-bosqich: faqat egasining worker'iga ishoniladi (worker prompt va rasmlarni ko'radi). Keyin: worker'ga alohida token, ro'yxatdan o'tkazish, natijani tekshirish, to'lov/mukofot; bitta umumiy token buning uchun yetarli emas |
 
 ## Allaqachon bor (raqiblarda ham bor, bizda ham)
 

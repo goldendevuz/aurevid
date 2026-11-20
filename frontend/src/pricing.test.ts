@@ -21,3 +21,19 @@ describe("priceOf", () => {
     expect(onFreeShare({ key_source: "user" } as Provider)).toBe(false);
   });
 });
+
+describe("free models", () => {
+  it("show 'free' instead of 0 credits in every language", async () => {
+    const { default: i18n } = await import("./i18n");
+    for (const [lng, free, paid] of [
+      ["en", "Free", "2 credits"],
+      ["uz", "Bepul", "2 kredit"],
+      ["ru", "Бесплатно", "2 кр."],
+    ] as const) {
+      expect(i18n.t("price.selection", { lng, count: 0 })).toBe(free);
+      expect(i18n.t("studio.perImage", { lng, count: 0 })).toBe(free);
+      expect(i18n.t("price.selection", { lng, count: 2 })).toBe(paid);
+    }
+    expect(priceOf({ ...model, credit_cost: 0 } as ModelInfo).total).toBe(0);
+  });
+});
