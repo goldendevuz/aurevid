@@ -9,7 +9,7 @@ import { BarList, ColumnChart, Heatmap, SERIES, StatTile } from "../components/c
 import { Badge, Button, Card, ErrorText, inputClass } from "../components/ui";
 import { formatSom } from "../money";
 
-const TABS = ["overview", "users", "jobs", "payments", "analytics", "moderation", "system", "announcements", "audit"] as const;
+const TABS = ["overview", "users", "jobs", "payments", "media", "analytics", "moderation", "system", "announcements", "audit"] as const;
 type Tab = (typeof TABS)[number];
 type Json = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -424,6 +424,88 @@ function Payments() {
 
 // ---------------------------------------------------------------------------------------------
 
+function Media() {
+  const { t } = useTranslation();
+  const f = useFmt();
+  const [kind, setKind] = useState("video");
+  const [shared, setShared] = useState("");
+  const [page, setPage] = useState(1);
+  const [tick, setTick] = useState(0);
+  const [copied, setCopied] = useState("");
+  const [err, setErr] = useState<unknown>(null);
+  const { data, error } = useData(`/api/admin/media?${qs({ kind, shared: shared ? "true" : "", page, limit: 20, tick })}`, 0);
+  useEffect(() => setPage(1), [kind, shared]);
+  const link = (tok: string) => `${window.location.origin}/api/s/${tok}`;
+  async function toggle(id: string, on: boolean) {
+    setErr(null);
+    try {
+      await api(`/api/admin/assets/${id}/share`, { method: on ? "DELETE" : "POST" });
+      setTick((x) => x + 1);
+    } catch (e) {
+      setErr(e);
+    }
+  }
+  async function copy(tok: string) {
+    try {
+      await navigator.clipboard.writeText(link(tok));
+      setCopied(tok);
+      setTimeout(() => setCopied(""), 1500);
+    } catch {
+      window.prompt(t("admin.copyLink"), link(tok));
+    }
+  }
+  return (
+    <Section
+      title={t("admin.tab_media")}
+      actions={
+        <>
+          <Select label="kind" value={kind} onChange={setKind} options={[["video", t("admin.m_video")], ["image", t("admin.m_image")], ["all", t("admin.f_all")]]} />
+          <Select label="shared" value={shared} onChange={setShared} options={[["", t("admin.f_all")], ["1", t("admin.m_sharedOnly")]]} />
+        </>
+      }
+    >
+      <p className="mb-2 text-xs text-muted">{t("admin.shareHint")}</p>
+      <ErrorText error={error ?? err} />
+      <div className="overflow-x-auto">
+        <table className="w-full text-xs">
+          <thead><tr><th className={th}>{t("admin.created")}</th><th className={th}>{t("admin.user")}</th><th className={th}>{t("admin.preview")}</th><th className={th}>{t("admin.shareLink")}</th></tr></thead>
+          <tbody>
+            {data?.items.map((a: Json) => (
+              <tr key={a.id} className="border-t border-line">
+                <td className={`${td} whitespace-nowrap text-muted`}>{f.date(a.created_at)}<p className="text-[10px]">{(a.size_bytes / 1048576).toFixed(1)} MB</p></td>
+                <td className={td}>{a.user_email ?? "—"}</td>
+                <td className={td}>
+                  {a.mime.startsWith("video/") ? (
+                    <video src={`/api/admin/assets/${a.id}/file`} className="h-20 rounded" controls preload="none" />
+                  ) : (
+                    <img src={`/api/admin/assets/${a.id}/file`} alt="" className="h-20 rounded" loading="lazy" />
+                  )}
+                </td>
+                <td className={td}>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {a.share_token ? (
+                      <>
+                        <input readOnly value={link(a.share_token)} onFocus={(e) => e.target.select()} className="w-56 rounded-lg border border-line bg-bg/70 px-2 py-1 text-[11px]" />
+                        <Button variant="ghost" onClick={() => copy(a.share_token)}>{copied === a.share_token ? t("admin.copied") : t("admin.copyLink")}</Button>
+                        <Button variant="ghost" onClick={() => toggle(a.id, true)}>{t("admin.revokeLink")}</Button>
+                      </>
+                    ) : (
+                      <Button variant="ghost" onClick={() => toggle(a.id, false)}>{t("admin.createLink")}</Button>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {data && <Pager page={page} total={data.total} limit={20} onPage={setPage} />}
+    </Section>
+  );
+}
+
+// ---------------------------------------------------------------------------------------------
+
 function Analytics({ internal }: { internal: boolean }) {
   const { t } = useTranslation();
   const [days, setDays] = useState("30");
@@ -743,6 +825,7 @@ export default function Admin() {
       {tab === "users" && <Users />}
       {tab === "jobs" && <Jobs internal={internal} />}
       {tab === "payments" && <Payments />}
+      {tab === "media" && <Media />}
       {tab === "analytics" && <Analytics internal={internal} />}
       {tab === "moderation" && <Moderation />}
       {tab === "system" && <System />}

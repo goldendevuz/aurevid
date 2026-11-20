@@ -510,7 +510,18 @@
     "status_created": "Создан",
     "status_pending": "Ожидает",
     "status_paid": "Оплачен",
-    "status_expired": "Истёк"
+    "status_expired": "Истёк",
+    "tab_media": "Медиа",
+    "m_video": "Видео",
+    "m_image": "Изображения",
+    "m_sharedOnly": "Только с доступом",
+    "shareHint": "Любой, у кого есть ссылка, увидит файл без входа. Отзовите ссылку, чтобы отключить.",
+    "preview": "Просмотр",
+    "shareLink": "Публичная ссылка",
+    "copyLink": "Копировать ссылку",
+    "copied": "Скопировано",
+    "revokeLink": "Отозвать",
+    "createLink": "Создать ссылку"
   },
   "marketing": {
     "title": "Маркетинговый помощник",

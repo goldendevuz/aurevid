@@ -510,7 +510,18 @@
     "status_created": "Created",
     "status_pending": "Pending",
     "status_paid": "Paid",
-    "status_expired": "Expired"
+    "status_expired": "Expired",
+    "tab_media": "Media",
+    "m_video": "Videos",
+    "m_image": "Images",
+    "m_sharedOnly": "Shared only",
+    "shareHint": "Anyone with a link can view the file without signing in. Revoke to disable it.",
+    "preview": "Preview",
+    "shareLink": "Public link",
+    "copyLink": "Copy link",
+    "copied": "Copied",
+    "revokeLink": "Revoke",
+    "createLink": "Create link"
   },
   "marketing": {
     "title": "Marketing helper",

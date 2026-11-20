@@ -10,6 +10,7 @@ Analytics exclude internal (team/test) accounts unless ``include_internal=true``
 import csv
 import io
 import logging
+import secrets
 from datetime import UTC, datetime, timedelta
 from typing import Literal
 
@@ -715,6 +716,93 @@ async def admin_asset_file(asset_id: str, _: AdminUser, session: Session):
     if not path.exists():
         raise not_found()
     return FileResponse(path, media_type=asset.mime, headers={"Cache-Control": "no-store"})
+
+
+def _share_row(a: Asset, email: str | None) -> dict:
+    return {
+        "id": a.id,
+        "user_email": email,
+        "mime": a.mime,
+        "size_bytes": a.size_bytes,
+        "created_at": a.created_at,
+        "share_token": a.share_token,
+    }
+
+
+@router.get("/media")
+async def list_media(
+    _: AdminUser,
+    session: Session,
+    kind: Literal["all", "video", "image"] = "video",
+    shared: bool = False,
+    page: int = Query(1, ge=1, le=10_000),
+    limit: int = Query(20, ge=1, le=100),
+):
+    """Generated media, newest first, with the public-link token (admin only)."""
+    stmt = (
+        select(Asset, User.email)
+        .outerjoin(User, User.id == Asset.user_id)
+        .where(Asset.source == "generated")
+    )
+    if kind != "all":
+        stmt = stmt.where(Asset.mime.like(f"{kind}/%"))
+    if shared:
+        stmt = stmt.where(Asset.share_token.is_not(None))
+    total = (await session.execute(select(func.count()).select_from(stmt.subquery()))).scalar_one()
+    rows = await session.execute(
+        stmt.order_by(Asset.created_at.desc()).limit(limit).offset((page - 1) * limit)
+    )
+    return {"total": total, "items": [_share_row(a, e) for a, e in rows.all()]}
+
+
+@router.post("/assets/{asset_id}/share")
+async def share_asset(asset_id: str, admin: AdminUser, session: Session):
+    """Create (or keep) the public link. Anyone with the link can view the file."""
+    asset = await session.get(Asset, asset_id)
+    if asset is None:
+        raise not_found()
+    if asset.share_token is None:
+        asset.share_token = secrets.token_urlsafe(24)
+        await _audit(session, admin, "asset.share", asset_id)
+        await session.commit()
+    return {"id": asset.id, "share_token": asset.share_token}
+
+
+@router.delete("/assets/{asset_id}/share", status_code=204)
+async def unshare_asset(asset_id: str, admin: AdminUser, session: Session) -> None:
+    asset = await session.get(Asset, asset_id)
+    if asset is None:
+        raise not_found()
+    if asset.share_token is not None:
+        asset.share_token = None
+        await _audit(session, admin, "asset.unshare", asset_id)
+        await session.commit()
+
+
+@public.get("/s/{token}")
+async def shared_file(token: str, session: Session):
+    """Public, unauthenticated view of an admin-shared asset. Unknown token: 404."""
+    if not 20 <= len(token) <= 48:
+        raise not_found()
+    asset = (
+        await session.execute(select(Asset).where(Asset.share_token == token))
+    ).scalar_one_or_none()
+    if asset is None:
+        raise not_found()
+    path = asset_path(asset.storage_key)
+    if not path.exists():
+        raise not_found()
+    return FileResponse(
+        path,
+        media_type=asset.mime,
+        filename=f"aurevid-{asset.id}.{'mp4' if asset.mime == 'video/mp4' else 'webp'}",
+        content_disposition_type="inline",
+        headers={
+            "Cache-Control": "public, max-age=3600",
+            "X-Content-Type-Options": "nosniff",
+            "Referrer-Policy": "no-referrer",
+        },
+    )
 
 
 @router.delete("/assets/{asset_id}", status_code=204)
