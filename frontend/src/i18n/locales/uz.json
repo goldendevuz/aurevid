@@ -333,6 +333,7 @@
     "cannot_target_self": "Buni o'z hisobingizga qilib bo'lmaydi.",
     "job_not_queued": "Faqat navbatdagi jobni bekor qilish mumkin.",
     "job_not_failed": "Faqat xato bo'lgan jobni qayta ishga tushirish mumkin.",
+    "own_key_required": "Bu uzun klip qimmat, shuning uchun faqat o'z Modal kalitingiz bilan ishlaydi. Sozlamalarda qo'shing.",
     "free_share_used": "Aurevid kalitidagi bepul ulushingiz tugadi. Sozlamalarda o'z kalitingizni qo'shing yoki ertaga qayta urining.",
     "job_not_finished": "Bu natija hali tayyorlanmoqda. Tugashini kuting.",
     "free_month_used": "Aurevid kalitidagi bu oylik bepul video limiti tugadi. Sozlamalarda o'z Modal kalitingizni qo'shing yoki keyingi oyda urinib ko'ring.",

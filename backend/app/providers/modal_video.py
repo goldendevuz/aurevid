@@ -26,6 +26,7 @@ from app.providers.base import (
 )
 
 WAN = "wan-2.2-ti2v-5b"
+WAN_LONG = "wan-2.2-ti2v-5b-15s"  # same endpoint/weights: 15 s at 720p, A100 (costly)
 # Optional, hidden: conditional licence (MODEL_LICENSES.md); endpoint in deploy/modal/ltx_video.py
 LTX = "ltx-2.3"
 POLL_SECONDS = 5.0
@@ -33,6 +34,8 @@ POLL_SECONDS = 5.0
 _SIZES = {"16:9": (832, 480), "9:16": (480, 832), "1:1": (640, 640)}
 # LTX-2.3: multiples of 32 too, a bit smaller (a 22B model costs more per second of GPU time).
 _LTX_SIZES = {"16:9": (768, 448), "9:16": (448, 768), "1:1": (640, 640)}
+_LONG_SIZES = {"16:9": (1280, 704), "9:16": (704, 1280)}  # 720p rounded to 32
+_LONG_FRAMES = 361  # 15 s at 24 fps
 _FRAMES = {5: 121, 3: 73}  # 24 fps; 4k+1 frames (Wan) and 8k+1 (LTX) both hold for 121 and 73
 
 
@@ -74,6 +77,19 @@ class ModalVideoProvider(ImageProvider):
                 max_count=1,
                 durations=[5, 3],
                 has_audio=False,  # Wan 2.2 TI2V-5B makes silent clips
+            ),
+            ModelInfo(
+                id=WAN_LONG,
+                label="Wan 2.2 TI2V-5B, 15 s at 720p (Modal, own key)",
+                kind="video",
+                license="Apache-2.0",
+                commercial_use="yes",
+                aspect_ratios=list(_LONG_SIZES),
+                credit_cost=30,
+                max_count=1,
+                durations=[15],
+                server_key_ok=False,  # ~6x the GPU time of a 5 s clip: never on the owner's key
+                has_audio=False,
             ),
             ModelInfo(
                 id=LTX,
@@ -120,22 +136,24 @@ class ModalVideoProvider(ImageProvider):
             raise ProviderError(
                 "Add your Modal endpoint and token in Settings to use this provider"
             )
-        if req.kind != "video" or req.model not in (WAN, LTX):
+        if req.kind != "video" or req.model not in (WAN, WAN_LONG, LTX):
             raise ProviderError("Unknown Modal video model")
         submit, result = endpoints(submit_url)
         headers = {"Modal-Key": token_id, "Modal-Secret": token_secret}
-        sizes = _LTX_SIZES if req.model == LTX else _SIZES
+        long_clip = req.model == WAN_LONG
+        sizes = _LTX_SIZES if req.model == LTX else _LONG_SIZES if long_clip else _SIZES
         width, height = sizes.get(req.aspect_ratio, sizes["16:9"])
         body = {
-            "model": req.model,  # the LTX endpoint refuses a payload for another model
+            # the LTX endpoint refuses a payload for another model; the long clip is the Wan model
+            "model": WAN if long_clip else req.model,
             "prompt": req.prompt,
             "width": width,
             "height": height,
-            "frames": _FRAMES.get(req.duration_s or 5, 121),
+            "frames": _LONG_FRAMES if long_clip else _FRAMES.get(req.duration_s or 5, 121),
             "seed": req.seed or 0,
         }
         settings = get_settings()
-        deadline = time.monotonic() + settings.video_timeout_seconds
+        deadline = time.monotonic() + max(settings.video_timeout_seconds, 1800 if long_clip else 0)
         dest = req.workdir / f"{secrets.token_hex(8)}.part" if req.workdir else None
         try:
             async with _http(60) as client:
