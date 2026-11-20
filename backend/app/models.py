@@ -118,6 +118,10 @@ class Asset(Base):
     is_favorite: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     # Short machine-written description (Cloudflare image-to-text), used as the <img alt>.
     alt_text: Mapped[str | None] = mapped_column(String(400), nullable=True)
+    # Random public-link token. Set only by an admin; clearing it revokes the link.
+    share_token: Mapped[str | None] = mapped_column(
+        String(48), unique=True, index=True, nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
 

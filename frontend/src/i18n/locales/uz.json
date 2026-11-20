@@ -510,7 +510,18 @@
     "status_created": "Yaratildi",
     "status_pending": "Kutilmoqda",
     "status_paid": "To'langan",
-    "status_expired": "Muddati o'tdi"
+    "status_expired": "Muddati o'tdi",
+    "tab_media": "Media",
+    "m_video": "Videolar",
+    "m_image": "Rasmlar",
+    "m_sharedOnly": "Faqat ulashilganlar",
+    "shareHint": "Havola bor har kim faylni kirmasdan ko'ra oladi. O'chirish uchun \"Bekor qilish\" ni bosing.",
+    "preview": "Ko'rinish",
+    "shareLink": "Ommaviy havola",
+    "copyLink": "Havolani nusxalash",
+    "copied": "Nusxalandi",
+    "revokeLink": "Bekor qilish",
+    "createLink": "Havola yaratish"
   },
   "marketing": {
     "title": "Marketing yordamchisi",
