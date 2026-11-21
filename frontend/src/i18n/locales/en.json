@@ -15,7 +15,8 @@
     "language": "Language",
     "credits": "{{count}} credits",
     "admin": "Admin",
-    "marketing": "Marketing"
+    "marketing": "Marketing",
+    "home": "Home"
   },
   "auth": {
     "loginTitle": "Welcome back",
@@ -129,7 +130,22 @@
     "voice": "Voice",
     "voiceStart": "Dictate the prompt",
     "voiceStop": "Stop recording",
-    "voiceSending": "Transcribing…"
+    "voiceSending": "Transcribing…",
+    "panel": {
+      "title": "Result",
+      "region": "Result preview",
+      "ready": "Ready",
+      "emptyTitle": "Ready to generate",
+      "emptyHint": "Write a prompt on the left and press Generate. Your result appears here.",
+      "generatingTitle": "Generating",
+      "generatingHint": "Queued or running. This panel updates on its own.",
+      "queue": "Position in queue: {{count}}",
+      "eta": "About {{seconds}} s left",
+      "creditsTitle": "Out of credits",
+      "creditsHint": "This generation costs more credits than you have left. Top up to keep creating.",
+      "creditsCta": "Get credits",
+      "errorTitle": "Something went wrong"
+    }
   },
   "job": {
     "queued": "Queued",
@@ -651,7 +667,13 @@
     "ad_step2_desc": "Get ideas for Stories/Reels (9:16) and the feed (1:1), in Uzbek, Russian or English.",
     "ad_step3": "Generate",
     "ad_step3_desc": "Create one ad or the whole set at once. You see the credit cost before anything starts.",
-    "adCta": "Make my first ad"
+    "adCta": "Make my first ad",
+    "marquee": {
+      "label": "Models available in Aurevid",
+      "title": "Live models",
+      "count": "{{count}} models"
+    },
+    "create": "Create"
   },
   "price": {
     "selection": "{{count}} credits",

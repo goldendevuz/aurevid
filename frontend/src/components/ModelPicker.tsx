@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { onFreeShare, priceOf } from "../pricing";
 import type { ModelInfo, Provider } from "../types";
 import { Icon } from "./icons";
+import { ProviderDot } from "./ProviderDot";
 import { Badge, Segmented } from "./ui";
 
 export interface ModelChoice {
@@ -20,13 +21,16 @@ function swatch(seed: string): string {
   return `linear-gradient(135deg, hsl(${a} 80% 62%), hsl(${(a + 70) % 360} 75% 52%) 60%, hsl(${(a + 140) % 360} 70% 45%))`;
 }
 
-export function ModelSwatch({ seed, size = 36 }: { seed: string; size?: number }) {
+/** `provider` adds a small provider-coloured dot on the corner (same colour as in the landing marquee). */
+export function ModelSwatch({ seed, size = 36, provider }: { seed: string; size?: number; provider?: string }) {
   return (
-    <span
-      aria-hidden
-      className="inline-block shrink-0 rounded-xl shadow-[inset_0_1px_0_rgb(255_255_255/0.35)]"
-      style={{ width: size, height: size, background: swatch(seed) }}
-    />
+    <span aria-hidden className="relative inline-block shrink-0" style={{ width: size, height: size }}>
+      <span
+        className="block h-full w-full rounded-xl shadow-[inset_0_1px_0_rgb(255_255_255/0.35)]"
+        style={{ background: swatch(seed) }}
+      />
+      {provider && <ProviderDot id={provider} size={Math.max(7, Math.round(size / 3.4))} className="absolute -bottom-0.5 -right-0.5 ring-2 ring-surface" />}
+    </span>
   );
 }
 
@@ -142,13 +146,21 @@ export default function ModelPicker({
                   aria-pressed={active}
                   className="flex w-full items-start gap-3 text-left disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  <ModelSwatch seed={key} size={40} />
+                  <ModelSwatch seed={key} size={40} provider={p.id} />
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-2">
                       <span className="truncate text-sm font-semibold">{m.label}</span>
                       {active && <Icon name="check" size={15} className="shrink-0 text-accent" />}
                     </span>
-                    <span className="block text-[11px] text-muted">{p.name}</span>
+                    <span className="flex items-center gap-1.5 text-[11px] text-muted">
+                      {p.name}
+                      {p.available && (
+                        <span className="inline-flex items-center" title={t("studio.panel.ready")}>
+                          <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-accent-4 shadow-[0_0_6px_rgb(200_255_46/0.7)]" />
+                          <span className="sr-only">{t("studio.panel.ready")}</span>
+                        </span>
+                      )}
+                    </span>
                   </span>
                 </button>
                 <div className="mt-3 flex flex-wrap gap-1.5">
@@ -157,7 +169,7 @@ export default function ModelPicker({
                   {p.key_source === "user" && <Badge tone="muted">{t("studio.byok")}</Badge>}
                   {p.key_source === "server" && p.free_left !== null && <Badge tone="free">{t("studio.freeLeft", { count: p.free_left })}</Badge>}
                 </div>
-                <ul className="mt-3 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted">
+                <ul className="mt-3 flex flex-wrap gap-x-3 gap-y-1 font-mono text-[11px] text-muted">
                   <li className="flex items-center gap-1"><Icon name="ratio" size={12} />{m.aspect_ratios.join(" · ")}</li>
                   {m.kind === "image" ? (
                     <li className="flex items-center gap-1"><Icon name="layers" size={12} />{t("studio.upToImages", { count: m.max_count })}</li>
@@ -173,7 +185,7 @@ export default function ModelPicker({
                   )}
                   <li className="flex items-center gap-1"><Icon name="bolt" size={12} />{t("studio.perImage", { count: m.credit_cost })}</li>
                 </ul>
-                <p className="mt-2 text-[11px] font-medium text-ink/90">
+                <p className="mt-2 font-mono text-[11px] font-medium text-ink/90">
                   {(() => {
                     const target = upscale && m.upscale_targets.includes(upscale as "4k" | "8k") ? upscale : null;
                     const price = priceOf(m, m.kind === "video" ? 1 : Math.min(count, m.max_count), target);

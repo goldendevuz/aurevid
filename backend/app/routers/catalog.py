@@ -44,6 +44,27 @@ async def list_providers(user: CurrentUser, session: Session):
     return out
 
 
+@router.get("/catalog/models")
+async def public_models():
+    """Public, credential-free list of the models this instance really offers (landing page).
+
+    Same registry as ``/api/providers`` (so the commercial-use filter applies), but no keys,
+    quotas or per-user state.
+    """
+    return [
+        {
+            "provider_id": provider.info.id,
+            "provider": provider.info.name,
+            "id": m.id,
+            "label": m.label,
+            "kind": m.kind,
+        }
+        for provider in enabled_providers().values()
+        for m in provider.info.models
+        if m.kind in ("image", "video")
+    ]
+
+
 @router.get("/presets")
 async def list_presets():
     return [p.model_dump() for p in load_presets().values()]

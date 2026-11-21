@@ -98,13 +98,14 @@ export function Label({ children, htmlFor }: { children: ReactNode; htmlFor?: st
 export const inputClass =
   "w-full rounded-xl border border-white/[0.14] bg-white/[0.05] px-3.5 py-2.5 text-sm text-ink shadow-[inset_0_1px_2px_rgb(0_0_0/0.35)] placeholder:text-muted/60 transition hover:border-white/25 focus:border-accent/70 focus:bg-white/[0.07] focus:outline-none focus:ring-2 focus:ring-accent/25";
 
-export function Badge({ tone, children }: { tone: "free" | "paid" | "muted" | "ok" | "danger"; children: ReactNode }) {
+export function Badge({ tone, children }: { tone: "free" | "paid" | "muted" | "ok" | "danger" | "live"; children: ReactNode }) {
   const styles = {
     free: "bg-ok/12 text-ok",
     paid: "bg-accent-2/15 text-accent-2",
     muted: "bg-raised text-muted",
     ok: "bg-ok/12 text-ok",
     danger: "bg-danger/12 text-danger",
+    live: "bg-accent-4/12 font-mono text-accent-4",
   }[tone];
   return <span className={`inline-block whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold ${styles}`}>{children}</span>;
 }

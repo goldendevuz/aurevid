@@ -75,3 +75,32 @@ skyline, grid) is original SVG/CSS drawn for Aurevid; no game, film or brand art
   perspective grid (`.grid-floor`). Hero sample tiles use the `.postcard` frame.
 - **Motion:** every scenery animation and the sky drift are disabled under `prefers-reduced-motion`.
 - **Token names** (`accent`, `aurora`, `glass`, `btn-aurora`) are unchanged, so every page follows.
+
+### Neon Coast additions (workspace, marquee, mono data)
+
+Borrowed ideas, built on the shared tokens so a theme swap stays a CSS change:
+
+- **Lime `--color-accent-4` (`#c8ff2e`)**, owner-approved, used sparingly: ok-status dots (available provider in
+  `ModelPicker`, hero tile badges), "live/ready" badges (`Badge tone="live"`, the marquee header) and key highlights. Never a main button colour.
+- **Mono data font:** `--font-mono` = JetBrains Mono Variable (`@fontsource-variable/jetbrains-mono`) for prompt counters,
+  prices/credits, times and model names. Headlines stay Anton, body Geist.
+- **`ModelMarquee`** (landing, under the hero): slow endless strip of model chips (mono text, provider dot, faded edges via
+  `mask-image`, list duplicated for a seamless loop, paused on hover). `prefers-reduced-motion` turns it into a static wrapping list.
+  It lists only what the registry really offers, from the public, credential-free `GET /api/catalog/models`
+  (same `enabled_providers()` as `/api/providers`, so the commercial-use filter applies). Nothing is hard-coded; if the request
+  fails the strip is not rendered.
+- **Routes:** `/` is always the Landing page (signed-in people get a "Create" button instead of sign-up links); the Studio lives at
+  `/create` (`/studio` redirects there, router state kept). Sign-in and register land on `/create` unless `state.next` says otherwise,
+  and a protected page remembers where you wanted to go. The logo goes to `/` and scrolls to the top, even when already there.
+- **Favicon:** original Neon Coast mark (striped pink-to-orange sun and a teal horizon line on dark purple), `favicon.svg` plus
+  `favicon-32.png` and `apple-touch-icon.png`; `index.html` links carry `?v=2` to bust caches.
+- **Studio workspace (lg+):** two columns. Left = composer (mode, model, prompt, options, presets), right = sticky
+  `ResultPanel` with states empty ("Ready to generate"), generating (neon orbit), error (credits-exhausted gets its own card
+  linking to `/credits`) and result (the latest job rendered by the existing `JobCard`). The panel only reads state `Studio`
+  already has (`focusId`, `error`, `compareRun`); generation logic is unchanged. Below lg it stays one column as before
+  (panel hidden, inline error, compare results below the composer). No resizable handle.
+- **Blueprint sheet:** `.blueprint` on the inner-page wrapper in `Layout`: thin grid and heavier lines every 128 px from
+  `--hairline`, ruler ticks on the top and left edges, sides faded. Not used on the landing hero (it keeps the scenery).
+- **Provider dots:** `ProviderDot` / `--color-provider-1..5` (plain `:root` variables, because `@theme` drops unused
+  variables), shown in `ModelPicker`, `ModelSwatch` and the marquee.
+

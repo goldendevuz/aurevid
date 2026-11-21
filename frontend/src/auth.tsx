@@ -55,8 +55,8 @@ export function useAuth(): AuthState {
   return ctx;
 }
 
-/** Where to go after sign-in: an internal path from router state (`{ next: "/marketing" }`), else "/". */
+/** Where to go after sign-in: an internal path from router state (`{ next: "/marketing" }`), else "/create" (the Studio). */
 export function nextPath(state: unknown): string {
   const next = (state as { next?: unknown } | null)?.next;
-  return typeof next === "string" && /^\/(?![/\\])/.test(next) ? next : "/";
+  return typeof next === "string" && /^\/(?![/\\])/.test(next) ? next : "/create";
 }

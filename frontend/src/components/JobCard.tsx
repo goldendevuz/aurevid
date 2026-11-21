@@ -114,7 +114,7 @@ function Chips({ job }: { job: Job }) {
           {t(`presets.${job.preset_id}.name`, { defaultValue: job.preset_id })}
         </li>
       )}
-      <li className={`${chip} tabular-nums`}>{new Date(job.created_at).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}</li>
+      <li className={`${chip} font-mono tabular-nums`}>{new Date(job.created_at).toLocaleString([], { dateStyle: "medium", timeStyle: "short" })}</li>
     </ul>
   );
 }

@@ -278,19 +278,19 @@ export default function History() {
               key={j.id}
               job={j}
               index={i % 12}
-              onRemix={(job) => navigate("/", { state: { remix: job } })}
+              onRemix={(job) => navigate("/create", { state: { remix: job } })}
               onRetry={retry}
               onDelete={remove}
               onChange={(u) => setJobs((p) => p.map((x) => (x.id === u.id ? u : x)))}
-              onAnimate={(asset) => navigate("/", { state: { animate: asset } })}
+              onAnimate={(asset) => navigate("/create", { state: { animate: asset } })}
               onEdit={async (asset, instruction) => {
                 await api(`/api/assets/${asset.id}/edit`, { method: "POST", body: { instruction } });
-                navigate("/");
+                navigate("/create");
               }}
               onUpscale={async (asset, target) => {
                 try {
                   await api(`/api/assets/${asset.id}/upscale`, { method: "POST", body: { target } });
-                  navigate("/");
+                  navigate("/create");
                 } catch (err) {
                   setError(err);
                 }

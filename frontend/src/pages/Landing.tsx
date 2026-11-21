@@ -2,8 +2,10 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
+import { useAuth } from "../auth";
 import { Footer, LanguageSelect, Logo } from "../components/Layout";
 import { Icon, type IconName } from "../components/icons";
+import ModelMarquee from "../components/ModelMarquee";
 import Scenery from "../components/Scenery";
 
 /** Real interactive sample tiles rendered in the hero */
@@ -106,6 +108,11 @@ const AD_FLOW: { key: string; icon: IconName }[] = [
 
 export default function Landing() {
   const { t } = useTranslation();
+  const { user, loading } = useAuth();
+  // Signed-in people see the same page with "Create" (the Studio) in place of sign-up links.
+  const cta = user ? "/create" : "/register";
+  const guest = !loading && !user;
+  const startLabel = user ? t("landing.create") : t("landing.start");
   const [filter, setFilter] = useState<"all" | "video" | "image">("all");
 
   const filteredItems = SHOWCASE_ITEMS.filter((item) => {
@@ -131,18 +138,22 @@ export default function Landing() {
           </nav>
           <div className="ml-auto flex items-center gap-2">
             <LanguageSelect />
-            <Link
-              to="/login"
-              className="rounded-full px-3.5 py-2 text-sm font-medium text-ink transition hover:bg-white/[0.06]"
-            >
-              {t("nav.login")}
-            </Link>
-            <Link
-              to="/register"
-              className="btn-aurora hidden rounded-full px-4 py-2 text-sm font-semibold sm:inline-flex"
-            >
-              {t("landing.start")}
-            </Link>
+            {guest && (
+              <Link
+                to="/login"
+                className="rounded-full px-3.5 py-2 text-sm font-medium text-ink transition hover:bg-white/[0.06]"
+              >
+                {t("nav.login")}
+              </Link>
+            )}
+            {!loading && (
+              <Link
+                to={cta}
+                className={`btn-aurora rounded-full px-4 py-2 text-sm font-semibold sm:inline-flex ${user ? "inline-flex" : "hidden"}`}
+              >
+                {startLabel}
+              </Link>
+            )}
           </div>
         </div>
       </header>
@@ -167,18 +178,20 @@ export default function Landing() {
             </p>
             <div className="rise mt-8 flex flex-wrap items-center gap-3 [--i:3]">
               <Link
-                to="/register"
+                to={cta}
                 className="btn-aurora inline-flex items-center gap-2 rounded-2xl px-6 py-3.5 text-base font-semibold shadow-lg shadow-accent/20"
               >
                 <Icon name="sparkle" size={18} />
-                {t("landing.start")}
+                {startLabel}
               </Link>
-              <Link
-                to="/login"
-                className="inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-white/[0.04] px-6 py-3.5 text-base font-medium text-ink transition hover:border-white/30 hover:bg-white/[0.08]"
-              >
-                {t("nav.login")}
-              </Link>
+              {guest && (
+                <Link
+                  to="/login"
+                  className="inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-white/[0.04] px-6 py-3.5 text-base font-medium text-ink transition hover:border-white/30 hover:bg-white/[0.08]"
+                >
+                  {t("nav.login")}
+                </Link>
+              )}
               <a
                 href="#showcase"
                 className="inline-flex items-center gap-2 rounded-2xl border border-line bg-white/[0.02] px-4 py-3.5 text-sm font-medium text-muted transition hover:border-white/20 hover:text-ink"
@@ -221,7 +234,7 @@ export default function Landing() {
                   className="h-full w-full object-cover transition duration-700 group-hover:scale-105"
                 />
                 <span className="absolute left-2.5 top-2.5 flex items-center gap-1 rounded-full bg-black/70 px-2 py-0.5 text-[10px] font-bold tracking-wide text-ink backdrop-blur border border-white/10">
-                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-ok" />
+                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-accent-4" />
                   {x.badge}
                 </span>
                 <figcaption className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-3 pt-8 text-[11px] leading-snug text-ink/90 opacity-90 transition duration-300 group-hover:opacity-100">
@@ -232,6 +245,9 @@ export default function Landing() {
           </div>
         </section>
         </div>
+
+        {/* MODELS THAT REALLY RUN ON AUREVID (from the backend registry) */}
+        <ModelMarquee />
 
         {/* TRENDING SHOWCASE SECTION (live creations) */}
         <section id="showcase" className="mx-auto max-w-7xl scroll-mt-20 px-4 py-16 sm:px-6">
@@ -328,7 +344,7 @@ export default function Landing() {
                       Prompt ready
                     </span>
                     <Link
-                      to="/register"
+                      to={cta}
                       state={{ prefill: { prompt: item.prompt, aspect: item.aspect } }}
                       className="inline-flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/[0.06] px-3 py-1.5 text-xs font-semibold text-ink transition hover:border-accent hover:bg-accent/15 hover:text-accent"
                     >
@@ -375,8 +391,8 @@ export default function Landing() {
               ))}
             </ol>
             <Link
-              to="/register"
-              state={{ next: "/marketing" }}
+              to={user ? "/marketing" : "/register"}
+              state={user ? undefined : { next: "/marketing" }}
               className="btn-aurora mt-8 inline-flex items-center gap-2 rounded-2xl px-6 py-3.5 text-base font-semibold shadow-lg shadow-accent/20"
             >
               <Icon name="megaphone" size={18} />
@@ -433,11 +449,11 @@ export default function Landing() {
             </h2>
             <p className="mx-auto mt-4 max-w-lg text-muted">{t("auth.bonus")}</p>
             <Link
-              to="/register"
+              to={cta}
               className="btn-aurora mt-8 inline-flex items-center gap-2 rounded-2xl px-7 py-3.5 text-base font-semibold shadow-xl shadow-accent/20"
             >
               <Icon name="sparkle" size={18} />
-              {t("landing.start")}
+              {startLabel}
             </Link>
           </div>
         </section>
