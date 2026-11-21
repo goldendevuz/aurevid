@@ -16,7 +16,8 @@ from app.timeutil import today_local
 _seen_today: set[tuple[str, str]] = set()
 
 
-async def _record_activity(session: AsyncSession, user_id: str) -> None:
+async def _record_activity(session: AsyncSession, user: User) -> None:
+    user_id = user.id
     day = today_local().isoformat()
     if (user_id, day) in _seen_today:
         return
@@ -28,6 +29,7 @@ async def _record_activity(session: AsyncSession, user_id: str) -> None:
         await session.commit()
     except IntegrityError:
         await session.rollback()  # already recorded (another process or a restart)
+        await session.refresh(user)  # rollback expires it; handlers read user.id synchronously
     _seen_today.add((user_id, day))
 
 
@@ -44,7 +46,7 @@ async def current_user(request: Request, session: Session) -> User:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail={"code": "not_authenticated"})
     if user.is_blocked:
         raise HTTPException(status.HTTP_403_FORBIDDEN, detail={"code": "account_blocked"})
-    await _record_activity(session, user.id)
+    await _record_activity(session, user)
     return user
 
 
