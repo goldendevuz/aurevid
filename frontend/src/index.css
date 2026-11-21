@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: AGPL-3.0-or-later */
 @import "tailwindcss";
 @import "@fontsource-variable/geist";
+@import "@fontsource-variable/jetbrains-mono";
 @import "@fontsource/anton";
 @import "@fontsource/kaushan-script";
 
@@ -19,11 +20,15 @@
   --color-accent: #ff3e8a;
   --color-accent-2: #ff9a3c;
   --color-accent-3: #19e3d3;
+  /* Lime: sparingly. OK-status dots, "live/ready" badges, key marquee highlights. Never a main button colour. */
+  --color-accent-4: #c8ff2e;
   --color-accent-ink: #1a0614;
   --color-ok: #3ee59a;
   --color-danger: #ff5c7a;
   --font-sans: "Geist Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
   --font-display: "Anton", "Impact", "Arial Narrow", "Geist Variable", ui-sans-serif, sans-serif;
+  /* Technical data (prompt counters, prices/credits, times, model ids). Headlines stay Anton, body Geist. */
+  --font-mono: "JetBrains Mono Variable", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   --font-script: "Kaushan Script", "Geist Variable", ui-sans-serif, sans-serif;
   --radius-card: 22px;
   /* Chart series (data colours), validated on the purple surface: warm/cool pair, contrast >= 3:1. */
@@ -32,6 +37,13 @@
 }
 
 :root {
+  /* Provider dots (ModelPicker, ModelMarquee): five distinguishable hues, assigned per provider id.
+     Plain custom properties, not @theme, because they are only read through var() in style props. */
+  --color-provider-1: #ff3e8a;
+  --color-provider-2: #ff9a3c;
+  --color-provider-3: #19e3d3;
+  --color-provider-4: #b78cff;
+  --color-provider-5: #5ab0ff;
   --sunset: linear-gradient(100deg, #ff3e8a 0%, #ff6a5c 45%, #ff9a3c 100%);
   --aurora: linear-gradient(180deg, #ffe08a 0%, #ff9a3c 38%, #ff3e8a 72%, #b13cff 100%);
   --aurora-soft: linear-gradient(180deg, rgb(255 62 138 / 0.14), rgb(107 43 217 / 0.06));
@@ -189,10 +201,61 @@ body::after {
     -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 45%);
     mask-image: linear-gradient(180deg, transparent 0%, #000 45%);
   }
+  /* Blueprint sheet behind inner pages: thin grid (--hairline), heavier lines every 128px, ruler ticks on the
+     top and left edges. Faint on purpose; the sides fade out. Not used on the Landing hero (it has scenery). */
+  .blueprint { position: relative; isolation: isolate; }
+  .blueprint::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.7;
+    --bp-minor: color-mix(in srgb, var(--hairline) 45%, transparent);
+    background-image:
+      repeating-linear-gradient(90deg, var(--hairline) 0 1px, transparent 1px 16px),
+      repeating-linear-gradient(90deg, var(--hairline) 0 1px, transparent 1px 128px),
+      repeating-linear-gradient(180deg, var(--hairline) 0 1px, transparent 1px 16px),
+      repeating-linear-gradient(180deg, var(--hairline) 0 1px, transparent 1px 128px),
+      linear-gradient(90deg, var(--hairline) 1px, transparent 1px),
+      linear-gradient(180deg, var(--hairline) 1px, transparent 1px),
+      linear-gradient(90deg, var(--bp-minor) 1px, transparent 1px),
+      linear-gradient(180deg, var(--bp-minor) 1px, transparent 1px);
+    background-size: 100% 6px, 100% 14px, 6px 100%, 14px 100%, 128px 128px, 128px 128px, 32px 32px, 32px 32px;
+    background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, repeat, repeat, repeat, repeat;
+    background-position: 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0, 0 0;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+  }
+
+  /* Model marquee: slow endless scroll, edges faded, paused on hover; static wrap for reduced motion. */
+  .marquee {
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 9%, #000 91%, transparent);
+  }
+  .marquee-track { display: flex; width: max-content; animation: marquee var(--marquee-s, 60s) linear infinite; }
+  .marquee:hover .marquee-track, .marquee:focus-within .marquee-track { animation-play-state: paused; }
+  .marquee-copy { display: flex; gap: 0.75rem; padding-right: 0.75rem; }
+
+  /* Generating indicator: a rotating neon ring with a pink-to-teal tail. */
+  .neon-orbit {
+    width: 4.5rem;
+    height: 4.5rem;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, transparent 0 40%, var(--color-accent) 70%, var(--color-accent-3) 98%, transparent);
+    -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px));
+    mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px));
+    filter: drop-shadow(0 0 8px rgb(255 62 138 / 0.7)) drop-shadow(0 0 20px rgb(25 227 211 / 0.35));
+    animation: spin 1.3s linear infinite;
+  }
+
   /* Postcard frame for showcase tiles: thick off-white border, slight tilt. */
   .postcard { border: 5px solid #f6ecff; box-shadow: 0 22px 50px -20px rgb(0 0 0 / 0.9), 0 0 0 1px rgb(0 0 0 / 0.4); }
 }
 
+@keyframes marquee { to { transform: translateX(-50%); } }
+@keyframes spin { to { transform: rotate(360deg); } }
 @keyframes shimmer { to { background-position: -200% 0; } }
 @keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 @keyframes drift { to { transform: translate3d(2%, 3%, 0) scale(1.06); } }
@@ -213,7 +276,12 @@ body::after {
 .fade { animation: fade 0.2s ease both; }
 
 @media (prefers-reduced-motion: reduce) {
-  body::before, .shimmer, .rise, .pop, .fade, .sun-glow, .palm-sway, .palm-sway-slow, .neon-flicker, .grid-floor { animation: none; }
+  body::before, .shimmer, .rise, .pop, .fade, .sun-glow, .palm-sway, .palm-sway-slow, .neon-flicker, .grid-floor, .marquee-track, .neon-orbit { animation: none; }
+  /* Marquee without motion: a normal wrapping list of the real models (the loop copy is hidden). */
+  .marquee { -webkit-mask-image: none; mask-image: none; }
+  .marquee-track { width: auto; }
+  .marquee-copy { flex-wrap: wrap; }
+  .marquee-dup { display: none; }
   .btn-aurora, .tile { transition: none; }
   .tile:hover { transform: none; }
 }

@@ -187,7 +187,7 @@ export default function Marketing() {
   };
 
   const openInStudio = (i: Idea, animate = false) =>
-    navigate("/", {
+    navigate("/create", {
       state: animate && photo
         ? { animate: photo, prefill: { prompt: promptOf(i), aspect: i.format } }
         : { prefill: { prompt: promptOf(i), aspect: i.format } },
@@ -296,7 +296,7 @@ export default function Marketing() {
               {pending.length === 0 ? (
                 <span className="text-muted">
                   {Object.values(sent).includes("sent") ? (
-                    <>{t("marketing.allSent")} <Link to="/" className="underline hover:text-accent">{t("marketing.seeResults")}</Link></>
+                    <>{t("marketing.allSent")} <Link to="/create" className="underline hover:text-accent">{t("marketing.seeResults")}</Link></>
                   ) : (
                     t("marketing.noModel")
                   )}
@@ -337,7 +337,7 @@ export default function Marketing() {
                       <textarea id={`p-${i.id}`} rows={4} value={promptOf(i)} onChange={(e) => setEdits({ ...edits, [i.id]: e.target.value })} className={`${inputClass} text-xs`} />
                       <div className="mt-2 flex flex-wrap items-center gap-2">
                         {sent[i.id] === "sent" ? (
-                          <Link to="/" className="text-xs font-semibold text-accent hover:underline">✓ {t("marketing.sent")}</Link>
+                          <Link to="/create" className="text-xs font-semibold text-accent hover:underline">✓ {t("marketing.sent")}</Link>
                         ) : (
                           models[fmt] && (
                             <Button className="px-3 py-1.5 text-xs" disabled={running || sent[i.id] === "busy"} onClick={() => void generateOne(i)}>

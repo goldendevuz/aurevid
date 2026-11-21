@@ -799,7 +799,7 @@ export default function Admin() {
   const [params, setParams] = useSearchParams();
   const tab = (TABS.includes(params.get("tab") as Tab) ? params.get("tab") : "overview") as Tab;
   const [internal, setInternal] = useState(false);
-  if (!user?.is_admin) return <Navigate to="/" replace />;
+  if (!user?.is_admin) return <Navigate to="/create" replace />;
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">

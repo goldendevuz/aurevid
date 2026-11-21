@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { useEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, NavLink, Outlet, useNavigate } from "react-router-dom";
+import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { useAuth } from "../auth";
 import { LANGUAGES } from "../i18n";
@@ -28,9 +28,17 @@ export function LogoMark({ size = 26 }: { size?: number }) {
   );
 }
 
+/** Goes to "/" and always lands at the top, also when "/" is already open (or has a #hash). */
 export function Logo() {
+  const { pathname, hash } = useLocation();
   return (
-    <Link to="/" className="flex items-center gap-2.5 text-lg font-semibold tracking-tight">
+    <Link
+      to="/"
+      onClick={() => {
+        if (pathname === "/" && !hash) window.scrollTo({ top: 0, behavior: "smooth" });
+        else window.scrollTo(0, 0);
+      }}
+      className="flex items-center gap-2.5 text-lg font-semibold tracking-tight">
       <LogoMark />
       <span className="hidden font-display text-xl uppercase tracking-[0.06em] text-white sm:inline">aurevid</span>
     </Link>
@@ -72,7 +80,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const items: NavItem[] = [
-    { to: "/", label: t("nav.studio"), icon: "sparkle", end: true },
+    { to: "/create", label: t("nav.studio"), icon: "sparkle" },
     { to: "/marketing", label: t("nav.marketing"), icon: "megaphone" },
     { to: "/history", label: t("nav.history"), icon: "history" },
     { to: "/credits", label: t("nav.usage"), icon: "coins" },
@@ -105,7 +113,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
             {user && (
               <Link
                 to="/credits"
-                className="glass flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-semibold text-ink transition hover:border-accent/50"
+                className="glass flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 font-mono text-xs font-semibold text-ink transition hover:border-accent/50"
               >
                 <Icon name="bolt" size={14} className="text-accent" />
                 {t("nav.credits", { count: user.credit_balance })}
@@ -127,9 +135,11 @@ export default function Layout({ children }: { children?: ReactNode }) {
         </div>
       </header>
       <Announcements />
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 pb-8 pt-6 sm:px-6 md:pt-8">
-        {children ?? <Outlet />}
-      </main>
+      <div className="blueprint flex flex-1 flex-col">
+        <main className="mx-auto w-full max-w-7xl flex-1 px-4 pb-8 pt-6 sm:px-6 md:pt-8">
+          {children ?? <Outlet />}
+        </main>
+      </div>
       <Footer clearTabBar />
       <nav
         aria-label="Main"

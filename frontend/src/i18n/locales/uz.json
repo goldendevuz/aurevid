@@ -15,7 +15,8 @@
     "language": "Til",
     "credits": "{{count}} kredit",
     "admin": "Admin",
-    "marketing": "Marketing"
+    "marketing": "Marketing",
+    "home": "Bosh sahifa"
   },
   "auth": {
     "loginTitle": "Xush kelibsiz",
@@ -129,7 +130,22 @@
     "voice": "Ovoz",
     "voiceStart": "Promptni ovoz bilan ayting",
     "voiceStop": "Yozishni to'xtatish",
-    "voiceSending": "Matnga aylantirilmoqda…"
+    "voiceSending": "Matnga aylantirilmoqda…",
+    "panel": {
+      "title": "Natija",
+      "region": "Natija ko'rinishi",
+      "ready": "Tayyor",
+      "emptyTitle": "Yaratishga tayyor",
+      "emptyHint": "Chap tomonda tavsif yozing va «Yaratish» tugmasini bosing. Natija shu yerda chiqadi.",
+      "generatingTitle": "Yaratilmoqda",
+      "generatingHint": "Navbatda yoki jarayonda. Bu oyna o'zi yangilanadi.",
+      "queue": "Navbatdagi o'rni: {{count}}",
+      "eta": "Taxminan {{seconds}} soniya qoldi",
+      "creditsTitle": "Kreditlar tugadi",
+      "creditsHint": "Bu generatsiya qolgan kreditlaringizdan qimmatroq. Davom etish uchun balansni to'ldiring.",
+      "creditsCta": "Kredit olish",
+      "errorTitle": "Nimadir xato ketdi"
+    }
   },
   "job": {
     "queued": "Navbatda",
@@ -651,7 +667,13 @@
     "ad_step2_desc": "Stories/Reels (9:16) va lenta (1:1) uchun g'oyalar: o'zbek, rus yoki ingliz tilida.",
     "ad_step3": "Yaratish",
     "ad_step3_desc": "Bitta reklamani yoki butun to'plamni birdan yarating. Boshlashdan oldin kredit narxi ko'rsatiladi.",
-    "adCta": "Birinchi reklamamni tayyorlash"
+    "adCta": "Birinchi reklamamni tayyorlash",
+    "marquee": {
+      "label": "Aurevid'da mavjud modellar",
+      "title": "Ishlayotgan modellar",
+      "count": "{{count}} ta model"
+    },
+    "create": "Yaratish"
   },
   "price": {
     "selection": "{{count}} kredit",

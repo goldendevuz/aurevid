@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { api } from "../api";
@@ -8,10 +8,12 @@ import { Icon } from "../components/icons";
 import JobCard from "../components/JobCard";
 import { retryJob, watchJob } from "../jobs";
 import ModelPicker, { ModelSwatch } from "../components/ModelPicker";
+import ResultPanel from "../components/ResultPanel";
 import VoiceButton from "../components/VoiceButton";
 import { Badge, Button, EmptyState, ErrorText, Segmented } from "../components/ui";
 import { onFreeShare, priceOf } from "../pricing";
 import type { Asset, Job, ModelInfo, Preset, Provider } from "../types";
+
 
 const MAX_PROMPT = 1000;
 const SIZES = ["small", "medium", "large"] as const;
@@ -83,6 +85,7 @@ export default function Studio() {
   const closePicker = useCallback(() => setPicking(false), []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
+  const [focusId, setFocusId] = useState<string | null>(null); // job shown in the result panel (lg+)
   const watchers = useRef(new Map<string, () => void>());
   const followRecipe = useRef<(id: string) => void>(() => undefined);
 
@@ -108,6 +111,7 @@ export default function Studio() {
 
   const watch = useCallback(
     (id: string) => {
+      setFocusId(id);
       if (!watchers.current.has(id)) watchers.current.set(id, watchJob(id, upsertJob));
     },
     [upsertJob],
@@ -431,18 +435,78 @@ export default function Studio() {
       ? compared.length >= 2 && compared.every(({ p }) => p.available)
       : Boolean(provider?.available) && !needsImage && (activeTool !== "recipe" || Boolean(videoChoice)));
 
+  const compareBlock: ReactNode =
+    compareRun && compareRun.length > 0 ? (
+          <div className="mt-6 lg:mt-0">
+            <div className="mb-2 flex items-center justify-between">
+              <h2 className="text-lg tracking-[0.02em]">{t("compare.results")}</h2>
+              <button type="button" onClick={() => setCompareRun(null)} className="text-xs text-muted hover:text-ink">{t("studio.close")}</button>
+            </div>
+            <div className={`grid gap-3 ${compareRun.length > 2 ? "grid-cols-2 lg:grid-cols-4" : "grid-cols-2"}`}>
+              {compareRun.map((c) => {
+                const job = jobs.find((j) => j.id === c.jobId);
+                const asset = job?.assets[0];
+                return (
+                  <figure key={c.key} className="overflow-hidden rounded-2xl border border-line bg-raised/40">
+                    <div className="grid aspect-square place-items-center bg-bg/60">
+                      {asset ? (
+                        <img src={asset.preview_url || asset.url} alt={job?.prompt ?? ""} className="h-full w-full object-cover" />
+                      ) : (
+                        <span className="px-2 text-center text-[11px] text-muted">
+                          {c.error ? "" : job ? t(`job.${job.status}`) : t("job.queued")}
+                        </span>
+                      )}
+                    </div>
+                    <figcaption className="p-2 text-[11px]">
+                      <p className="truncate font-semibold text-ink">{c.label}</p>
+                      <p className="text-muted">{t("price.selection", { count: c.cost })}</p>
+                      {job?.status === "failed" && <p className="text-danger">{job.error}</p>}
+                      {c.error ? <ErrorText error={c.error} /> : null}
+                    </figcaption>
+                  </figure>
+                );
+              })}
+            </div>
+          </div>
+        
+    ) : null;
+  const focusJob = jobs.find((j) => j.id === focusId);
+  const compareFocused = Boolean(compareRun?.length) && (!focusJob || compareRun!.some((c) => c.jobId === focusJob.id));
+  const renderCard = (j: Job, i = 0) => (
+    <JobCard
+      key={j.id}
+      job={j}
+      index={i}
+      onChange={upsertJob}
+      onRemix={remix}
+      onRetry={async (job) => {
+        const created = await retryJob(job);
+        upsertJob(created);
+        watch(created.id);
+        void reload();
+      }}
+      onDelete={async (job) => {
+        await api(`/api/jobs/${job.id}`, { method: "DELETE" });
+        setJobs((prev) => prev.filter((x) => x.id !== job.id));
+      }}
+      onAnimate={animate}
+      onEdit={editAsset}
+      onUpscale={(a, target) => void upscaleAsset(a, target)}
+    />
+  );
+
   return (
     <div>
-      <section className="mx-auto max-w-4xl pb-8 pt-2 text-center sm:pt-8">
+      <section className="mx-auto max-w-4xl pb-8 pt-2 text-center sm:pt-8 lg:pb-5 lg:pt-0">
         <p className="rise mx-auto mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-medium text-muted backdrop-blur">
           <Icon name="sparkle" size={13} className="text-accent" />
           {t("studio.eyebrow")}
         </p>
-        <h1 className="rise text-5xl font-bold leading-[1] tracking-[-0.04em] [--i:1] sm:text-7xl">
+        <h1 className="rise text-5xl font-bold leading-[1] tracking-[-0.04em] [--i:1] sm:text-7xl lg:text-5xl">
           <span className="block">{t("studio.heroLead")}</span>
           <span className="aurora-text block pb-1">{t("studio.heroAccent")}</span>
         </h1>
-        <p className="rise mx-auto mt-5 max-w-xl text-sm text-muted [--i:2] sm:text-base">{t("studio.heroSub")}</p>
+        <p className="rise mx-auto mt-5 max-w-xl text-sm text-muted [--i:2] sm:text-base lg:mt-3">{t("studio.heroSub")}</p>
         <Link
           to="/marketing"
           className="rise mt-4 inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-4 py-1.5 text-xs font-semibold text-accent transition hover:border-accent hover:bg-accent/20 [--i:2]"
@@ -453,7 +517,8 @@ export default function Studio() {
         </Link>
       </section>
 
-      <section className="mx-auto max-w-4xl" aria-label={t("studio.composer")}>
+      <div className="mx-auto max-w-4xl lg:grid lg:max-w-none lg:grid-cols-2 lg:items-start lg:gap-8 xl:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)]">
+      <section className="min-w-0" aria-label={t("studio.composer")}>
         <div className="mb-3 flex justify-center">
           <Segmented
             label={t("studio.mode")}
@@ -552,7 +617,7 @@ export default function Studio() {
                         on ? "border-white/60 bg-white/10 text-ink" : "border-line text-muted hover:border-white/20 hover:text-ink"
                       }`}
                     >
-                      <ModelSwatch seed={key} size={14} />
+                      <ModelSwatch seed={key} size={14} provider={p.id} />
                       {m.label}
                       <span className="opacity-70">· {t("price.selection", { count: priceOf(m).total })}</span>
                       {onFreeShare(p) && <span className="text-ok">· {t("price.free")}</span>}
@@ -624,7 +689,7 @@ export default function Studio() {
                 aria-label={`${t("studio.model")}: ${model?.label ?? ""}`}
                 className={`${chip} max-w-full`}
               >
-                <ModelSwatch seed={modelKey || "none"} size={20} />
+                <ModelSwatch seed={modelKey || "none"} size={20} provider={provider?.id} />
                 <span className="truncate">{model?.label ?? t("studio.model")}</span>
                 {model?.has_audio && <Icon name="sound" size={14} className="shrink-0 text-accent" title={t("studio.withAudio")} />}
                 <Icon name="chevron" size={14} className="text-muted" />
@@ -697,10 +762,10 @@ export default function Studio() {
 
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-2 pt-3 text-[11px] text-muted">
             <p>
-              <span className="font-medium text-ink/90">
+              <span className="font-mono font-medium text-ink/90">
                 {price.count > 1 && single ? t("price.selectionMany", { count: total, n: price.count, each: price.each }) : t("studio.cost", { count: total })}
               </span>
-              {single && onFreeShare(provider) && <span className="text-ok"> · {t("price.freeShare")}</span>} · <span className="tabular-nums">{t("studio.chars", { count: prompt.length, max: MAX_PROMPT })}</span>
+              {single && onFreeShare(provider) && <span className="text-ok"> · {t("price.freeShare")}</span>} · <span className="font-mono tabular-nums">{t("studio.chars", { count: prompt.length, max: MAX_PROMPT })}</span>
             </p>
             {single && provider && model && (
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
@@ -744,42 +809,12 @@ export default function Studio() {
               ))}
             </div>
           )}
-          <ErrorText error={error} />
+          <div className="lg:hidden">
+            <ErrorText error={error} />
+          </div>
         </div>
 
-        {compareRun && compareRun.length > 0 && (
-          <div className="mt-6" aria-live="polite">
-            <div className="mb-2 flex items-center justify-between">
-              <h2 className="text-lg tracking-[0.02em]">{t("compare.results")}</h2>
-              <button type="button" onClick={() => setCompareRun(null)} className="text-xs text-muted hover:text-ink">{t("studio.close")}</button>
-            </div>
-            <div className={`grid gap-3 ${compareRun.length > 2 ? "grid-cols-2 lg:grid-cols-4" : "grid-cols-2"}`}>
-              {compareRun.map((c) => {
-                const job = jobs.find((j) => j.id === c.jobId);
-                const asset = job?.assets[0];
-                return (
-                  <figure key={c.key} className="overflow-hidden rounded-2xl border border-line bg-raised/40">
-                    <div className="grid aspect-square place-items-center bg-bg/60">
-                      {asset ? (
-                        <img src={asset.preview_url || asset.url} alt={job?.prompt ?? ""} className="h-full w-full object-cover" />
-                      ) : (
-                        <span className="px-2 text-center text-[11px] text-muted">
-                          {c.error ? "" : job ? t(`job.${job.status}`) : t("job.queued")}
-                        </span>
-                      )}
-                    </div>
-                    <figcaption className="p-2 text-[11px]">
-                      <p className="truncate font-semibold text-ink">{c.label}</p>
-                      <p className="text-muted">{t("price.selection", { count: c.cost })}</p>
-                      {job?.status === "failed" && <p className="text-danger">{job.error}</p>}
-                      {c.error ? <ErrorText error={c.error} /> : null}
-                    </figcaption>
-                  </figure>
-                );
-              })}
-            </div>
-          </div>
-        )}
+        {compareBlock && <div className="lg:hidden">{compareBlock}</div>}
 
         {presets.length > 0 && (
           <div className="mt-4">
@@ -826,6 +861,11 @@ export default function Studio() {
         )}
       </section>
 
+      <div className="hidden lg:sticky lg:top-20 lg:block">
+        <ResultPanel job={focusJob} error={error} compare={compareFocused ? compareBlock : undefined} renderJob={(j) => renderCard(j)} />
+      </div>
+      </div>
+
       <section className="mt-14" aria-labelledby="recent-title">
         <div className="mb-4 flex items-center justify-between">
           <h2 id="recent-title" className="text-3xl tracking-[0.02em]">{t("studio.recent")}</h2>
@@ -838,28 +878,7 @@ export default function Studio() {
           <EmptyState icon={<Icon name="sparkle" size={22} />} title={t("studio.empty")} hint={t("studio.emptyHint")} />
         ) : (
           <div className="masonry columns-1 sm:columns-2 xl:columns-3">
-            {jobs.map((j, i) => (
-              <JobCard
-                key={j.id}
-                job={j}
-                index={i}
-                onChange={upsertJob}
-                onRemix={remix}
-                onRetry={async (job) => {
-                  const created = await retryJob(job);
-                  upsertJob(created);
-                  watch(created.id);
-                  void reload();
-                }}
-                onDelete={async (job) => {
-                  await api(`/api/jobs/${job.id}`, { method: "DELETE" });
-                  setJobs((prev) => prev.filter((x) => x.id !== job.id));
-                }}
-                onAnimate={animate}
-                onEdit={editAsset}
-                onUpscale={(a, target) => void upscaleAsset(a, target)}
-              />
-            ))}
+            {jobs.map((j, i) => renderCard(j, i))}
           </div>
         )}
       </section>
