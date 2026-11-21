@@ -104,10 +104,14 @@ RETRY_DELAY_SECONDS = 6.0  # free tiers (e.g. Pollinations) throttle back-to-bac
 async def _generate_with_retry(provider, req: GenerationRequest, creds):
     s = get_settings()
     timeout = s.video_timeout_seconds if req.kind == "video" else s.job_timeout_seconds
+    model = next((m for m in provider.info.models if m.id == req.model), None)
+    long_timeout = model.timeout_s if model is not None else None
+    if long_timeout:
+        timeout = max(timeout, long_timeout)
     try:
         return await asyncio.wait_for(provider.generate(req, creds), timeout=timeout)
     except ProviderError as exc:
-        if not exc.retryable:
+        if not exc.retryable or long_timeout:  # never re-run a 13-minute, costly clip
             raise
         await asyncio.sleep(RETRY_DELAY_SECONDS)
         return await asyncio.wait_for(provider.generate(req, creds), timeout=timeout)
@@ -342,7 +346,7 @@ async def process(job: Job) -> None:
 async def recover_stale() -> None:
     """Fail + refund jobs left 'running' by a crashed worker."""
     s = get_settings()
-    stale_after = max(s.job_timeout_seconds * 5, s.video_timeout_seconds * 2)
+    stale_after = max(s.job_timeout_seconds * 5, s.video_timeout_seconds * 2, 3600)
     cutoff = datetime.now(UTC) - timedelta(seconds=stale_after)
     async with db.session_factory()() as session:
         stale = (

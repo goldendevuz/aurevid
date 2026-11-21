@@ -49,6 +49,8 @@ class ModelInfo(BaseModel):
     requires_image: bool = False
     # False = costly model: never runs on the owner's shared key, only on the user's own key
     server_key_ok: bool = True
+    # Per-model generation limit (seconds) when it needs longer than the global video timeout
+    timeout_s: int | None = None
     has_audio: bool = False  # video only: the model generates a soundtrack / speech
     upscale_targets: list[str] = []  # video: provider-side upscaling; images use the local upscaler
 
