@@ -107,6 +107,28 @@ class JobCreateIn(_In):
         return check_prompt(v)
 
 
+class StoryCreateIn(_In):
+    """2-4 scene prompts, each becoming a 5 s video job with the same model and format."""
+
+    provider: str = Field(max_length=32)
+    model: str = Field(max_length=64)
+    aspect_ratio: AspectRatio = "16:9"
+    size: SizeName = "large"
+    scenes: list[str] = Field(min_length=2, max_length=4)
+    title: str | None = Field(default=None, max_length=80)
+
+    @field_validator("scenes")
+    @classmethod
+    def _scene_prompts(cls, v: list[str]) -> list[str]:
+        out = []
+        for prompt in v:
+            prompt = prompt.strip()
+            if len(prompt) < 3:
+                raise ValueError("scene prompt too short")
+            out.append(check_prompt(prompt))
+        return out
+
+
 class RecipeRunIn(_In):
     """First step (an image job) plus the settings of the follow-up video step."""
 
@@ -164,9 +186,29 @@ class JobOut(BaseModel):
     queue_position: int | None = None  # 1-based, queued jobs only
     eta_seconds: int | None = None  # rough estimate from recent job durations
     typical_seconds: int | None = None  # running jobs: median run time of similar finished jobs
+    story_id: str | None = None  # set when the job is one scene of a multi-scene video
+    scene_index: int | None = None
     model_label: str | None = None  # human-readable model name (None for unknown/disabled ones)
     provider_name: str | None = None
     has_audio: bool = False
+
+
+class SceneOut(BaseModel):
+    index: int
+    prompt: str
+    job: JobOut
+
+
+class StoryOut(BaseModel):
+    id: str
+    title: str | None
+    status: str
+    error: str | None
+    created_at: UTCDateTime
+    finished_at: UTCDateTime | None
+    cost: int  # credits charged for the scenes currently in the story
+    scenes: list[SceneOut]
+    final: AssetOut | None = None
 
 
 class FacetOut(BaseModel):

@@ -119,6 +119,8 @@ class Settings(BaseSettings):
     worker_poll_seconds: float = 1.0
     job_timeout_seconds: int = 180
     video_timeout_seconds: int = 600
+    ffmpeg_path: str = "ffmpeg"  # joins the clips of a multi-scene video (services/stitch.py)
+    stitch_timeout_seconds: int = 180
     gpu_worker_lease_seconds: int = 900  # a claimed job returns to the queue after this long
     gpu_worker_max_attempts: int = 3  # claims per job before it fails (a crashing worker)
 

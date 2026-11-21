@@ -17,6 +17,7 @@ from app.models import (
     PaymentOrder,
     ProviderKey,
     RefreshToken,
+    Story,
     User,
     UserActivity,
 )
@@ -163,7 +164,7 @@ async def delete_me(body: DeleteMeIn, response: Response, user: CurrentUser, ses
     ).all()
     # Explicit deletes (do not rely on FK cascade, which SQLite may not enforce everywhere).
     for model in (
-        Asset, Job, ProviderKey, CreditLedger, RefreshToken, UserActivity, ModerationEvent,
+        Asset, Job, Story, ProviderKey, CreditLedger, RefreshToken, UserActivity, ModerationEvent,
     ):  # fmt: skip
         await session.execute(delete(model).where(model.user_id == user.id))
     # Payment orders hold no personal data and are kept for accounting, detached from the user.

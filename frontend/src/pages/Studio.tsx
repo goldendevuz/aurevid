@@ -11,8 +11,11 @@ import ModelPicker, { ModelSwatch } from "../components/ModelPicker";
 import ResultPanel from "../components/ResultPanel";
 import VoiceButton from "../components/VoiceButton";
 import { Badge, Button, EmptyState, ErrorText, Segmented } from "../components/ui";
+import StoryCard from "../components/StoryCard";
 import { onFreeShare, priceOf } from "../pricing";
-import type { Asset, Job, ModelInfo, Preset, Provider } from "../types";
+import { MAX_SCENES, MIN_SCENES, STORY_SCENE_SECONDS, addScene, canSubmitStory, removeScene, storyCapable, storyPrice, trimScenes } from "../stories";
+import { useStories } from "../useStories";
+import type { Asset, Job, ModelInfo, Preset, Provider, Story } from "../types";
 
 
 const MAX_PROMPT = 1000;
@@ -22,6 +25,7 @@ const RECIPE_ID = "image-animate-4k";
 const MAX_COMPARE = 4;
 type Mode = "image" | "video";
 type Tool = "single" | "compare" | "recipe";
+type SceneMode = "single" | "multi";
 
 interface CompareEntry {
   key: string;
@@ -86,10 +90,19 @@ export default function Studio() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<unknown>(null);
   const [focusId, setFocusId] = useState<string | null>(null); // job shown in the result panel (lg+)
+  const [focusStoryId, setFocusStoryId] = useState<string | null>(null); // or a multi-scene video
+  const [sceneMode, setSceneMode] = useState<SceneMode>("single");
+  const [scenePrompts, setScenePrompts] = useState<string[]>(["", ""]);
   const watchers = useRef(new Map<string, () => void>());
   const followRecipe = useRef<(id: string) => void>(() => undefined);
 
   const loadProviders = useCallback(async () => setProviders(await api<Provider[]>("/api/providers")), []);
+
+  const refreshAccount = useCallback(() => {
+    void reload(); // credit balance (refunds)
+    void loadProviders(); // learned quota estimates
+  }, [reload, loadProviders]);
+  const { stories, load: loadStories, track: trackStory, retryScene, restitch, remove: removeStory } = useStories(12, refreshAccount);
 
   const upsertJob = useCallback(
     (job: Job) => {
@@ -112,6 +125,7 @@ export default function Studio() {
   const watch = useCallback(
     (id: string) => {
       setFocusId(id);
+      setFocusStoryId(null);
       if (!watchers.current.has(id)) watchers.current.set(id, watchJob(id, upsertJob));
     },
     [upsertJob],
@@ -152,16 +166,20 @@ export default function Studio() {
       ]);
       setPresets(pr);
       setJobs(recent);
+      await loadStories();
       recent.filter((j) => j.status === "queued" || j.status === "running").forEach((j) => watch(j.id));
     })().catch(setError);
     const current = watchers.current;
     return () => current.forEach((stop) => stop());
-  }, [watch, loadProviders]);
+  }, [watch, loadProviders, loadStories]);
 
   // All (provider, model) pairs of the current mode.
+  // A multi-scene video needs text-to-video models that make 5 s clips.
+  const hasStoryModels = useMemo(() => providers.some((p) => p.models.some(storyCapable)), [providers]);
+  const multiWanted = mode === "video" && sceneMode === "multi" && hasStoryModels;
   const choices = useMemo(
-    () => providers.flatMap((p) => p.models.filter((m) => m.kind === mode).map((m) => ({ p, m }))),
-    [providers, mode],
+    () => providers.flatMap((p) => p.models.filter((m) => m.kind === mode && (!multiWanted || storyCapable(m))).map((m) => ({ p, m }))),
+    [providers, mode, multiWanted],
   );
   const selected = choices.find(({ p, m }) => `${p.id}|${m.id}` === modelKey);
   const provider = selected?.p;
@@ -307,6 +325,7 @@ export default function Studio() {
 
   const switchMode = (next: Mode) => {
     setMode(next);
+    if (next === "image") setSceneMode("single");
     setModelKey("");
     setTool("single");
     if (next === "image") setStartImage(null);
@@ -378,7 +397,30 @@ export default function Studio() {
     }
   };
 
+  const submitStory = async () => {
+    if (!provider || !model) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const story = await api<Story>("/api/stories", {
+        method: "POST",
+        headers: { "Idempotency-Key": crypto.randomUUID() },
+        body: { provider: provider.id, model: model.id, aspect_ratio: aspect, size, scenes: trimScenes(scenePrompts) },
+      });
+      trackStory(story);
+      setFocusStoryId(story.id);
+      setFocusId(null);
+      void reload();
+    } catch (err) {
+      setError(err);
+      void loadProviders();
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const submit = async () => {
+    if (multi) return submitStory();
     if (tool === "compare" && !isVideo) return submitCompare();
     if (tool === "recipe" && !isVideo) return submitRecipe();
     if (!provider || !model) return;
@@ -416,10 +458,14 @@ export default function Studio() {
   const isVideo = mode === "video";
   const activeTool: Tool = isVideo ? "single" : tool;
   const single = activeTool === "single";
+  const multi = multiWanted && storyCapable(model);
+  const sceneCount = scenePrompts.length;
   // Upfront price of exactly what will be sent (same formula as the backend).
   const price = priceOf(model, isVideo ? 1 : count, resolution);
-  const total =
-    activeTool === "compare"
+  const storyCost = storyPrice(model, sceneCount);
+  const total = multi
+    ? storyCost.total
+    : activeTool === "compare"
       ? compared.reduce((sum, { m }) => sum + priceOf(m).total, 0)
       : activeTool === "recipe"
         ? priceOf(model).total + priceOf(videoChoice?.m, 1, recipe4k ? "4k" : null).total
@@ -429,8 +475,9 @@ export default function Studio() {
     "flex items-center gap-1.5 rounded-xl border border-line bg-bg/60 px-3 py-2 text-xs font-medium text-ink transition hover:border-white/20 focus-within:border-white/50";
   const selectChip = "cursor-pointer appearance-none bg-transparent pr-1 text-xs font-medium text-ink focus:outline-none [&>option]:bg-surface";
   const examples = (isVideo ? (["v1", "v2", "v3"] as const) : (["i1", "i2", "i3", "i4"] as const)).map((k) => t(`studio.example_${k}`));
-  const canGenerate =
-    !(busy || prompt.trim().length < 3) &&
+  const canGenerate = multi
+    ? !busy && Boolean(provider?.available) && canSubmitStory(scenePrompts)
+    : !(busy || prompt.trim().length < 3) &&
     (activeTool === "compare"
       ? compared.length >= 2 && compared.every(({ p }) => p.available)
       : Boolean(provider?.available) && !needsImage && (activeTool !== "recipe" || Boolean(videoChoice)));
@@ -471,7 +518,25 @@ export default function Studio() {
         
     ) : null;
   const focusJob = jobs.find((j) => j.id === focusId);
-  const compareFocused = Boolean(compareRun?.length) && (!focusJob || compareRun!.some((c) => c.jobId === focusJob.id));
+  const focusStory = stories.find((s) => s.id === focusStoryId);
+  const compareFocused = Boolean(compareRun?.length) && !focusStory && (!focusJob || compareRun!.some((c) => c.jobId === focusJob.id));
+  const renderStory = (s: Story, i = 0) => (
+    <StoryCard
+      key={s.id}
+      story={s}
+      index={i}
+      onRetryScene={retryScene}
+      onRestitch={restitch}
+      onDelete={async (story) => {
+        await removeStory(story);
+        if (focusStoryId === story.id) setFocusStoryId(null);
+      }}
+    />
+  );
+  const recent = [
+    ...jobs.map((job) => ({ at: job.created_at, job })),
+    ...stories.map((story) => ({ at: story.created_at, story })),
+  ].sort((a, b) => b.at.localeCompare(a.at));
   const renderCard = (j: Job, i = 0) => (
     <JobCard
       key={j.id}
@@ -530,6 +595,22 @@ export default function Studio() {
             ]}
           />
         </div>
+        {isVideo && hasStoryModels && (
+          <div className="mb-3 flex justify-center">
+            <Segmented
+              label={t("story.label")}
+              value={sceneMode}
+              onChange={(next: SceneMode) => {
+                setSceneMode(next);
+                if (next === "multi") setModelKey(""); // re-pick a model with 5 s clips
+              }}
+              options={[
+                { value: "single", label: t("story.single") },
+                { value: "multi", label: <span className="flex items-center gap-1.5"><Icon name="layers" size={15} />{t("story.multi")}</span> },
+              ]}
+            />
+          </div>
+        )}
         {!isVideo && (
           <div className="mb-3 flex justify-center">
             <Segmented
@@ -546,7 +627,7 @@ export default function Studio() {
         )}
 
         <div className="glass ring-aurora spot rise rounded-[28px] p-3 [--i:3] sm:p-4">
-          {isVideo && startImage && (
+          {isVideo && !multi && startImage && (
             <div className="mb-3 flex items-center gap-3 rounded-2xl border border-line bg-bg/60 p-2">
               <img src={startImage.preview_url || startImage.url} alt="" className="h-14 w-14 rounded-xl object-cover" />
               <div className="flex-1 text-xs">
@@ -559,7 +640,7 @@ export default function Studio() {
             </div>
           )}
 
-          {isVideo && !startImage && (
+          {isVideo && !multi && !startImage && (
             <label
               onDragOver={(e) => {
                 e.preventDefault();
@@ -659,23 +740,71 @@ export default function Studio() {
             </div>
           )}
 
+          {multi ? (
+            <div className="space-y-2" role="group" aria-label={t("story.multi")}>
+              {scenePrompts.map((text, i) => (
+                <div key={i} className="flex items-start gap-2 rounded-2xl border border-line bg-bg/60 p-2">
+                  <span className="mt-1 grid h-6 w-6 shrink-0 place-items-center rounded-full bg-raised text-[11px] font-semibold tabular-nums text-accent" aria-hidden>{i + 1}</span>
+                  <div className="min-w-0 flex-1">
+                    <label htmlFor={`scene-${i}`} className="sr-only">{t("story.scene", { n: i + 1 })}</label>
+                    <textarea
+                      id={i === 0 ? "prompt" : `scene-${i}`}
+                      rows={2}
+                      maxLength={MAX_PROMPT}
+                      value={text}
+                      onChange={(e) => setScenePrompts((prev) => prev.map((p, k) => (k === i ? e.target.value : p)))}
+                      placeholder={t("story.scenePlaceholder", { n: i + 1 })}
+                      className="block w-full resize-y bg-transparent px-1 py-1 text-base leading-relaxed text-ink placeholder:text-muted/60 focus:outline-none"
+                    />
+                  </div>
+                  {sceneCount > MIN_SCENES && (
+                    <button
+                      type="button"
+                      onClick={() => setScenePrompts((prev) => removeScene(prev, i))}
+                      aria-label={t("story.remove", { n: i + 1 })}
+                      title={t("story.remove", { n: i + 1 })}
+                      className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-muted transition hover:bg-white/[0.08] hover:text-danger"
+                    >
+                      <Icon name="close" size={14} />
+                    </button>
+                  )}
+                </div>
+              ))}
+              {sceneCount < MAX_SCENES && (
+                <button
+                  type="button"
+                  onClick={() => setScenePrompts((prev) => addScene(prev))}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-line px-3 py-1.5 text-xs font-medium text-muted transition hover:border-white/30 hover:text-ink"
+                >
+                  <span aria-hidden>+</span>
+                  {t("story.add")}
+                </button>
+              )}
+            </div>
+          ) : (
+            <>
           <label htmlFor="prompt" className="sr-only">{isVideo ? t("studio.videoPromptLabel") : t("studio.promptLabel")}</label>
-          <textarea
-            id="prompt"
-            rows={3}
-            maxLength={MAX_PROMPT}
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder={isVideo ? t("studio.videoPromptPlaceholder") : t("studio.promptPlaceholder")}
-            className="block w-full resize-y rounded-2xl bg-transparent px-3 py-2 text-base leading-relaxed text-ink placeholder:text-muted/60 focus:outline-none sm:text-lg"
-          />
+            <textarea
+              id="prompt"
+              rows={3}
+              maxLength={MAX_PROMPT}
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder={isVideo ? t("studio.videoPromptPlaceholder") : t("studio.promptPlaceholder")}
+              className="block w-full resize-y rounded-2xl bg-transparent px-3 py-2 text-base leading-relaxed text-ink placeholder:text-muted/60 focus:outline-none sm:text-lg"
+            />
+  
+            </>
+          )}
 
           <div className="flex flex-wrap items-end justify-between gap-3 px-1 pt-2">
            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-            <VoiceButton
-              onError={setError}
-              onText={(text) => setPrompt((p) => (p.trim() ? `${p.trim()} ${text}` : text).slice(0, MAX_PROMPT))}
-            />
+            {!multi && (
+              <VoiceButton
+                onError={setError}
+                onText={(text) => setPrompt((p) => (p.trim() ? `${p.trim()} ${text}` : text).slice(0, MAX_PROMPT))}
+              />
+            )}
             {activeTool === "compare" ? null : choices.length === 0 ? (
               <p className="text-xs text-muted">
                 {t("studio.noVideoModels")}{" "}
@@ -716,7 +845,12 @@ export default function Studio() {
               </select>
             </label>
 
-            {isVideo ? (
+            {multi ? (
+              <span className={chip}>
+                <Icon name="clock" size={15} className="text-muted" />
+                {t("story.perScene", { count: STORY_SCENE_SECONDS })}
+              </span>
+            ) : isVideo ? (
               <label className={chip}>
                 <Icon name="clock" size={15} className="text-muted" />
                 <span className="sr-only">{t("studio.duration")}</span>
@@ -738,7 +872,7 @@ export default function Studio() {
               </label>
             )}
 
-            {single && model && model.upscale_targets.length > 0 && (
+            {single && !multi && model && model.upscale_targets.length > 0 && (
               <label className={chip}>
                 <Icon name="wand" size={15} className="text-muted" />
                 <span className="sr-only">{t("studio.resolution")}</span>
@@ -756,14 +890,14 @@ export default function Studio() {
            </div>
            <Button className="w-full min-w-32 py-2.5 sm:w-auto" disabled={!canGenerate} onClick={() => void submit()}>
              <Icon name="sparkle" size={17} />
-             {busy ? t("studio.generating") : activeTool === "compare" ? t("compare.send", { count: compared.length }) : t("studio.generate")}
+             {busy ? t("studio.generating") : multi ? t("story.generate", { n: sceneCount }) : activeTool === "compare" ? t("compare.send", { count: compared.length }) : t("studio.generate")}
            </Button>
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 px-2 pt-3 text-[11px] text-muted">
             <p>
               <span className="font-mono font-medium text-ink/90">
-                {price.count > 1 && single ? t("price.selectionMany", { count: total, n: price.count, each: price.each }) : t("studio.cost", { count: total })}
+                {multi ? t("story.cost", { count: total, n: sceneCount, each: storyCost.each }) : price.count > 1 && single ? t("price.selectionMany", { count: total, n: price.count, each: price.each }) : t("studio.cost", { count: total })}
               </span>
               {single && onFreeShare(provider) && <span className="text-ok"> · {t("price.freeShare")}</span>} · <span className="font-mono tabular-nums">{t("studio.chars", { count: prompt.length, max: MAX_PROMPT })}</span>
             </p>
@@ -780,6 +914,7 @@ export default function Studio() {
             )}
           </div>
           {isVideo && <p className="px-2 pt-2 text-[11px] text-muted">{t("studio.videoWait")}</p>}
+          {multi && <p className="px-2 pt-2 text-[11px] text-muted">{t("story.hint", { seconds: STORY_SCENE_SECONDS })}</p>}
           {isVideo && model?.has_audio && (
             <p className="flex flex-wrap items-center gap-x-2 gap-y-1 px-2 pt-2 text-[11px] text-muted">
               <Icon name="sound" size={13} className="shrink-0 text-accent" />
@@ -793,9 +928,9 @@ export default function Studio() {
               </button>
             </p>
           )}
-          {isVideo && !startImage && <p className="px-2 pt-2 text-[11px] text-muted">{t("studio.startImageHint")}</p>}
+          {isVideo && !multi && !startImage && <p className="px-2 pt-2 text-[11px] text-muted">{t("studio.startImageHint")}</p>}
           {needsImage && <p className="px-2 pt-2 text-[11px] text-danger">{t("studio.needsImage")}</p>}
-          {single && resolution !== "native" && (
+          {single && !multi && resolution !== "native" && (
             <p className="px-2 pt-2 text-[11px] text-muted">{isVideo ? t("studio.resHintVideo") : t("studio.resHintImage")}</p>
           )}
           {choices.some(({ p }) => !p.available) && (
@@ -816,7 +951,7 @@ export default function Studio() {
 
         {compareBlock && <div className="lg:hidden">{compareBlock}</div>}
 
-        {presets.length > 0 && (
+        {presets.length > 0 && !multi && (
           <div className="mt-4">
             <p className="mb-2 flex items-center justify-center gap-1.5 text-[11px] font-medium uppercase tracking-[0.08em] text-muted">
               <Icon name="camera" size={13} />
@@ -842,7 +977,7 @@ export default function Studio() {
           </div>
         )}
 
-        {prompt.trim() === "" && (
+        {prompt.trim() === "" && !multi && (
           <div className="mt-6">
             <p className="mb-2 text-center text-[11px] font-medium uppercase tracking-[0.08em] text-muted">{t("studio.tryThese")}</p>
             <div className="flex flex-wrap justify-center gap-2">
@@ -862,7 +997,14 @@ export default function Studio() {
       </section>
 
       <div className="hidden lg:sticky lg:top-20 lg:block">
-        <ResultPanel job={focusJob} error={error} compare={compareFocused ? compareBlock : undefined} renderJob={(j) => renderCard(j)} />
+        <ResultPanel
+          job={focusJob}
+          error={error}
+          compare={compareFocused ? compareBlock : undefined}
+          renderJob={(j) => renderCard(j)}
+          story={focusStory}
+          renderStory={(s) => renderStory(s)}
+        />
       </div>
       </div>
 
@@ -874,11 +1016,11 @@ export default function Studio() {
             <Icon name="arrow" size={13} />
           </Link>
         </div>
-        {jobs.length === 0 ? (
+        {recent.length === 0 ? (
           <EmptyState icon={<Icon name="sparkle" size={22} />} title={t("studio.empty")} hint={t("studio.emptyHint")} />
         ) : (
           <div className="masonry columns-1 sm:columns-2 xl:columns-3">
-            {jobs.map((j, i) => renderCard(j, i))}
+            {recent.map((item, i) => ("story" in item ? renderStory(item.story, i) : renderCard(item.job, i)))}
           </div>
         )}
       </section>

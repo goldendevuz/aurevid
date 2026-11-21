@@ -274,7 +274,8 @@ async def list_jobs(
     hide_failed: bool = False,
 ):
     """Your history, newest first. Every filter is optional, combinable and owner-scoped."""
-    stmt = select(Job).where(Job.user_id == user.id)
+    # Scenes of a multi-scene video are shown through their story (routers/stories.py).
+    stmt = select(Job).where(Job.user_id == user.id, Job.story_id.is_(None))
     if before is not None:
         stmt = stmt.where(Job.created_at < before)
     if favorites:
@@ -311,7 +312,7 @@ async def job_facets(user: CurrentUser, session: Session):
     rows = (
         await session.execute(
             select(Job.provider, Job.model, Job.kind, Job.status, func.count(Job.id))
-            .where(Job.user_id == user.id)
+            .where(Job.user_id == user.id, Job.story_id.is_(None))
             .group_by(Job.provider, Job.model, Job.kind, Job.status)
         )
     ).all()
@@ -366,6 +367,8 @@ async def delete_job(job_id: str, user: CurrentUser, session: Session) -> None:
     job = await _owned_job(session, user.id, job_id)
     if job.status in ACTIVE:
         raise _bad("job_not_finished", status.HTTP_409_CONFLICT)
+    if job.story_id:  # a scene belongs to its story: delete the story instead
+        raise _bad("job_in_story", status.HTTP_409_CONFLICT)
     assets = (
         (
             await session.execute(

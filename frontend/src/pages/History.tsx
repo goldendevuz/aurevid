@@ -5,6 +5,8 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { api } from "../api";
 import { useAuth } from "../auth";
 import JobCard from "../components/JobCard";
+import StoryCard from "../components/StoryCard";
+import { useStories } from "../useStories";
 import { Icon } from "../components/icons";
 import { Button, EmptyState, ErrorText, PageHeader, Segmented, inputClass } from "../components/ui";
 import { isFinished, retryJob, watchJob } from "../jobs";
@@ -34,6 +36,7 @@ export default function History() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<unknown>(null);
   const [query, setQuery] = useState(() => params.get("q") ?? "");
+  const { stories, load: loadStories, retryScene, restitch, remove: removeStory } = useStories(12, reloadCredits);
   const request = useRef(0);
   const watchers = useRef(new Map<string, () => void>());
 
@@ -46,6 +49,8 @@ export default function History() {
   const favorites = get("favorites") === "true";
   const hideFailed = get("hide_failed") === "true";
   const anyFilter = FILTER_KEYS.some((k) => params.has(k));
+  // Multi-scene videos are listed above the single results, unless a filter other than "video" is active.
+  const showStories = stories.length > 0 && FILTER_KEYS.every((k) => (k === "kind" ? !kind || kind === "video" : !params.has(k)));
 
   const setFilter = useCallback(
     (changes: Partial<Record<(typeof FILTER_KEYS)[number], string | boolean>>) => {
@@ -127,9 +132,10 @@ export default function History() {
 
   useEffect(() => {
     loadFacets().catch(setError);
+    loadStories().catch(setError);
     const current = watchers.current;
     return () => current.forEach((stop) => stop());
-  }, [loadFacets]);
+  }, [loadFacets, loadStories]);
 
   const retry = async (job: Job) => {
     const created = await retryJob(job);
@@ -261,8 +267,18 @@ export default function History() {
       </section>
 
       <ErrorText error={error} />
+      {showStories && (
+        <section className="mb-8" aria-labelledby="stories-title">
+          <h2 id="stories-title" className="mb-3 text-2xl tracking-[0.02em]">{t("story.section")}</h2>
+          <div className="masonry columns-1 sm:columns-2 xl:columns-3">
+            {stories.map((s, i) => (
+              <StoryCard key={s.id} story={s} index={i % 12} onRetryScene={retryScene} onRestitch={restitch} onDelete={removeStory} />
+            ))}
+          </div>
+        </section>
+      )}
       {jobs.length === 0 ? (
-        loading ? null : anyFilter ? (
+        loading || showStories ? null : anyFilter ? (
           <EmptyState
             icon={<Icon name="search" size={22} />}
             title={t("history.noMatch")}

@@ -113,6 +113,8 @@ export interface Job {
   queue_position?: number | null;
   eta_seconds?: number | null;
   typical_seconds?: number | null;
+  story_id?: string | null; // set when the job is a scene of a multi-scene video
+  scene_index?: number | null;
   model_label?: string | null;
   provider_name?: string | null;
   has_audio?: boolean;
@@ -167,4 +169,25 @@ export interface PaymentOrder {
   status: PaymentStatus;
   created_at: string;
   paid_at: string | null;
+}
+
+export type StoryStatus = "pending" | "stitching" | "ready" | "partial" | "failed";
+
+export interface Scene {
+  index: number;
+  prompt: string;
+  job: Job;
+}
+
+/** A multi-scene video: scene jobs joined into one clip (backend routers/stories.py). */
+export interface Story {
+  id: string;
+  title: string | null;
+  status: StoryStatus;
+  error: string | null;
+  created_at: string;
+  finished_at: string | null;
+  cost: number;
+  scenes: Scene[];
+  final: Asset | null;
 }

@@ -32,7 +32,7 @@ from app.images import (
 from app.models import Asset, Job, JobStatus, WorkerHeartbeat
 from app.providers.base import GenerationRequest, ProviderError
 from app.providers.registry import get_provider, resolve_credentials
-from app.services import allowance, credits, describe, queue, quota, recipes
+from app.services import allowance, credits, describe, queue, quota, recipes, stories
 from app.services.payments import orders as payment_orders
 
 log = logging.getLogger("aurevid.worker")
@@ -96,6 +96,10 @@ async def finish_job(job_id: str, produced: int, error: str | None) -> None:
         await recipes.advance(job_id)  # next step of a recipe chain, if any
     except Exception:  # noqa: BLE001 - a broken chain must not stop the worker
         log.exception("recipe advance failed job=%s", job_id)
+    try:
+        await stories.settle_for_job(job_id)  # last scene of a multi-scene video: join the clips
+    except Exception:  # noqa: BLE001 - the janitor retries stories that were missed
+        log.exception("story settle failed job=%s", job_id)
 
 
 RETRY_DELAY_SECONDS = 6.0  # free tiers (e.g. Pollinations) throttle back-to-back requests
@@ -419,8 +423,8 @@ async def _slot(stop: asyncio.Event | None, poll: float) -> None:
 
 
 async def _janitor(stop: asyncio.Event | None) -> None:
-    """Every minute: reconcile payment orders, requeue expired GPU leases; every 5 minutes:
-    recover stale jobs."""
+    """Every minute: reconcile payment orders, requeue expired GPU leases, settle multi-scene
+    videos; every 5 minutes: recover stale jobs."""
     tick = 0
     while not (stop and stop.is_set()):
         await asyncio.sleep(60)
@@ -433,6 +437,10 @@ async def _janitor(stop: asyncio.Event | None) -> None:
             await requeue_expired_leases()
         except Exception:  # noqa: BLE001
             log.exception("GPU lease requeue failed")
+        try:
+            await stories.recover()
+        except Exception:  # noqa: BLE001
+            log.exception("story recovery failed")
         if tick % 5:
             continue
         try:
