@@ -121,11 +121,11 @@ def _modal_models(**flags):
 
 
 def test_ltx_is_hidden_by_default_and_wan_is_unchanged():
-    assert _modal_models() == [mv.WAN, mv.WAN_LONG]
+    assert _modal_models() == [mv.WAN]
 
 
 def test_ltx_is_visible_only_with_allow_unclear_models():
-    assert _modal_models(allow_unclear_models=True) == [mv.WAN, mv.WAN_LONG, mv.LTX]
+    assert _modal_models(allow_unclear_models=True) == [mv.WAN, mv.LTX]
     ltx = mv.ModalVideoProvider().model(mv.LTX)
     assert ltx.commercial_use == "unclear" and ltx.has_audio is True
     assert mv.ModalVideoProvider().model(mv.WAN).has_audio is False
@@ -145,14 +145,3 @@ async def test_payload_carries_the_model_and_ltx_uses_its_own_sizes(monkeypatch)
     assert (ltx_body["width"], ltx_body["height"], ltx_body["frames"]) == (448, 768, 73)
     assert (ltx_body["frames"] - 1) % 8 == 0 and ltx_body["width"] % 32 == 0
     assert wan_body["model"] == mv.WAN and (wan_body["width"], wan_body["height"]) == (832, 480)
-
-
-def test_long_clip_model_is_own_key_only_and_uses_wan_endpoint():
-    from app.providers import modal_video as mv
-
-    info = {m.id: m for m in mv.ModalVideoProvider().info.models}
-    long_ = info[mv.WAN_LONG]
-    assert long_.commercial_use == "yes" and long_.server_key_ok is False
-    assert long_.durations == [15] and long_.credit_cost > info[mv.WAN].credit_cost
-    assert mv._LONG_FRAMES == 361 and (361 - 1) % 4 == 0
-    assert all(w % 32 == 0 and h % 32 == 0 for w, h in mv._LONG_SIZES.values())

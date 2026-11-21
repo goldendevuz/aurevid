@@ -47,8 +47,6 @@ class ModelInfo(BaseModel):
     durations: list[int] = []  # video only: allowed lengths in seconds, first = default
     accepts_image: bool = False  # can take a start image (image-to-video)
     requires_image: bool = False
-    # False = costly model: never runs on the owner's shared key, only on the user's own key
-    server_key_ok: bool = True
     has_audio: bool = False  # video only: the model generates a soundtrack / speech
     upscale_targets: list[str] = []  # video: provider-side upscaling; images use the local upscaler
 
