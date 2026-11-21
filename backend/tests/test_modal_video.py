@@ -156,3 +156,33 @@ def test_long_clip_model_is_own_key_only_and_uses_wan_endpoint():
     assert long_.durations == [15] and long_.credit_cost > info[mv.WAN].credit_cost
     assert mv._LONG_FRAMES == 361 and (361 - 1) % 4 == 0
     assert all(w % 32 == 0 and h % 32 == 0 for w, h in mv._LONG_SIZES.values())
+
+
+async def test_worker_gives_the_long_clip_its_own_timeout(monkeypatch):
+    import asyncio
+
+    from app import worker
+    from app.providers.base import GenerationRequest
+
+    seen = []
+    real = asyncio.wait_for
+
+    async def spy(coro, timeout):  # noqa: ASYNC109
+        seen.append(timeout)
+        return await real(coro, timeout=timeout)
+
+    class Fake:
+        info = __import__("app.providers.modal_video", fromlist=["x"]).ModalVideoProvider().info
+
+        async def generate(self, req, creds):
+            return "ok"
+
+    monkeypatch.setattr(worker.asyncio, "wait_for", spy)
+    from app.providers import modal_video as mv
+
+    for model, expect in ((mv.WAN, 600), (mv.WAN_LONG, mv.LONG_CLIP_TIMEOUT_S)):
+        req = GenerationRequest(
+            prompt="x", model=model, aspect_ratio="16:9", width=8, height=8, kind="video"
+        )
+        assert await worker._generate_with_retry(Fake(), req, None) == "ok"
+        assert seen[-1] == expect

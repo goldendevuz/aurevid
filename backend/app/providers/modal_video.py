@@ -26,6 +26,7 @@ from app.providers.base import (
 )
 
 WAN = "wan-2.2-ti2v-5b"
+LONG_CLIP_TIMEOUT_S = 1800  # measured 732 s of generation + cold start
 WAN_LONG = "wan-2.2-ti2v-5b-15s"  # same endpoint/weights: 15 s at 720p, A100 (costly)
 # Optional, hidden: conditional licence (MODEL_LICENSES.md); endpoint in deploy/modal/ltx_video.py
 LTX = "ltx-2.3"
@@ -88,6 +89,7 @@ class ModalVideoProvider(ImageProvider):
                 credit_cost=30,
                 max_count=1,
                 durations=[15],
+                timeout_s=LONG_CLIP_TIMEOUT_S,
                 server_key_ok=False,  # ~6x the GPU time of a 5 s clip: never on the owner's key
                 has_audio=False,
             ),
@@ -153,7 +155,9 @@ class ModalVideoProvider(ImageProvider):
             "seed": req.seed or 0,
         }
         settings = get_settings()
-        deadline = time.monotonic() + max(settings.video_timeout_seconds, 1800 if long_clip else 0)
+        deadline = time.monotonic() + max(
+            settings.video_timeout_seconds, LONG_CLIP_TIMEOUT_S if long_clip else 0
+        )
         dest = req.workdir / f"{secrets.token_hex(8)}.part" if req.workdir else None
         try:
             async with _http(60) as client:
