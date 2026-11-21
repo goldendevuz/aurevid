@@ -333,7 +333,6 @@
     "cannot_target_self": "You can't do this to your own account.",
     "job_not_queued": "Only queued jobs can be cancelled.",
     "job_not_failed": "Only failed jobs can be retried.",
-    "own_key_required": "This long clip is costly, so it runs only on your own Modal key. Add it in Settings.",
     "free_share_used": "You have used your free share on the Aurevid key. Add your own key in Settings or try again tomorrow.",
     "job_not_finished": "This generation is still running. Wait until it finishes.",
     "free_month_used": "This month's free video clips on the Aurevid key are used up. Add your own Modal key in Settings or try again next month.",

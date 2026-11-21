@@ -37,7 +37,7 @@ describe("locales", () => {
       "file_too_large", "byok_disabled", "bad_fields", "not_found", "not_authenticated",
       "invalid_session", "duplicate_request", "duration_unsupported", "image_input_unsupported",
       "image_required", "provider_cooldown", "upscale_unsupported", "upscaler_disabled",
-      "already_that_large", "too_many_active_jobs", "queue_full", "free_share_used", "free_month_used", "own_key_required", "job_not_finished",
+      "already_that_large", "too_many_active_jobs", "queue_full", "free_share_used", "free_month_used", "job_not_finished",
       "recipe_step_unavailable", "recipe_step_failed",
       "already_that_large", "too_many_active_jobs", "queue_full", "free_share_used",
       "payments_disabled", "unknown_pack", "payment_gateway_error",

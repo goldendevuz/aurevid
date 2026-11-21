@@ -112,18 +112,3 @@ async def test_monthly_cap_across_all_users():
     assert next(p for p in providers if p["id"] == "modal_video")["free_left"] == 0
     await a.aclose()
     await b.aclose()
-
-
-async def test_long_clip_refused_on_the_owner_key():
-    _owner_modal()
-    client, _ = await make_user("long@example.com")
-    body = {
-        "prompt": "an epic sci-fi scene",
-        "provider": "modal_video",
-        "model": mv.WAN_LONG,
-        "aspect_ratio": "16:9",
-        "duration": 15,
-    }
-    r = await client.post("/api/jobs", json=body, headers=csrf_headers(client))
-    assert r.status_code == 403 and r.json()["detail"]["code"] == "own_key_required"
-    await client.aclose()

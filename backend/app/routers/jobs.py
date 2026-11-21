@@ -165,8 +165,6 @@ async def prepare_job(
     creds = await resolve_credentials(session, provider, user_id)
     if not provider.has_usable_credentials(creds):
         raise _bad("provider_key_required")
-    if creds.source == "server" and not model.server_key_ok:
-        raise _bad("own_key_required", status.HTTP_403_FORBIDDEN)
     if creds.source == "server":
         # The owner's key is shared: each user gets a fair free share (services/allowance.py).
         if provider.info.id in allowance.LIFETIME_PROVIDERS:
