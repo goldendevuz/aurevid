@@ -34,10 +34,10 @@ P3 = keyinroq.
 | 14 | **Brend va mashhur shaxsga o'xshashlikni tekshirish** | Huquqiy xavfni kamaytiradi (GTA VI holati kabi) | Higgsfield Similarity Scoring | P3 | L | Chiqish moderatsiyasi bilan birga (`threat-model` "Known gaps") |
 | 15 | **Ovozli video: litsenziyasiz (CC0) musiqa kutubxonasi** | Modal kliplari ovozsiz; MMAudio tijoriy emas (CC-BY-NC) | To'y videosi tahlili | P2 | M | Faqat CC0/public-domain treklar; ffmpeg bilan videoga ulash (imijga ffmpeg qo'shish yoki Modal'da) |
 | 16 | **Hamjamiyat GPU worker'lari** (ishonchli odamlar o'z GPU'sida video tayyorlaydi) | Bulut narxisiz bepul video; foydalanuvchilar GPU'sini ulashadi | Egasining GPU worker'i (`deploy/gpu-worker/`) | P2 | M | 1-bosqich: faqat egasining worker'iga ishoniladi (worker prompt va rasmlarni ko'radi). Keyin: worker'ga alohida token, ro'yxatdan o'tkazish, natijani tekshirish, to'lov/mukofot; bitta umumiy token buning uchun yetarli emas |
+| 17 | **15 soniyalik video: 5 soniyalik klip zanjiri** | Wan 2.2 5B bir yo'la 361 kadrda "qulaydi" (sinab ko'rildi 2026-11-21: ko'k dog' va qora ekran), shuning uchun uzun video faqat oldingi klipning oxirgi kadridan davom ettirib yig'ilishi mumkin | Raqiblar (uzun video) | P2 | M | Avval bitta tajriba video, kadrlarini tekshirib, keyin saytga. Narxi ~3x. LTX-2.3 muqobil (litsenziyasi shartli) |
 
 ## Allaqachon bor (raqiblarda ham bor, bizda ham)
 
 - Rasmni jonlantirish, navbat va progress (fal Video Generator): Studio, SSE, adolatli navbat.
 - Endpoint bo'yicha rate limit (Mux namunasi): `ratelimit.py`, kunlik limit.
 - Bir nechta provayder (AI SDK Image Generator): provayder registri.
-| 17 | **15 soniyalik video: 5 soniyalik klip zanjiri** | Wan 2.2 5B bir yo'la 361 kadrda "qulaydi" (sinab ko'rildi 2026-11-21: ko'k dog' va qora ekran), shuning uchun uzun video faqat oldingi klipning oxirgi kadridan davom ettirib yig'ilishi mumkin | Raqiblar (uzun video) | P2 | M | Avval bitta tajriba video, kadrlarini tekshirib, keyin saytga. Narxi ~3x. LTX-2.3 muqobil (litsenziyasi shartli) |
