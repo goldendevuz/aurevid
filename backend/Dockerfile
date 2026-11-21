@@ -4,6 +4,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 UV_COMPILE_BYTECODE=1 UV_LINK_M
     ORT_DISABLE_TELEMETRY=1 \
     PATH="/app/.venv/bin:$PATH"
 COPY --from=ghcr.io/astral-sh/uv:0.12.7 /uv /bin/uv
+# ffmpeg joins the clips of a multi-scene video (app/services/stitch.py)
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY pyproject.toml uv.lock ./
 RUN uv sync --frozen --no-dev --no-install-project

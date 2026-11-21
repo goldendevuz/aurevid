@@ -99,6 +99,13 @@ Borrowed ideas, built on the shared tokens so a theme swap stays a CSS change:
   linking to `/credits`) and result (the latest job rendered by the existing `JobCard`). The panel only reads state `Studio`
   already has (`focusId`, `error`, `compareRun`); generation logic is unchanged. Below lg it stays one column as before
   (panel hidden, inline error, compare results below the composer). No resizable handle.
+- **Multi-scene video (video mode):** a second `Segmented` (Single / Multi-scene) under the Image/Video one, shown only when a
+  text-to-video model offers 5 s clips (`storyCapable`). Multi-scene swaps the single prompt for 2-4 numbered scene fields
+  (add / remove), a fixed "5 s per scene" chip and a summed price line; the start-image upload, presets, examples, upscale and
+  voice button are hidden. `StoryCard` (glass card, same radius as `JobCard`) shows a progress bar while generating or joining,
+  the joined video with Download/Delete when ready, and a per-scene grid (first-frame thumbnail, status chip, Retry on a failed
+  scene). It appears in `ResultPanel`, in Studio's "Recent results" (merged with jobs by date) and in a "Multi-scene videos"
+  block at the top of History. Scene jobs are hidden from `GET /api/jobs` (they live inside their story).
 - **Blueprint sheet:** `.blueprint` on the inner-page wrapper in `Layout`: thin grid and heavier lines every 128 px from
   `--hairline`, ruler ticks on the top and left edges, sides faded. Not used on the landing hero (it keeps the scenery).
 - **Provider dots:** `ProviderDot` / `--color-provider-1..5` (plain `:root` variables, because `@theme` drops unused

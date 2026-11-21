@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router-dom";
 import { ApiError } from "../api";
-import type { Job } from "../types";
+import type { Job, Story } from "../types";
 import { Icon } from "./icons";
 import { Badge, ErrorText } from "./ui";
 
@@ -16,11 +16,15 @@ export default function ResultPanel({
   error,
   compare,
   renderJob,
+  story,
+  renderStory,
 }: {
   job: Job | undefined;
   error: unknown;
   compare?: ReactNode;
   renderJob: (job: Job) => ReactNode;
+  story?: Story;
+  renderStory?: (story: Story) => ReactNode;
 }) {
   const { t } = useTranslation();
   const out = error instanceof ApiError && error.code === "insufficient_credits";
@@ -49,6 +53,9 @@ export default function ResultPanel({
         <ErrorText error={error} />
       </div>
     );
+  } else if (story && renderStory) {
+    if (story.status === "ready") badge = <Badge tone="live">{t("studio.panel.ready")}</Badge>;
+    body = renderStory(story);
   } else if (job && running) {
     body = (
       <div className="grid place-items-center gap-4 rounded-2xl border border-white/10 bg-bg/50 px-6 py-14 text-center">

@@ -38,7 +38,7 @@ describe("locales", () => {
       "invalid_session", "duplicate_request", "duration_unsupported", "image_input_unsupported",
       "image_required", "provider_cooldown", "upscale_unsupported", "upscaler_disabled",
       "already_that_large", "too_many_active_jobs", "queue_full", "free_share_used", "free_month_used", "job_not_finished",
-      "recipe_step_unavailable", "recipe_step_failed",
+      "recipe_step_unavailable", "recipe_step_failed", "stitch_failed", "scene_not_failed", "story_not_stitchable", "job_in_story",
       "already_that_large", "too_many_active_jobs", "queue_full", "free_share_used",
       "payments_disabled", "unknown_pack", "payment_gateway_error",
       "edit_unavailable", "voice_unavailable", "audio_too_large", "invalid_audio",

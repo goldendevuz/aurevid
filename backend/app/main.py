@@ -24,6 +24,7 @@ from app.routers import (
     me,
     payments,
     recipes,
+    stories,
     voice,
 )
 from app.security import CSRF_COOKIE, CSRF_HEADER, csrf_matches
@@ -112,6 +113,7 @@ def create_app() -> FastAPI:
         catalog.router,
         jobs.router,
         recipes.router,
+        stories.router,
         assets.router,
         credits.router,
         admin.router,

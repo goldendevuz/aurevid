@@ -29,7 +29,7 @@ from app.images import (
 from app.models import Asset, Job, JobStatus
 from app.providers import gpu_worker as gw
 from app.ratelimit import client_ip, hit
-from app.services import recipes
+from app.services import recipes, stories
 from app.worker import finish_job, requeue_expired_leases
 
 log = logging.getLogger("aurevid.gpu_worker")
@@ -194,6 +194,10 @@ async def complete(job_id: str, file: UploadFile, session: Session):
         await recipes.advance(job.id)  # next step of a recipe chain, if any
     except Exception:  # noqa: BLE001 - a broken chain must not fail the upload
         log.exception("recipe advance failed job=%s", job.id)
+    try:
+        await stories.settle_for_job(job.id)  # last scene of a multi-scene video: join the clips
+    except Exception:  # noqa: BLE001 - the janitor retries stories that were missed
+        log.exception("story settle failed job=%s", job.id)
     return {"status": "done"}
 
 

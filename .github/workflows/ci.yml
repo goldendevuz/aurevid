@@ -16,6 +16,8 @@ jobs:
         with: { persist-credentials: false }
       - uses: astral-sh/setup-uv@v6
         with: { version: "0.12.7" }
+      - name: ffmpeg (real clip-joining tests; they skip when it is missing)
+        run: command -v ffmpeg ffprobe >/dev/null || (sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg)
       - run: uv sync --frozen
       - run: uv run ruff check .
       - run: uv run ruff format --check .

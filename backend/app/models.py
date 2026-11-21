@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""ORM models: users, refresh_tokens, jobs, assets, credits_ledger, provider_keys, reports,
+"""ORM models: users, refresh_tokens, jobs, stories, assets, credits_ledger, provider_keys, reports,
 payment_orders."""
 
 import enum
@@ -37,6 +37,14 @@ class JobStatus(enum.StrEnum):
     running = "running"
     done = "done"
     failed = "failed"
+
+
+class StoryStatus(enum.StrEnum):
+    pending = "pending"  # scene jobs still running (or waiting for a retried scene)
+    stitching = "stitching"  # every scene succeeded, ffmpeg is joining the clips
+    ready = "ready"  # final_asset_id holds the joined video
+    partial = "partial"  # all scenes finished, some failed: retry them
+    failed = "failed"  # every scene failed, or joining failed (error holds the code)
 
 
 class User(Base):
@@ -86,6 +94,11 @@ class Job(Base):
     # Whose key ran it: "user" (BYOK), "server" (owner's key, counts against the free share),
     # "none" (keyless/local). Set at creation; the worker switches it on a server fallback.
     key_source: Mapped[str | None] = mapped_column(String(8), nullable=True, index=True)
+    # Multi-scene video: the story this clip is a scene of (None for ordinary jobs).
+    story_id: Mapped[str | None] = mapped_column(
+        ForeignKey("stories.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    scene_index: Mapped[int | None] = mapped_column(Integer, nullable=True)
     count: Mapped[int] = mapped_column(Integer, default=1)
     cost: Mapped[int] = mapped_column(Integer, default=0)
     status: Mapped[JobStatus] = mapped_column(
@@ -97,6 +110,29 @@ class Job(Base):
         DateTime(timezone=True), default=utcnow, index=True
     )
     started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+
+class Story(Base):
+    """A multi-scene video: N ordinary video jobs (Job.story_id) joined into one clip."""
+
+    __tablename__ = "stories"
+
+    id: Mapped[str] = mapped_column(String(32), primary_key=True, default=new_id)
+    user_id: Mapped[str] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    title: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    status: Mapped[StoryStatus] = mapped_column(
+        Enum(StoryStatus, native_enum=False, length=16), default=StoryStatus.pending, index=True
+    )
+    # Safe machine code (e.g. "stitch_failed"), never a path or ffmpeg output.
+    error: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    # The joined video. Deliberately not a foreign key: assets -> jobs -> stories already
+    # reference each other, and a deleted final asset just leaves the story without a video.
+    final_asset_id: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, index=True
+    )
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     finished_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 

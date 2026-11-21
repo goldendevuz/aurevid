@@ -49,7 +49,7 @@ class MockProvider(ImageProvider):
                 aspect_ratios=["1:1", "16:9", "9:16"],
                 credit_cost=2,
                 max_count=1,
-                durations=[3],
+                durations=[3, 5],
                 accepts_image=True,
             ),
         ],
