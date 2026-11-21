@@ -40,3 +40,4 @@ P3 = keyinroq.
 - Rasmni jonlantirish, navbat va progress (fal Video Generator): Studio, SSE, adolatli navbat.
 - Endpoint bo'yicha rate limit (Mux namunasi): `ratelimit.py`, kunlik limit.
 - Bir nechta provayder (AI SDK Image Generator): provayder registri.
+| 17 | **15 soniyalik video: 5 soniyalik klip zanjiri** | Wan 2.2 5B bir yo'la 361 kadrda "qulaydi" (sinab ko'rildi 2026-11-21: ko'k dog' va qora ekran), shuning uchun uzun video faqat oldingi klipning oxirgi kadridan davom ettirib yig'ilishi mumkin | Raqiblar (uzun video) | P2 | M | Avval bitta tajriba video, kadrlarini tekshirib, keyin saytga. Narxi ~3x. LTX-2.3 muqobil (litsenziyasi shartli) |
