@@ -399,9 +399,16 @@ export default function Studio() {
   }, [location.state, animate, remix, navigate]);
 
   useEffect(() => {
-    if (searchParams.get("mode") === "director") {
+    const m = searchParams.get("mode");
+    if (m === "director") {
       setMode("video");
       setSceneMode("director");
+    } else if (m === "video") {
+      setMode("video");
+      setSceneMode("single");
+    } else if (m === "image") {
+      setMode("image");
+      setSceneMode("single");
     }
   }, [searchParams]);
 

@@ -90,3 +90,9 @@ Re-run after changing dependencies. Review any license that is not permissive.
 | set-cookie-parser | 2.7.3 | MIT |
 | tslib | 2.9.1 | 0BSD |
 | typescript | 5.9.3 | Apache-2.0 |
+
+## Development dependencies
+
+| Name | Version | License |
+|------|---------|---------|
+| @playwright/test | 1.65.1 | Apache-2.0 |

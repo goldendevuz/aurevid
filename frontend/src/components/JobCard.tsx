@@ -231,11 +231,13 @@ function JobDialog({ job, onClose, onChange, onRemix, onAnimate, onUpscale, onEd
   const [editing, setEditing] = useState(false);
   const [copied, setCopied] = useState(false);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const assets = job.assets;
   const a = assets[Math.min(idx, assets.length - 1)];
   const isUpscaleJob = job.provider === "local" && job.params.upscale;
 
   useEffect(() => {
+    const previous = document.activeElement as HTMLElement | null;
     closeRef.current?.focus();
     const prevOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -243,11 +245,26 @@ function JobDialog({ job, onClose, onChange, onRemix, onAnimate, onUpscale, onEd
       if (e.key === "Escape") onClose();
       if (e.key === "ArrowRight") setIdx((i) => Math.min(i + 1, Math.max(0, assets.length - 1)));
       if (e.key === "ArrowLeft") setIdx((i) => Math.max(i - 1, 0));
+      if (e.key !== "Tab" || !dialogRef.current) return;
+      const nodes = dialogRef.current.querySelectorAll<HTMLElement>(
+        "button:not([disabled]), a[href], input:not([disabled]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex='-1'])"
+      );
+      if (nodes.length === 0) return;
+      const first = nodes[0];
+      const last = nodes[nodes.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => {
       window.removeEventListener("keydown", onKey);
       document.body.style.overflow = prevOverflow;
+      previous?.focus?.();
     };
   }, [onClose, assets.length]);
 
@@ -281,7 +298,7 @@ function JobDialog({ job, onClose, onChange, onRemix, onAnimate, onUpscale, onEd
 
   return (
     <div className="fade fixed inset-0 z-50 flex items-stretch justify-center bg-black/80 p-0 backdrop-blur-md sm:p-6" role="presentation" onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
-      <div role="dialog" aria-modal="true" aria-label={job.prompt} className="pop glass relative grid max-h-full w-full max-w-6xl overflow-hidden rounded-none sm:rounded-[28px] md:grid-cols-[minmax(0,1fr)_360px]">
+      <div ref={dialogRef} role="dialog" aria-modal="true" aria-label={job.prompt} className="pop glass relative grid max-h-full w-full max-w-6xl overflow-hidden rounded-none sm:rounded-[28px] md:grid-cols-[minmax(0,1fr)_360px]">
         <button ref={closeRef} type="button" onClick={onClose} aria-label={t("job.close")} title={t("job.close")} className="absolute right-3 top-3 z-10 grid h-9 w-9 place-items-center rounded-full bg-black/60 text-ink backdrop-blur transition hover:bg-black/80 hover:text-accent">
           <span aria-hidden className="text-lg leading-none">×</span>
         </button>
