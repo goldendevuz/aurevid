@@ -21,8 +21,8 @@ export interface StoryPrice {
 }
 
 /** Same formula the backend charges: one clip per scene, no upscale. */
-export function storyPrice(model: ModelInfo | undefined, scenes: number): StoryPrice {
-  const each = priceOf(model).each;
+export function storyPrice(model: ModelInfo | undefined, scenes: number, resolution: string | null = null): StoryPrice {
+  const each = priceOf(model, 1, null, resolution).each;
   return { scenes, each, total: each * scenes };
 }
 

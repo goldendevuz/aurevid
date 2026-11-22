@@ -13,6 +13,9 @@ This is an engineering record, not legal advice.
 | fal.ai (`fal`) | `fal-ai/wan/v2.2-5b/text-to-video` | Apache-2.0 (Wan 2.2 TI2V-5B weights) | **Yes** by model licence | fal.ai terms; **paid**, $0.15 per video per fal's model page (2026-11-17) | **On**, BYOK only |
 | fal.ai (`fal`) | `fal-ai/wan/v2.2-a14b/image-to-video` | Apache-2.0 (Wan 2.2 I2V-A14B weights) | **Yes** by model licence | fal.ai terms; **paid**, $0.04-0.08 per video second by resolution | **On**, BYOK only |
 | fal.ai (`fal`) | `fal-ai/kling-video/v2.6/pro/text-to-video` | Proprietary hosted API (Kling, via fal.ai); no weights are distributed or used by us | **Unclear**: check Kling/fal.ai terms before commercial use | fal.ai terms; **paid**, fal lists about $0.07/s audio off and $0.14/s audio on (third-party and fal page figures, not verified); generates native audio | **Hidden** (commercial use unclear, rule 3) |
+| OpenRouter (`openrouter_video`) | `bytedance/seedance-2.0-mini` (video with audio, 480p/720p) | Proprietary hosted API (ByteDance Seedance, via OpenRouter); no weights | **Yes, recorded 2026-11-22, owner to confirm**: BytePlus General Terms for AI Services 2.1 says you own the Output and BytePlus claims no ownership; no non-commercial clause found (see Evidence for caveats) | OpenRouter terms (Output rights follow each Model's terms); **paid** in USD to the user's own OpenRouter key, 3.5 USD per 1M video tokens | **On** (`OPENROUTER_VIDEO_ENABLED`), BYOK only; the owner key is off by default |
+| OpenRouter (`openrouter_video`) | `bytedance/seedance-2.5-flash` (480p/720p) | same | same | 7.0 USD per 1M video tokens | **On**, BYOK only |
+| OpenRouter (`openrouter_video`) | `bytedance/seedance-2.5` (480p/720p/1080p) | same | same | 10.7 USD per 1M video tokens (11.7 at 1080p) | **On**, BYOK only |
 | Modal (`modal_video`) | `wan-2.2-ti2v-5b` | Apache-2.0 (Wan 2.2 TI2V-5B weights, Wan-AI/Wan2.2-TI2V-5B-Diffusers) | **Yes** by model licence | Runs in the user's own Modal workspace, paid from their Modal credit; no third party sees prompts except Modal | **On** (`MODAL_VIDEO_ENABLED`), BYOK only |
 | Modal (`modal_video`) | `ltx-2.3` (LTX-2.3 22B distilled, video **with audio**) | **LTX-2 Community License Agreement** (Lightricks, 2026-01-05) for the weights; repo code is Apache-2.0; the Gemma text encoder stays under Google's Gemma terms | **Unclear (conditional)**: free only for entities with annual revenue below USD 10,000,000 (incl. affiliates); at or above it a paid commercial licence from Lightricks is required; outputs: "Licensor claims no rights in the Output" but you are accountable for input and use | Runs in the user's own Modal workspace (same terms as Wan above); hosting for third parties (SaaS) is allowed only if the licence text and Attachment A use restrictions are passed on to users; ~32 GB+ VRAM | **Off / hidden** (`commercial_use="unclear"`, rule 3), not enabled; see Evidence |
 | GPU worker (`gpu_worker`) | `wan-2.2-ti2v-5b` | Apache-2.0 (Wan 2.2 TI2V-5B weights, Wan-AI/Wan2.2-TI2V-5B-Diffusers) | **Yes** by model licence | Runs on a GPU machine the owner operates (`deploy/gpu-worker/`); no third party sees prompts. Free for users (0 credits); the owner pays only electricity. The worker is trusted with prompts and start images, so only the owner's machine holds the token | **Off** until `GPU_WORKER_TOKEN` is set |
@@ -95,6 +98,30 @@ This is an engineering record, not legal advice.
     klein image + alt text, ~147 Neurons); see `backend/app/providers/cloudflare.py`.
   - Not verified live (no key in CI): whether Whisper on Workers AI decodes WebM/Opus and MP4/AAC
     as recorded by browsers; the request shapes follow the published JSON schemas.
+
+- **OpenRouter video (Seedance), checked 2026-11-22** (public pages fetched with curl):
+  - Prices: `openrouter.ai/api/v1/videos/models` lists USD per 1M video tokens: Seedance 2.0 Mini 3.5,
+    2.5 Flash 7.0, 2.5 10.7 (1080p 11.7). A second of video is width x height x 24 / 1024 tokens, so a
+    16:9 second costs about 0.034 / 0.067 / 0.103 USD at 480p and 0.076 / 0.151 / 0.231 USD at 720p
+    (Mini / Flash / 2.5), and 0.569 USD at 1080p (2.5). The UI adds a 7% margin (a real run came back 5.6%
+    larger than the label, 864x496 for "480p"), so a 5 s clip is shown as about 18c (Mini 480p), 40c
+    (Mini 720p), 81c (Flash 720p), 1.24 USD (2.5 720p) and 3.04 USD (2.5 1080p).
+  - Commercial use of the output: OpenRouter's terms (openrouter.ai/terms, "User Content") say "Your
+    ownership rights in the Output are set forth in the Model Terms for each Model you use"; the Seedance
+    pages link BytePlus's terms. BytePlus "General Terms for AI Services" (docs.byteplus.com/en/docs/legal/AI-Services-terms),
+    section 2.1: "you own the Output generated in response to your Input, and BytePlus does not claim
+    ownership of such Output". We found no non-commercial restriction in those terms or in the ModelArk
+    service terms, so the entries are `commercial_use="yes"`, the same standard as FLUX.2 klein (the
+    provider claims no ownership of outputs). **Caveats the owner should accept or reject:** (1) the terms
+    never use the words "commercial use", they only assign ownership; (2) 2.4-2.6: outputs may not be unique,
+    no warranty that they are non-infringing, the user is responsible for their use; (3) OpenRouter 5.7:
+    some model providers do not authorise certain countries or organisations, and OpenRouter may suspend
+    access on the provider's request; (4) we did not verify which upstream OpenRouter routes Seedance
+    through. If any of this is not acceptable, set `commercial_use="unclear"` on the three models in
+    `backend/app/providers/openrouter_video.py` (`_model`): the registry then hides them everywhere.
+  - Aurevid never pays for this: the user's own key is used; an owner key (`OPENROUTER_API_KEY`) is off by
+    default and, when set, only runs the 480p Mini draft inside a per-user and monthly allowance that is 0
+    by default.
 
 ## Rules for adding a model
 

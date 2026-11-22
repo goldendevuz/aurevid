@@ -72,7 +72,13 @@ async def claim_next() -> Job | None:
         return job
 
 
-async def finish_job(job_id: str, produced: int, error: str | None) -> None:
+async def finish_job(
+    job_id: str,
+    produced: int,
+    error: str | None,
+    real_size: tuple[int, int] | None = None,
+    usd_cost: float | None = None,
+) -> None:
     async with db.session_factory()() as session:
         job = await session.get(Job, job_id)
         if job is None:
@@ -90,6 +96,14 @@ async def finish_job(job_id: str, produced: int, error: str | None) -> None:
             )
         job.status = JobStatus.done if produced > 0 else JobStatus.failed
         job.error = error  # kept for partial results too, so the UI can explain the refund
+        if real_size is not None or usd_cost is not None:
+            # What was really produced replaces what was expected (never the requested label).
+            params = dict(job.params or {})
+            if real_size is not None:
+                params["width"], params["height"] = real_size
+            if usd_cost is not None:
+                params["usd_cost"] = round(usd_cost, 4)
+            job.params = params  # new dict, so the JSON column is marked dirty
         job.finished_at = datetime.now(UTC)
         await session.commit()
     try:
@@ -117,7 +131,7 @@ async def _generate_with_retry(provider, req: GenerationRequest, creds):
         return await asyncio.wait_for(provider.generate(req, creds), timeout=timeout)
 
 
-async def _quota_event(provider, scope: str, *, hit: bool) -> None:
+async def _quota_event(provider, scope: str, *, hit: bool, units: int = 1) -> None:
     if not provider.info.track_quota:
         return
     async with db.session_factory()() as session:
@@ -125,7 +139,7 @@ async def _quota_event(provider, scope: str, *, hit: bool) -> None:
         if hit:
             await quota.record_quota_hit(*args)
         else:
-            await quota.record_success(*args)
+            await quota.record_success(*args, units=units)
         await session.commit()
 
 
@@ -169,8 +183,13 @@ def _video_dims(width: int, height: int, target: str | None) -> tuple[int, int]:
     return round(width * scale), round(height * scale)
 
 
-async def _store_output(media, req: GenerationRequest, target: str | None) -> StoredImage:
-    """Validate by content and store. Images are re-encoded (and upscaled locally if asked)."""
+async def _store_output(
+    media, req: GenerationRequest, target: str | None, publish: bool = False
+) -> StoredImage:
+    """Validate by content and store. Images are re-encoded (and upscaled locally if asked).
+
+    The stored width/height are the file's own: a video's size is read from its header (the
+    declared size is only a fallback), an image's from the decoded pixels."""
     if req.kind == "video":
         w, h = _video_dims(req.width, req.height, target)
         if media.path is not None:
@@ -179,7 +198,11 @@ async def _store_output(media, req: GenerationRequest, target: str | None) -> St
     img = decode_image(media.data, get_settings().max_provider_image_bytes)
     if target:
         img = await asyncio.to_thread(  # CPU-bound, off the event loop, with a hard deadline
-            upscaler.upscale, img, target, get_settings().upscaler_timeout_seconds
+            upscaler.upscale,
+            img,
+            target,
+            get_settings().upscaler_timeout_seconds,
+            upscaler.PUBLISH_NET_LONG.get(target) if publish else None,
         )
     return await asyncio.to_thread(save_image, img)
 
@@ -224,7 +247,9 @@ async def _process_local_upscale(job: Job) -> None:
                 )
             )
             await session.commit()
-    await finish_job(job.id, 1 if stored else 0, error)
+    await finish_job(
+        job.id, 1 if stored else 0, error, (stored.width, stored.height) if stored else None
+    )
 
 
 async def _server_fallback(provider, job: Job, creds, remaining: int):
@@ -234,12 +259,15 @@ async def _server_fallback(provider, job: Job, creds, remaining: int):
     server = provider.server_credentials()
     if server.source != "server" or not provider.has_usable_credentials(server):
         return None
+    if not provider.server_allows(job.model, (job.params or {}).get("resolution")):
+        return None  # the owner's key only pays for what the free tier allows
     async with db.session_factory()() as session:
         row = await session.get(Job, job.id)
         if row is None:
             return None
         left = await allowance.server_left(session, provider, job.user_id, exclude_job_id=job.id)
-        if left is not None and remaining > left:
+        weight = int((job.params or {}).get("quota_weight", 1))
+        if left is not None and remaining * weight > left:
             return None
         row.key_source = "server"  # from now on this job counts against the free share
         await session.commit()
@@ -264,6 +292,9 @@ async def process(job: Job) -> None:
         await finish_job(job.id, 0, exc.public)
         return
     produced = 0
+    real_size: tuple[int, int] | None = None
+    usd_cost: float | None = None
+    weight = int(params.get("quota_weight", 1))
     described: list[str] = []
     error: str | None = None
     base_seed = params.get("seed")
@@ -276,8 +307,8 @@ async def process(job: Job) -> None:
             prompt=params.get("final_prompt", job.prompt),
             model=job.model,
             aspect_ratio=params["aspect_ratio"],
-            width=params["width"],
-            height=params["height"],
+            width=params.get("gen_width", params["width"]),
+            height=params.get("gen_height", params["height"]),
             seed=seed,
             kind="video" if job.kind == "video" else "image",
             size=params.get("size", "large"),
@@ -285,6 +316,7 @@ async def process(job: Job) -> None:
             image=start_frame,
             upscale=params.get("upscale") if job.kind == "video" else None,
             workdir=tmp_dir(),
+            resolution=params.get("resolution"),
         )
         try:
             try:
@@ -297,7 +329,9 @@ async def process(job: Job) -> None:
                 log.info("job=%s user key failed, using server key", job.id)
                 creds, scope = fallback, quota.scope_for("server", job.user_id)
                 media = await _generate_with_retry(provider, req, creds)
-            stored = await _store_output(media, req, params.get("upscale"))
+            stored = await _store_output(
+                media, req, params.get("upscale"), params.get("quality") == "publish"
+            )
         except ProviderError as exc:
             if exc.quota:
                 await _quota_event(provider, scope, hit=True)
@@ -316,7 +350,11 @@ async def process(job: Job) -> None:
             log.exception("unexpected provider failure job=%s", job.id)
             error = "Unexpected error"
             break
-        await _quota_event(provider, scope, hit=False)
+        await _quota_event(provider, scope, hit=False, units=weight)
+        real_size = real_size or (stored.width, stored.height)
+        reported = media.meta.get("usd_cost")
+        if isinstance(reported, int | float):
+            usd_cost = (usd_cost or 0.0) + float(reported)
         async with db.session_factory()() as session:
             if await session.get(Job, job.id) is None:  # user deleted account meanwhile
                 delete_stored(stored.storage_key, stored.preview_key)
@@ -337,7 +375,7 @@ async def process(job: Job) -> None:
             if stored.mime.startswith("image/"):
                 described.append(asset.id)
         produced += 1
-    await finish_job(job.id, produced, error)
+    await finish_job(job.id, produced, error, real_size, usd_cost)
     for asset_id in described:  # after the job is done, so alt text never delays results
         await describe.describe_asset(asset_id)
     log.info("job=%s produced=%d status=%s", job.id, produced, "ok" if produced else "failed")

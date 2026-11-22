@@ -193,8 +193,82 @@ def validate_mp4(data: bytes) -> None:
     _validate_mp4_stream(io.BytesIO(data), len(data))
 
 
+_MAX_MOOV_BYTES = 32 * 1024 * 1024
+
+
+def _child_boxes(buf: bytes):
+    """(type, payload) of each box inside `buf` (an already-read container box payload)."""
+    offset = 0
+    while offset + 8 <= len(buf):
+        size = int.from_bytes(buf[offset : offset + 4], "big")
+        box, header = buf[offset + 4 : offset + 8], 8
+        if size == 1 and offset + 16 <= len(buf):
+            size, header = int.from_bytes(buf[offset + 8 : offset + 16], "big"), 16
+        elif size == 0:
+            size = len(buf) - offset
+        if size < header or offset + size > len(buf):
+            return
+        yield box, buf[offset + header : offset + size]
+        offset += size
+
+
+def _track_size(tkhd: bytes) -> tuple[int, int] | None:
+    version = tkhd[0] if tkhd else 0
+    pos = (4 + 32 + 52) if version == 1 else (4 + 20 + 52)  # version/flags + fields + matrix etc.
+    if len(tkhd) < pos + 8:
+        return None
+    w = int.from_bytes(tkhd[pos : pos + 4], "big") >> 16  # 16.16 fixed point
+    h = int.from_bytes(tkhd[pos + 4 : pos + 8], "big") >> 16
+    return (w, h) if w > 0 and h > 0 else None
+
+
+def probe_mp4_size(source: Path | bytes) -> tuple[int, int] | None:
+    """(width, height) of the first video track, read from the MP4 header (no ffmpeg needed).
+
+    This is the real size of the file, which is what the UI must show; providers' requested
+    sizes are only a hint. Returns None when the header cannot be read.
+    """
+    try:
+        if isinstance(source, bytes):
+            f: BinaryIO = io.BytesIO(source)
+            total = len(source)
+        else:
+            f = source.open("rb")
+            total = source.stat().st_size
+        with f:
+            offset = 0
+            while offset + 8 <= total:
+                f.seek(offset)
+                head = f.read(16)
+                size = int.from_bytes(head[0:4], "big")
+                box, header = head[4:8], 8
+                if size == 1:
+                    size, header = int.from_bytes(head[8:16], "big"), 16
+                elif size == 0:
+                    size = total - offset
+                if size < header or offset + size > total:
+                    return None
+                if box == b"moov":
+                    if size - header > _MAX_MOOV_BYTES:
+                        return None
+                    f.seek(offset + header)
+                    moov = f.read(size - header)
+                    for kind, payload in _child_boxes(moov):
+                        if kind != b"trak":
+                            continue
+                        for sub, body in _child_boxes(payload):
+                            if sub == b"tkhd" and (dims := _track_size(body)):
+                                return dims
+                    return None
+                offset += size
+    except (OSError, ValueError):
+        return None
+    return None
+
+
 def store_video(data: bytes, width: int, height: int) -> StoredImage:
     validate_mp4(data)
+    width, height = probe_mp4_size(data) or (width, height)  # the file's own size wins
     key = f"{secrets.token_hex(16)}.mp4"
     asset_path(key).write_bytes(data)
     return StoredImage(key, "video/mp4", width, height, len(data))
@@ -206,6 +280,7 @@ def store_video_file(path: Path, width: int, height: int) -> StoredImage:
         size = path.stat().st_size
         with path.open("rb") as f:
             _validate_mp4_stream(f, size)
+        width, height = probe_mp4_size(path) or (width, height)  # the file's own size wins
         key = f"{secrets.token_hex(16)}.mp4"
         os.replace(path, asset_path(key))
         return StoredImage(key, "video/mp4", width, height, size)

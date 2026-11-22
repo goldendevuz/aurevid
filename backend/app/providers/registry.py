@@ -13,6 +13,7 @@ from app.providers.fal import FalProvider
 from app.providers.gpu_worker import GpuWorkerProvider
 from app.providers.mock import MockProvider
 from app.providers.modal_video import ModalVideoProvider
+from app.providers.openrouter_video import OpenRouterVideoProvider
 from app.providers.pollinations import PollinationsProvider
 from app.providers.pollinations_video import PollinationsVideoProvider
 
@@ -26,7 +27,9 @@ def enabled_providers() -> dict[str, ImageProvider]:
         providers.append(PollinationsProvider())
     if s.pollinations_video_enabled:
         providers.append(PollinationsVideoProvider())
-    if s.modal_video_enabled:
+    if s.openrouter_video_enabled:
+        providers.append(OpenRouterVideoProvider())
+    if s.modal_video_enabled:  # secondary: the owner's own Wan on Modal, 480p-class draft quality
         providers.append(ModalVideoProvider())
     if s.fal_enabled:
         providers.append(FalProvider())
@@ -47,12 +50,27 @@ def enabled_providers() -> dict[str, ImageProvider]:
     return out
 
 
+def publish_image_model() -> tuple[ImageProvider, ModelInfo] | None:
+    """The model behind "Publish quality" images: the best one that is free to use (no paid key
+    needed) and commercially allowed, i.e. the largest native render. Ties keep registry order."""
+    best: tuple[ImageProvider, ModelInfo] | None = None
+    for provider in enabled_providers().values():
+        if provider.info.tier != "free":
+            continue
+        for m in provider.info.models:
+            if m.kind != "image" or m.commercial_use != "yes" or not m.publish_max_side:
+                continue
+            if best is None or m.publish_max_side > (best[1].publish_max_side or 0):
+                best = (provider, m)
+    return best
+
+
 def allowed_upscales(model: ModelInfo) -> list[str]:
     """4K/8K targets: images use the free local upscaler, videos their provider's own."""
     if model.kind == "image":
         from app import upscaler
 
-        return ["4k", "8k"] if upscaler.available() else []
+        return ["2k", "4k", "8k"] if upscaler.available() else []
     s = get_settings()
     # Video upscaling runs on Topaz (fal), whose output terms are unclear: same rule as models.
     if model.kind == "video" and not (s.fal_video_upscale_enabled and s.allow_unclear_models):

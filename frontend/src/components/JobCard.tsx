@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "../api";
 import { isUpscaleJob as isUpscale } from "../jobs";
+import { isDraft, isDraftJob, resolutionClass, sizeText, usdLabel } from "../quality";
 import type { Asset, Job } from "../types";
 import { Icon } from "./icons";
 import { Badge, Button, ErrorText, inputClass } from "./ui";
@@ -91,6 +92,14 @@ function Chips({ job }: { job: Job }) {
   const isVideo = job.kind === "video";
   const isUpscaleJob = job.provider === "local" && job.params.upscale;
   const chip = "rounded-md bg-raised px-1.5 py-0.5";
+  // The real size of the file once there is one; until then the size the provider will make.
+  const first = job.assets[0];
+  const w = first?.width ?? job.params.width;
+  const h = first?.height ?? job.params.height;
+  const mime = first?.mime ?? (isVideo ? "video/mp4" : "image/webp");
+  const res = w && h ? resolutionClass(mime, w, h) : "";
+  const usd = job.params.usd_cost ?? job.params.estimated_usd;
+  const usdText = usd === undefined ? null : usdLabel(usd);
   return (
     <ul className="flex flex-wrap gap-1.5 text-[11px] text-muted" aria-label={t("job.details")}>
       <li className="flex items-center gap-1 rounded-md bg-raised px-1.5 py-0.5 font-medium text-ink/90" title={job.provider_name ?? job.provider}>
@@ -99,9 +108,23 @@ function Chips({ job }: { job: Job }) {
       </li>
       {job.provider_name && <li className={chip}>{job.provider_name}</li>}
       <li className={chip}>{job.params.aspect_ratio}</li>
-      {job.params.size && !isUpscaleJob && <li className={chip}>{t(`studio.size_${job.params.size}`, { defaultValue: job.params.size })}</li>}
+      {w > 0 && h > 0 && (
+        <li className={`${chip} font-mono tabular-nums`} title={t("studio.outputSize")}>
+          {sizeText(w, h)}
+          {res ? ` · ${res}` : ""}
+        </li>
+      )}
+      {isDraftJob(job) && !isUpscaleJob && (
+        <li className={`${chip} font-semibold text-accent-3`} title={t("job.draftTitle")}>{t("job.draft")}</li>
+      )}
+      {job.params.quality === "publish" && <li className={`${chip} font-semibold text-accent`}>{t("job.publishChip")}</li>}
       {isVideo ? <li className={chip}>{t("studio.seconds", { count: job.params.duration ?? 0 })}</li> : <li className={chip}>{job.count}×</li>}
-      {job.params.upscale && !isUpscaleJob && <li className={`${chip} font-semibold text-accent`}>{job.params.upscale.toUpperCase()}</li>}
+      {job.params.upscale && !isUpscaleJob && job.params.quality !== "publish" && <li className={`${chip} font-semibold text-accent`}>{job.params.upscale.toUpperCase()}</li>}
+      {usdText && (
+        <li className={`${chip} font-mono tabular-nums`} title={usdText.exact}>
+          {job.params.usd_cost !== undefined ? t("job.billed", { amount: usdText.short }) : t("job.estimated", { amount: usdText.short })}
+        </li>
+      )}
       {job.has_audio && (
         <li className={`${chip} flex items-center gap-1 text-accent`}>
           <Icon name="sound" size={12} />
@@ -127,7 +150,7 @@ interface Handlers {
   onDelete?: (job: Job) => Promise<void>;
   onRemix?: (job: Job) => void;
   onAnimate?: (asset: Asset) => void;
-  onUpscale?: (asset: Asset, target: "4k" | "8k") => void;
+  onUpscale?: (asset: Asset, target: "2k" | "4k" | "8k") => void;
   /** "Edit with text": throws an ApiError the form shows inline. */
   onEdit?: (asset: Asset, instruction: string) => Promise<void>;
 }
@@ -293,9 +316,14 @@ function JobDialog({ job, onClose, onChange, onRemix, onAnimate, onUpscale, onEd
           </div>
           {a.alt_text && <AltText key={a.id} text={a.alt_text} />}
           <Chips job={job} />
-          <p className="text-[11px] tabular-nums text-muted">
-            {a.width}×{a.height}
-            {big >= 7680 ? " · 8K" : big >= 3840 ? " · 4K" : ""}
+          <p className="flex flex-wrap items-center gap-2 text-[11px] tabular-nums text-muted">
+            <span>
+              {a.width}×{a.height}
+              {resolutionClass(a.mime, a.width, a.height) ? ` · ${resolutionClass(a.mime, a.width, a.height)}` : ""}
+            </span>
+            {isDraft(a.mime, a.width, a.height) && !isUpscaleJob && (
+              <span className="rounded-full bg-accent-3/15 px-2 py-0.5 font-semibold text-accent-3" title={t("job.draftTitle")}>{t("job.draft")}</span>
+            )}
           </p>
           {job.status === "done" && job.error && <p className="text-xs text-accent-3">{t("job.partial")}</p>}
           <RecipeNote job={job} className="text-xs" />
@@ -329,8 +357,8 @@ function JobDialog({ job, onClose, onChange, onRemix, onAnimate, onUpscale, onEd
             </a>
             {onUpscale &&
               !video &&
-              (["4k", "8k"] as const)
-                .filter((target) => big < (target === "4k" ? 3840 : 7680))
+              (["2k", "4k", "8k"] as const)
+                .filter((target) => big < (target === "2k" ? 2560 : target === "4k" ? 3840 : 7680))
                 .map((target) => (
                   <button key={target} type="button" className={act} onClick={() => { onUpscale(a, target); onClose(); }}>
                     <Icon name="wand" size={15} />
@@ -503,7 +531,10 @@ export default function JobCard({ job, index = 0, ...handlers }: Handlers & { jo
               {job.params.duration ? t("studio.seconds", { count: job.params.duration }) : ""}
             </span>
           )}
-          {big >= 3840 && <span className="rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-bold text-accent backdrop-blur">{big >= 7680 ? "8K" : "4K"}</span>}
+          {big >= 2560 && <span className="rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-bold text-accent backdrop-blur">{big >= 7680 ? "8K" : big >= 3840 ? "4K" : "2K"}</span>}
+          {isDraft(first.mime, first.width, first.height) && !isUpscaleJob && (
+            <span title={t("job.draftTitle")} className="rounded-full bg-black/70 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-accent-3 backdrop-blur">{t("job.draft")}</span>
+          )}
           {job.assets.length > 1 && <span className="rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-ink backdrop-blur">+{job.assets.length - 1}</span>}
         </div>
         {first.is_favorite && (

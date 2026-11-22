@@ -23,8 +23,21 @@ export interface ModelInfo {
   accepts_image: boolean;
   requires_image: boolean;
   has_audio?: boolean;
-  upscale_targets: ("4k" | "8k")[];
+  upscale_targets: ("2k" | "4k" | "8k")[];
   upscale_credits: Record<string, number>;
+  /** Real (width, height) per aspect ratio for models that ignore the Size choice. */
+  fixed_dimensions?: Record<string, [number, number]>;
+  /** Video models with a resolution parameter; `default_resolution` is the cheap default. */
+  resolutions?: string[];
+  default_resolution?: string | null;
+  resolution_credits?: Record<string, number>;
+  /** Nominal output size per resolution and aspect ratio (the file can be a bit larger). */
+  resolution_sizes?: Record<string, Record<string, [number, number]>>;
+  /** Estimated USD per second (7% margin included): resolution -> aspect ratio -> rate. */
+  usd_per_second?: Record<string, Record<string, number>>;
+  /** The one image model behind "Publish quality" (free, commercial use allowed). */
+  publish_quality?: boolean;
+  publish_max_side?: number | null;
 }
 
 export interface QuotaView {
@@ -76,7 +89,7 @@ export interface Asset {
 /** Chain state stored on each job of a recipe (see backend services/recipes.py). */
 export interface RecipeState {
   id: string;
-  next?: { provider: string; model: string; duration: number | null; upscale: "4k" | "8k" | null }[];
+  next?: { provider: string; model: string; duration: number | null; upscale: "2k" | "4k" | "8k" | null }[];
   next_job_id?: string;
   prev_job_id?: string;
   error?: string;
@@ -99,7 +112,11 @@ export interface Job {
     height: number;
     duration?: number | null;
     image_asset_id?: string | null;
-    upscale?: "4k" | "8k" | null;
+    upscale?: "2k" | "4k" | "8k" | null;
+    resolution?: string | null;
+    quality?: "publish";
+    estimated_usd?: number;
+    usd_cost?: number; // what the provider reported as billed
     seed?: number | null;
     source_asset_id?: string | null;
     recipe?: RecipeState;

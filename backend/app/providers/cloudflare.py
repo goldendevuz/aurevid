@@ -9,6 +9,7 @@ with a start image). Side tools on the same account: image description (alt text
 import base64
 import io
 import logging
+import math
 import re
 from typing import Any
 
@@ -33,6 +34,9 @@ CAPTION_MODEL = "@cf/qwen/qwen3.8-27b"
 WHISPER_MODEL = "@cf/openai/whisper-large-v3-turbo"
 # Workers AI: klein input images "must be smaller than 512x512" (changelog 2026-01-15).
 KLEIN_INPUT_MAX_SIDE = 496
+KLEIN_MAX_SIDE = 1920  # largest width/height Workers AI accepts for klein
+NEURONS_PER_OUTPUT_TILE = 26.05  # klein 4B, per 512x512 output tile (pricing page, 2026-11-20)
+QUOTA_UNIT_NEURONS = 147  # what one "output" of the free share is assumed to cost (see prior)
 EDIT_OUTPUT_LONG_SIDE = 1024  # ~4 output tiles, same Neuron cost as a 1024x1024 image
 ALT_TEXT_MAX = 300
 _CAPTION_PROMPT = (
@@ -77,15 +81,18 @@ class CloudflareProvider(ImageProvider):
                 commercial_use="yes",
                 aspect_ratios=["1:1"],  # endpoint takes no size params; output is square
                 credit_cost=1,
+                fixed_dimensions={"1:1": (1024, 1024)},  # the size choice has no effect
             ),
             ModelInfo(
                 id=KLEIN,
                 label="FLUX.2 klein 4B",
                 license="Apache-2.0",
                 commercial_use="yes",
-                aspect_ratios=["1:1"],
+                # width/height are free, 256-1920 each (Cloudflare changelog 2026-01-15)
+                aspect_ratios=["1:1", "16:9", "9:16", "4:3", "3:4"],
                 credit_cost=1,
                 accepts_image=True,  # "Edit with text": the start image is edited by the prompt
+                publish_max_side=KLEIN_MAX_SIDE,  # "Publish quality": render at 1920, then upscale
             ),
         ],
         notes="Free daily allocation on your Cloudflare account; output is 1024x1024.",
@@ -107,6 +114,13 @@ class CloudflareProvider(ImageProvider):
                 {"account_id": s.cf_account_id, "api_token": s.cf_api_token}, "server"
             )
         return Credentials()
+
+    def quota_weight(self, model_id: str, width: int, height: int) -> int:
+        """A 1920 px klein image costs ~3x a 1024 px one in Neurons; the free share counts it so."""
+        if model_id != KLEIN:
+            return 1
+        tiles = math.ceil(width * height / (512 * 512))
+        return max(1, math.ceil(tiles * NEURONS_PER_OUTPUT_TILE / QUOTA_UNIT_NEURONS))
 
     async def generate(self, req: GenerationRequest, creds: Credentials) -> GeneratedImage:
         if req.model == KLEIN:

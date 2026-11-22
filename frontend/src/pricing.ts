@@ -8,10 +8,22 @@ export interface Price {
   total: number;
 }
 
-export function priceOf(model: ModelInfo | undefined, count = 1, upscale: string | null = null): Price {
+/** The resolution a job without an explicit one gets (the backend's default). */
+export function defaultResolution(model: ModelInfo | undefined): string | null {
+  return model?.resolutions?.length ? (model.default_resolution ?? model.resolutions[0]) : null;
+}
+
+export function priceOf(
+  model: ModelInfo | undefined,
+  count = 1,
+  upscale: string | null = null,
+  resolution: string | null = null,
+): Price {
   if (!model) return { each: 0, count, total: 0 };
   const extra = upscale && upscale !== "native" ? (model.upscale_credits[upscale] ?? 0) : 0;
-  const each = model.credit_cost + extra;
+  const res = resolution ?? defaultResolution(model);
+  const resExtra = res ? (model.resolution_credits?.[res] ?? 0) : 0;
+  const each = model.credit_cost + extra + resExtra;
   return { each, count, total: each * count };
 }
 

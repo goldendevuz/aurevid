@@ -37,6 +37,7 @@ class GpuWorkerProvider(ImageProvider):
                 id=WAN,
                 label="Wan 2.2 TI2V-5B text/image-to-video (GPU worker)",
                 kind="video",
+                fixed_dimensions=SIZES,
                 license="Apache-2.0",
                 commercial_use="yes",
                 aspect_ratios=list(SIZES),

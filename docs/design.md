@@ -111,3 +111,49 @@ Borrowed ideas, built on the shared tokens so a theme swap stays a CSS change:
 - **Provider dots:** `ProviderDot` / `--color-provider-1..5` (plain `:root` variables, because `@theme` drops unused
   variables), shown in `ModelPicker`, `ModelSwatch` and the marquee.
 
+
+## Publishable output: honest sizes, Draft badge, Publish quality, video tiers
+
+Why: a creator wants output that is "not even slightly blurry". Wan on Modal made 832x480 while the job
+said "large" 1344x768, and FLUX.1 schnell (4 steps) gives soft detail. 480p cannot honestly become
+publishable by upscaling, so the UI says what a result is instead.
+
+- **Honest sizes.** Every model has a real output size: `ModelInfo.fixed_dimensions` (models that ignore
+  the Size choice: Modal and GPU-worker Wan 832x480, schnell 1024x1024), `resolution_sizes` (Seedance),
+  else `dimensions(aspect, size)`. `prepare_job` stores that as `params.width/height` (the *expected* real
+  size; `gen_width/gen_height` is what the provider is asked for). When a job finishes, the worker replaces
+  it with the file's own size: images from the decoded pixels, video from the MP4 header (`images.probe_mp4_size`,
+  no ffmpeg needed; the stored `Asset` has used the same numbers since this change). `params.size` keeps the
+  requested label for Remix only. The UI shows `W x H` and the class (480p, 720p, 1080p, 2K, 4K) from the real
+  numbers (`frontend/src/quality.ts`), and hides the Size select for models where it changes nothing.
+- **Draft badge.** `isDraft`: video with a short side under 720 px, or an image under 1024 px. Shown on the
+  result card (top-left), in the detail dialog, in the output-size chip of the composer and on a multi-scene
+  video. It uses the real asset size, so History and Studio agree.
+- **Image "Publish quality".** One toggle in the image composer. It selects the best model that is free to
+  use (provider tier `free`), `commercial_use=="yes"` and has `publish_max_side` (`registry.publish_image_model`;
+  today FLUX.2 klein 4B on Cloudflare, 1920 px max, from the Workers AI docs). The job renders at the largest
+  size of the chosen ratio on the 64 px grid (1920x1920, 1920x1088, ...) and then runs the existing Real-ESRGAN
+  upscaler to 2K (2560 px long side, default) or 4K, with the same deadline (`UPSCALER_TIMEOUT_SECONDS`,
+  checked between tiles), CPU class (`cpu_job_concurrency`), queue admission and daily limit as any upscaled
+  image. Publish feeds the network the real render, capped at 1280 px (2K) or 1920 px (4K) per side, and then
+  Lanczos-resizes the 4x result, so detail is not thrown away first (`PUBLISH_NET_LONG`). One image per job.
+  The delivered asset is the upscaled one; the original is **not** kept (a second asset would break the
+  one-asset-per-output model behind refunds and the card badges). Error codes: `quality_unsupported`.
+- **No free-share loophole.** A 1920 px klein image costs about 3x a 1024 px one in Neurons. The provider's
+  `quota_weight` (area in 512 px tiles x 26.05 Neurons / 147) is stored as `params.quota_weight`; the daily share,
+  the worker's server-key fallback and the quota learner count the job that many times.
+- **Video tiers (Seedance via OpenRouter, BYOK).** `providers/openrouter_video.py`. Studio video mode has a
+  quality selector: Draft (Mini 480p), **Standard** (Mini 720p, the default), Publish (2.5 Flash 720p), Premium
+  (2.5 1080p, explicit, shows a dollar warning). A tier is just model + resolution; the API takes
+  `resolution` (`resolution_unsupported`). Cost is shown in cents under a dollar ("23c"), exact USD in the
+  tooltip, from `usd_per_second` in the catalog (tokens per second x price x 1.07 margin); the provider's own
+  `usage.cost` is stored as `params.usd_cost` and shown as "billed". Credits: model cost + `resolution_credits`.
+  Wan on Modal stays available but is listed last and never preselected.
+- **Money safety of the adapter.** An ambiguous submit (timeout, dropped connection, 5xx) is never retried; only a
+  clear 429 is retried with backoff; a poll that times out is not retried; a failed/cancelled/expired job is
+  an error with a refund (once, idempotency key `refund:<job>`); the clip is downloaded server-side with the
+  Authorization header, and the key only ever goes to openrouter.ai. The owner key is optional and off by
+  default; with it set, only the Mini 480p draft runs and only within a per-user allowance (0 by default).
+- **Stories** carry `resolution` per scene (retry too) and use the Seedance models (5 s is one of their
+  durations). Clips of one model share a layout, so the ffmpeg join is a lossless copy; mixed sizes re-encode
+  to the first clip's size (a 1080p re-encode is the slow case, `STITCH_TIMEOUT_SECONDS`).

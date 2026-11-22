@@ -41,12 +41,23 @@ class MockProvider(ImageProvider):
                 credit_cost=1,
             ),
             ModelInfo(
+                id="gradient-hd",
+                label="Gradient master (offline, publish quality)",
+                license="AGPL-3.0-or-later (our code)",
+                commercial_use="yes",
+                aspect_ratios=["1:1", "16:9", "9:16", "4:3", "3:4"],
+                credit_cost=1,
+                publish_max_side=1920,
+            ),
+            ModelInfo(
                 id="loop",
                 label="Amber loop (offline video)",
                 kind="video",
                 license="AGPL-3.0-or-later (our clip)",
                 commercial_use="yes",
                 aspect_ratios=["1:1", "16:9", "9:16"],
+                # The demo clip is always 320x320, whatever the format asked for.
+                fixed_dimensions={"1:1": (320, 320), "16:9": (320, 320), "9:16": (320, 320)},
                 credit_cost=2,
                 max_count=1,
                 durations=[3, 5],

@@ -49,6 +49,9 @@ class Settings(BaseSettings):
     # Bring-your-own-GPU: a remote worker (deploy/gpu-worker) logs in with this bearer token.
     # Empty = the gpu_worker provider and /api/gpu-worker/* are off.
     gpu_worker_token: str = Field(default="", repr=False)
+    # Optional owner key for OpenRouter video. OFF by default (empty): video is BYOK, the user's
+    # own OpenRouter key pays. If set, it only runs inside the small allowance below.
+    openrouter_api_key: str = Field(default="", repr=False)
     inpay_merchant_id: str = Field(default="", repr=False)
     inpay_merchant_token: str = Field(default="", repr=False)
 
@@ -96,6 +99,9 @@ class Settings(BaseSettings):
     pollinations_video_enabled: bool = False  # all its models have unclear terms
     modal_video_enabled: bool = True  # BYOK only: runs in the user's own Modal workspace
     fal_enabled: bool = True
+    openrouter_video_enabled: bool = True  # Seedance via OpenRouter, BYOK: the user's key pays
+    openrouter_free_clips_per_user: int = 0  # lifetime 480p drafts per user on the owner's key
+    openrouter_monthly_cap: int = 0  # all users together, per UTC month, on the owner's key
     fal_video_upscale_enabled: bool = False  # Topaz: output terms unclear
     mock_provider_enabled: bool = False
     upscaler_enabled: bool = True  # local Real-ESRGAN (CPU) for 4K/8K images
