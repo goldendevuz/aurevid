@@ -16,7 +16,14 @@
     "credits": "{{count}} kredit",
     "admin": "Admin",
     "marketing": "Marketing",
-    "home": "Bosh sahifa"
+    "home": "Bosh sahifa",
+    "explore": "Kashf qilish",
+    "library": "Kutubxona",
+    "pricing": "Narxlar",
+    "upgrade": "Yangilash",
+    "account": "Hisob",
+    "privacy": "Maxfiylik",
+    "signup": "Ro'yxatdan o'tish"
   },
   "auth": {
     "loginTitle": "Xush kelibsiz",

@@ -16,7 +16,14 @@
     "credits": "{{count}} credits",
     "admin": "Admin",
     "marketing": "Marketing",
-    "home": "Home"
+    "home": "Home",
+    "explore": "Explore",
+    "library": "Library",
+    "pricing": "Pricing",
+    "upgrade": "Upgrade",
+    "account": "Account",
+    "privacy": "Privacy",
+    "signup": "Sign up"
   },
   "auth": {
     "loginTitle": "Welcome back",
