@@ -43,6 +43,7 @@ describe("locales", () => {
       "payments_disabled", "unknown_pack", "payment_gateway_error",
       "edit_unavailable", "voice_unavailable", "audio_too_large", "invalid_audio",
       "transcription_failed", "quality_unsupported", "resolution_unsupported", "server_key_draft_only",
+      "expand_unavailable", "expand_busy", "expand_timeout", "expand_empty", "expand_failed",
     ];
     for (const c of codes) expect(Object.keys(en.errors)).toContain(c);
   });

@@ -23,6 +23,7 @@ from app.routers import (
     marketing,
     me,
     payments,
+    prompt,
     recipes,
     stories,
     voice,
@@ -122,6 +123,7 @@ def create_app() -> FastAPI:
         payments.router,
         gpu_worker.router,
         voice.router,
+        prompt.router,
     ):
         app.include_router(router)
 

@@ -8,6 +8,7 @@ export interface User {
   is_admin: boolean;
   credit_balance: number;
   created_at: string;
+  expand_available: boolean;
 }
 
 export interface ModelInfo {
