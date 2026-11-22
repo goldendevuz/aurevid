@@ -1,7 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import {
+  DirectorPlan,
+  buildDirectorJobPayload,
+  buildDirectorStoryPayload,
+  parseDirectorPlan,
+  shouldUseStory,
+} from "../director";
 import { api, ApiError } from "../api";
 import { useAuth } from "../auth";
 import { Icon } from "../components/icons";
@@ -43,7 +50,7 @@ const RECIPE_ID = "image-animate-4k";
 const MAX_COMPARE = 4;
 type Mode = "image" | "video";
 type Tool = "single" | "compare" | "recipe";
-type SceneMode = "single" | "multi";
+type SceneMode = "single" | "multi" | "director";
 
 interface CompareEntry {
   key: string;
@@ -128,6 +135,14 @@ export default function Studio() {
   const [error, setError] = useState<unknown>(null);
   const [sceneMode, setSceneMode] = useState<SceneMode>("single");
   const [scenePrompts, setScenePrompts] = useState<string[]>(["", ""]);
+
+  // Director mode state (P5)
+  const [searchParams] = useSearchParams();
+  const [directorIdea, setDirectorIdea] = useState("");
+  const [directorDuration, setDirectorDuration] = useState<number>(10);
+  const [directorPlan, setDirectorPlan] = useState<DirectorPlan | null>(null);
+  const [draftingPlan, setDraftingPlan] = useState(false);
+  const [draftError, setDraftError] = useState<string | null>(null);
 
   // Expand prompt state (P1)
   const [expandBusy, setExpandBusy] = useState(false);
@@ -382,6 +397,13 @@ export default function Studio() {
     navigate(".", { replace: true, state: null });
   }, [location.state, animate, remix, navigate]);
 
+  useEffect(() => {
+    if (searchParams.get("mode") === "director") {
+      setMode("video");
+      setSceneMode("director");
+    }
+  }, [searchParams]);
+
   const handleFileUpload = async (file: File, isEnd = false) => {
     setUploadError(null);
     if (!file.type.startsWith("image/")) {
@@ -428,6 +450,88 @@ export default function Studio() {
     setPresetId(id);
     const wanted = presets.find((p) => p.id === id)?.image_defaults.aspect_ratio;
     if (wanted && ratios.includes(wanted)) setAspect(wanted);
+  };
+
+  // Director mode handlers (P5)
+  const handleDraftPlan = async () => {
+    if (!directorIdea.trim() || draftingPlan) return;
+    setDraftingPlan(true);
+    setDraftError(null);
+    try {
+      const res = await api<{ original: string; expanded: string }>("/api/prompt/expand", {
+        method: "POST",
+        body: {
+          prompt: directorIdea.trim(),
+          kind: "video",
+          duration_sec: directorDuration,
+          aspect_ratio: aspect,
+          has_audio: Boolean(model?.has_audio),
+        },
+      });
+      const plan = parseDirectorPlan(res.expanded);
+      setDirectorPlan(plan);
+    } catch (err) {
+      setDraftError(err instanceof ApiError ? err.message : "Failed to draft plan");
+    } finally {
+      setDraftingPlan(false);
+    }
+  };
+
+  const handleApproveDirectorPlan = async () => {
+    if (!directorPlan || !provider || !model) return;
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      const isStory = shouldUseStory(directorDuration, model);
+      if (isStory) {
+        const payload = buildDirectorStoryPayload({
+          plan: directorPlan,
+          providerId: provider.id,
+          modelId: model.id,
+          aspectRatio: aspect,
+          size,
+          resolution: videoRes,
+        });
+        const story = await api<Story>("/api/stories", {
+          method: "POST",
+          headers: { "Idempotency-Key": crypto.randomUUID() },
+          body: payload,
+        });
+        trackStory(story);
+      } else {
+        const payload = buildDirectorJobPayload({
+          plan: directorPlan,
+          providerId: provider.id,
+          modelId: model.id,
+          aspectRatio: aspect,
+          size,
+          duration: directorDuration,
+          resolution: videoRes,
+          startImageAssetId: startImage && model.accepts_image ? startImage.id : null,
+        });
+        const job = await api<Job>("/api/jobs", {
+          method: "POST",
+          headers: { "Idempotency-Key": crypto.randomUUID() },
+          body: payload,
+        });
+        upsertJob(job);
+        watch(job.id);
+      }
+      setDirectorPlan(null);
+      void reload();
+    } catch (err) {
+      if (err instanceof ApiError && err.code === "insufficient_credits") {
+        setShowBuyCredits(true);
+      }
+      setError(err);
+      void loadProviders();
+    } finally {
+      setBusy(false);
+    }
   };
 
   // Expand prompt handler (P1)
@@ -703,7 +807,7 @@ export default function Studio() {
                 { value: "video", label: <span className="flex items-center gap-1.5"><Icon name="video" size={15} />{t("studio.mode_video")}</span> },
               ]}
             />
-            {isVideo && hasStoryModels && (
+            {isVideo && (
               <Segmented
                 label={t("story.label")}
                 value={sceneMode}
@@ -713,7 +817,10 @@ export default function Studio() {
                 }}
                 options={[
                   { value: "single", label: t("story.single") },
-                  { value: "multi", label: <span className="flex items-center gap-1.5"><Icon name="layers" size={15} />{t("story.multi")}</span> },
+                  ...(hasStoryModels
+                    ? [{ value: "multi" as const, label: <span className="flex items-center gap-1.5"><Icon name="layers" size={15} />{t("story.multi")}</span> }]
+                    : []),
+                  { value: "director" as const, label: <span className="flex items-center gap-1.5"><Icon name="sparkle" size={15} />Director</span> },
                 ]}
               />
             )}
@@ -799,6 +906,188 @@ export default function Studio() {
             </div>
           )}
 
+          {/* Director Mode UI (P5) */}
+          {sceneMode === "director" ? (
+            <div className="mt-4 flex flex-col gap-3">
+              {user && !user.expand_available ? (
+                <div className="rounded-2xl border border-line bg-surface-2 p-5 text-center">
+                  <div className="mx-auto mb-2.5 grid h-10 w-10 place-items-center rounded-xl bg-accent/15 text-accent">
+                    <Icon name="sparkle" size={20} />
+                  </div>
+                  <h3 className="text-sm font-semibold text-ink">Director Flow</h3>
+                  <p className="mt-1.5 text-xs text-muted leading-relaxed">
+                    Director mode requires AI prompt expansion to decompose your vision into cinematic beats. Connect your OpenRouter key to unlock Director mode.
+                  </p>
+                  <div className="mt-4">
+                    <Link
+                      to="/account"
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-3.5 py-2 text-xs font-semibold text-black transition hover:opacity-90"
+                    >
+                      Connect OpenRouter key
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {/* Chat-style Idea Input */}
+                  <div className="rounded-2xl border border-line bg-surface-2 p-3.5">
+                    <div className="flex items-center justify-between text-xs text-muted mb-2">
+                      <label htmlFor="director-idea" className="font-semibold text-ink flex items-center gap-1.5">
+                        <Icon name="sparkle" size={14} className="text-accent" />
+                        Direct your scene
+                      </label>
+                      <div className="flex items-center gap-1 bg-surface-3 p-0.5 rounded-lg border border-line">
+                        {[5, 10, 15].map((d) => (
+                          <button
+                            key={d}
+                            type="button"
+                            onClick={() => setDirectorDuration(d)}
+                            className={`rounded-md px-2 py-0.5 text-xs font-mono transition ${
+                              directorDuration === d
+                                ? "bg-accent/20 text-accent font-semibold"
+                                : "text-muted hover:text-ink"
+                            }`}
+                          >
+                            {d}s
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <textarea
+                      id="director-idea"
+                      rows={3}
+                      value={directorIdea}
+                      onChange={(e) => setDirectorIdea(e.target.value)}
+                      placeholder="Type your story or concept (e.g. A solitary explorer discovers an ancient crystalline monolith glowing inside an ice cave)..."
+                      className="w-full resize-none bg-transparent text-sm leading-relaxed text-ink placeholder:text-muted/50 focus:outline-none"
+                    />
+                    <div className="mt-2.5 flex items-center justify-between border-t border-line/60 pt-2">
+                      <span className="text-[11px] text-muted">Generates beats, look & audio</span>
+                      <button
+                        type="button"
+                        onClick={() => void handleDraftPlan()}
+                        disabled={!directorIdea.trim() || draftingPlan}
+                        className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-3.5 py-1.5 text-xs font-semibold text-black transition hover:opacity-90 disabled:opacity-50"
+                      >
+                        <Icon name="sparkle" size={13} className={draftingPlan ? "animate-spin" : ""} />
+                        {draftingPlan ? "Drafting plan..." : "Draft plan"}
+                      </button>
+                    </div>
+                    {draftError && <p className="mt-2 text-xs text-danger">{draftError}</p>}
+                  </div>
+
+                  {/* Plan Card */}
+                  {directorPlan && (
+                    <div className="rounded-2xl border border-accent/40 bg-surface-2 p-4 shadow-xl">
+                      <div className="flex items-center justify-between border-b border-line pb-2 mb-3">
+                        <div className="flex items-center gap-2">
+                          <span className="grid h-6 w-6 place-items-center rounded-lg bg-accent/20 text-accent font-mono text-xs font-bold">
+                            🎬
+                          </span>
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-accent">Director Plan</h4>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setDirectorPlan(null)}
+                          className="text-[11px] text-muted hover:text-ink transition"
+                        >
+                          Discard
+                        </button>
+                      </div>
+
+                      {/* Opening frame */}
+                      <div className="mb-3">
+                        <label className="text-[10px] font-semibold uppercase tracking-wider text-muted">Opening Frame</label>
+                        <textarea
+                          rows={2}
+                          value={directorPlan.openingFrame}
+                          onChange={(e) => setDirectorPlan({ ...directorPlan, openingFrame: e.target.value })}
+                          className="mt-1 w-full rounded-xl border border-line bg-surface-3 p-2 text-xs text-ink focus:border-accent/60 focus:outline-none"
+                        />
+                      </div>
+
+                      {/* Beats */}
+                      <div className="mb-3 flex flex-col gap-2">
+                        <label className="text-[10px] font-semibold uppercase tracking-wider text-muted">Timeline Beats ({directorPlan.beats.length})</label>
+                        {directorPlan.beats.map((beat, idx) => (
+                          <div key={idx} className="rounded-xl border border-line/80 bg-surface-3/80 p-2 text-xs">
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="font-mono text-[10px] font-bold text-accent">{beat.timeRange}</span>
+                              <input
+                                type="text"
+                                value={beat.name}
+                                onChange={(e) => {
+                                  const next = [...directorPlan.beats];
+                                  next[idx] = { ...beat, name: e.target.value };
+                                  setDirectorPlan({ ...directorPlan, beats: next });
+                                }}
+                                className="rounded bg-transparent px-1 font-semibold text-ink text-right focus:bg-surface-2 focus:outline-none text-[11px]"
+                              />
+                            </div>
+                            <textarea
+                              rows={2}
+                              value={beat.text}
+                              onChange={(e) => {
+                                const next = [...directorPlan.beats];
+                                next[idx] = { ...beat, text: e.target.value };
+                                setDirectorPlan({ ...directorPlan, beats: next });
+                              }}
+                              className="w-full bg-transparent p-0.5 text-xs text-ink/90 focus:outline-none"
+                            />
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Look */}
+                      <div className="mb-3">
+                        <label className="text-[10px] font-semibold uppercase tracking-wider text-muted">Look & Cinematography</label>
+                        <input
+                          type="text"
+                          value={directorPlan.look}
+                          onChange={(e) => setDirectorPlan({ ...directorPlan, look: e.target.value })}
+                          className="mt-1 w-full rounded-xl border border-line bg-surface-3 p-2 text-xs text-ink focus:border-accent/60 focus:outline-none"
+                        />
+                      </div>
+
+                      {/* Audio */}
+                      {(directorPlan.audio !== undefined || model?.has_audio) && (
+                        <div className="mb-3">
+                          <label className="text-[10px] font-semibold uppercase tracking-wider text-muted">Soundscape & Audio</label>
+                          <input
+                            type="text"
+                            value={directorPlan.audio ?? ""}
+                            onChange={(e) => setDirectorPlan({ ...directorPlan, audio: e.target.value })}
+                            placeholder="Atmospheric sound, soundtrack, drone..."
+                            className="mt-1 w-full rounded-xl border border-line bg-surface-3 p-2 text-xs text-ink focus:border-accent/60 focus:outline-none"
+                          />
+                        </div>
+                      )}
+
+                      {/* Cost Line & Approve Button */}
+                      <div className="mt-3.5 border-t border-line/80 pt-3">
+                        <div className="flex items-center justify-between text-xs text-muted mb-2 font-mono">
+                          <span>Cost estimate:</span>
+                          <span className="font-semibold text-ink">
+                            {usdText?.short ? `≈ ${usdText.short}` : `${total} credits`}
+                            {model && ` with ${model.label}`}
+                          </span>
+                        </div>
+                        <Button
+                          className="w-full py-2.5 text-xs font-bold tracking-wide"
+                          disabled={busy || !user}
+                          onClick={() => void handleApproveDirectorPlan()}
+                        >
+                          <Icon name="sparkle" size={14} />
+                          {busy ? "Submitting..." : `Approve & Generate (${shouldUseStory(directorDuration, model) ? "Story" : "Single Clip"})`}
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          ) : (
+            <>
           {/* 2. Reference Dropzones (Image input / start frame & optional end frame) */}
           {isVideo && !multi && (
             <div className="mt-4 flex flex-col gap-2">
@@ -998,6 +1287,8 @@ export default function Studio() {
             </div>
           )}
 
+            </>
+          )}
           {/* 4. Model Row (click opens ModelPicker modal) */}
           <div className="mt-4">
             <button
@@ -1244,7 +1535,7 @@ export default function Studio() {
             <Button
               className="w-full py-3 text-sm font-semibold tracking-wide shadow-lg"
               disabled={Boolean(user && !canGenerate)}
-              onClick={() => void submit()}
+              onClick={() => (sceneMode === "director" ? (directorPlan ? void handleApproveDirectorPlan() : void handleDraftPlan()) : void submit())}
             >
               <Icon name="sparkle" size={17} />
               {busy
