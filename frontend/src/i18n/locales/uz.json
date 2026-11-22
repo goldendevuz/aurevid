@@ -162,7 +162,11 @@
     "tierHint_standard": "Standart: Seedance Mini bilan 720p. Narxi bir necha sent.",
     "tierHint_publish": "Nashr: Seedance 2.5 Flash bilan 720p, harakat va tafsilot yaxshiroq.",
     "tierHint_premium": "Premium: Seedance 2.5 bilan 1080p, eng aniq va eng qimmat.",
-    "premiumWarning": "Premium 1080p har bir klip uchun taxminan {{amount}} turadi, OpenRouter kalitingizdan olinadi."
+    "premiumWarning": "Premium 1080p har bir klip uchun taxminan {{amount}} turadi, OpenRouter kalitingizdan olinadi.",
+    "expand": "Promptni kengaytirish",
+    "expanding": "Kengaytirilmoqda…",
+    "expandUndo": "Ortga qaytarish",
+    "expandError": "Promptni kengaytirib bo'lmadi."
   },
   "job": {
     "queued": "Navbatda",
@@ -391,7 +395,12 @@
     "job_in_story": "Bu klip ko'p sahnali videoning sahnasi. Butun videoni o'chiring.",
     "quality_unsupported": "Nashr sifati bu model uchun mavjud emas.",
     "resolution_unsupported": "Bu ruxsat modelda qo'llab-quvvatlanmaydi.",
-    "server_key_draft_only": "Bepul limit faqat 480p qoralamani qoplaydi. 720p va 1080p uchun o'z OpenRouter kalitingizni qo'shing."
+    "server_key_draft_only": "Bepul limit faqat 480p qoralamani qoplaydi. 720p va 1080p uchun o'z OpenRouter kalitingizni qo'shing.",
+    "expand_unavailable": "Prompt kengaytirish mavjud emas. Sozlamalarda OpenRouter kalitingizni qo'shing.",
+    "expand_busy": "AI band. Biroz kutib, qayta urinib ko'ring.",
+    "expand_timeout": "Prompt kengaytirish vaqti tugadi. Qayta urinib ko'ring.",
+    "expand_empty": "AI bo'sh javob qaytardi. Qayta urinib ko'ring.",
+    "expand_failed": "Prompt kengaytirish muvaffaqiyatsiz bo'ldi. Qayta urinib ko'ring."
   },
   "admin": {
     "title": "Admin panel",

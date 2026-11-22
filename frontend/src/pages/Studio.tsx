@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { api } from "../api";
+import { api, ApiError } from "../api";
 import { useAuth } from "../auth";
 import { Icon } from "../components/icons";
 import JobCard from "../components/JobCard";
@@ -62,7 +62,7 @@ export function QuotaLine({ provider }: { provider: Provider }) {
 
 export default function Studio() {
   const { t } = useTranslation();
-  const { reload } = useAuth();
+  const { reload, user } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [providers, setProviders] = useState<Provider[]>([]);
@@ -97,6 +97,9 @@ export default function Studio() {
   const [focusStoryId, setFocusStoryId] = useState<string | null>(null); // or a multi-scene video
   const [sceneMode, setSceneMode] = useState<SceneMode>("single");
   const [scenePrompts, setScenePrompts] = useState<string[]>(["", ""]);
+  const [expandBusy, setExpandBusy] = useState(false);
+  const [expandError, setExpandError] = useState<string | null>(null);
+  const [preExpandPrompt, setPreExpandPrompt] = useState<string | null>(null);
   const watchers = useRef(new Map<string, () => void>());
   const followRecipe = useRef<(id: string) => void>(() => undefined);
 
@@ -849,10 +852,56 @@ export default function Studio() {
               rows={3}
               maxLength={MAX_PROMPT}
               value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
+              onChange={(e) => { setPrompt(e.target.value); setPreExpandPrompt(null); setExpandError(null); }}
               placeholder={isVideo ? t("studio.videoPromptPlaceholder") : t("studio.promptPlaceholder")}
               className="block w-full resize-y rounded-2xl bg-transparent px-3 py-2 text-base leading-relaxed text-ink placeholder:text-muted/60 focus:outline-none sm:text-lg"
             />
+            {!multi && user?.expand_available && (
+              <div className="flex items-center gap-2 px-1">
+                <button
+                  type="button"
+                  disabled={!prompt.trim() || expandBusy}
+                  onClick={async () => {
+                    setExpandBusy(true);
+                    setExpandError(null);
+                    try {
+                      const res = await api<{ prompt: string }>("/api/prompt/expand", {
+                        method: "POST",
+                        body: {
+                          prompt: prompt.trim(),
+                          kind: isVideo ? "video" : "image",
+                          ...(isVideo && duration ? { duration_sec: duration } : {}),
+                          ...(aspect !== "1:1" ? { aspect_ratio: aspect } : {}),
+                          ...(isVideo ? { has_audio: model?.has_audio ?? true } : {}),
+                        },
+                      });
+                      setPreExpandPrompt(prompt);
+                      setPrompt(res.prompt);
+                    } catch (err) {
+                      const code = err instanceof ApiError ? err.code : "expand_failed";
+                      setExpandError(t(`errors.${code}`, { defaultValue: t("studio.expandError") }));
+                    } finally {
+                      setExpandBusy(false);
+                    }
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-xs font-medium text-muted transition hover:border-white/30 hover:text-ink disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <Icon name="sparkle" size={14} className={expandBusy ? "animate-spin" : ""} />
+                  {expandBusy ? t("studio.expanding") : t("studio.expand")}
+                </button>
+                {preExpandPrompt !== null && (
+                  <button
+                    type="button"
+                    onClick={() => { setPrompt(preExpandPrompt); setPreExpandPrompt(null); }}
+                    className="inline-flex items-center gap-1 rounded-full border border-line px-3 py-1.5 text-xs font-medium text-muted transition hover:border-white/30 hover:text-ink"
+                  >
+                    <Icon name="retry" size={14} />
+                    {t("studio.expandUndo")}
+                  </button>
+                )}
+                {expandError && <span className="text-xs text-danger">{expandError}</span>}
+              </div>
+            )}
   
             </>
           )}
