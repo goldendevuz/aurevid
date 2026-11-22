@@ -66,6 +66,10 @@
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 24px;
+  --sample-gradient-1: linear-gradient(135deg, #1e1b4b, #4338ca, #ec4899);
+  --sample-gradient-2: linear-gradient(135deg, #064e3b, #047857, #10b981);
+  --sample-gradient-3: linear-gradient(135deg, #0f172a, #334155, #64748b);
+  --sample-gradient-4: linear-gradient(135deg, #451a03, #9a3412, #f59e0b);
   --shadow-pop: 0 12px 40px rgb(0 0 0 / 0.5);
   --font-sans: "Geist Variable", "Geist", system-ui, sans-serif;
   --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace;
@@ -227,11 +231,6 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   .aurora-text {
-    color: var(--text);
-  }
-
-  .neon-text,
-  .neon-teal {
     color: var(--text);
   }
 

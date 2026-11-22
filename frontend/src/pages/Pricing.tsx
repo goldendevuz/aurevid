@@ -92,7 +92,7 @@ export default function Pricing() {
               </tr>
               <tr>
                 <td className="py-3 font-medium text-ink">Video 5s (Standard 720p)</td>
-                <td className="py-3 text-muted">Seedance 2.5 / Kling 1.5</td>
+                <td className="py-3 text-muted">Seedance 2.5</td>
                 <td className="py-3 font-mono text-accent">8 credits</td>
                 <td className="py-3 font-mono text-muted">≈ 14.0¢</td>
               </tr>

@@ -136,17 +136,21 @@ class TestCleanup:
 
     def test_cuts_at_line_break(self):
         """Cut at a line break if it keeps > 60% of cap."""
-        text = ("A" * 1200) + "\n" + ("B" * 500)
+        cap = min(1600, get_settings().max_prompt_chars)
+        head = int(cap * 0.75)
+        text = ("A" * head) + "\n" + ("B" * cap)
         result = cleanup(text)
-        assert len(result) <= 1600
-        assert result.endswith("A" * 1200)
+        assert len(result) <= cap
+        assert result.endswith("A" * head)
 
     def test_cuts_at_sentence(self):
         """Cut at '. ' if no good line break."""
-        text = ("A" * 1200) + ". " + ("B" * 500)
+        cap = min(1600, get_settings().max_prompt_chars)
+        head = int(cap * 0.75)
+        text = ("A" * head) + ". " + ("B" * cap)
         result = cleanup(text)
-        assert len(result) <= 1600
-        assert result.endswith("A" * 1200 + ".")
+        assert len(result) <= cap
+        assert result.endswith("A" * head + ".")
 
 
 # ---------------------------------------------------------------------------
@@ -456,3 +460,24 @@ class TestExpandAvailable:
         r = await alice.get("/api/me")
         assert r.status_code == 200
         assert r.json()["expand_available"] is False
+
+
+class TestExpansionFitsJobPromptLimit:
+    """An expansion must be submittable as a job prompt (MAX_PROMPT_CHARS), else Generate fails."""
+
+    def test_cleanup_respects_max_prompt_chars(self):
+        from app.config import get_settings
+        from app.services.expand import cleanup
+
+        limit = get_settings().max_prompt_chars
+        beats = [f"Beat {i} (0-5 s) X: " + "word " * 40 for i in range(1, 12)]
+        long_text = "Opening frame: a.\n" + "\n".join(beats)
+        assert len(cleanup(long_text)) <= limit
+
+    def test_overlong_video_expansion_is_not_complete(self):
+        from app.config import get_settings
+        from app.services.expand import is_complete
+
+        limit = get_settings().max_prompt_chars
+        text = "Opening frame: a.\nBeat 1 (0-5 s) X: " + "w" * limit + "\nLook: warm\nAudio: boom"
+        assert not is_complete(text, True)

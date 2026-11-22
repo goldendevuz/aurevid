@@ -191,6 +191,11 @@ _MULTI_NL = re.compile(r"\n{3,}")
 HARD_CAP = 1600
 
 
+def _length_cap() -> int:
+    """Cap at what a job prompt may hold (MAX_PROMPT_CHARS); longer text could not be submitted."""
+    return min(HARD_CAP, get_settings().max_prompt_chars)
+
+
 def cleanup(text: str) -> str:
     """Strip model artifacts and enforce length cap."""
     text = _THINK_RE.sub("", text)
@@ -198,12 +203,13 @@ def cleanup(text: str) -> str:
     text = _MULTI_NL.sub("\n\n", text)
     text = text.strip()
 
-    if len(text) <= HARD_CAP:
+    cap = _length_cap()
+    if len(text) <= cap:
         return text
 
     # Try to cut at the last line break or ". " that keeps > 60% of cap.
-    threshold = int(HARD_CAP * 0.6)
-    candidate = text[:HARD_CAP]
+    threshold = int(cap * 0.6)
+    candidate = text[:cap]
 
     # Try line break first
     pos = candidate.rfind("\n")
@@ -231,7 +237,7 @@ def is_complete(text: str, has_audio: bool) -> bool:
         return False
     if has_audio and not has_audio_line:
         return False
-    if len(text) > 1350:
+    if len(text) > min(1350, _length_cap()):
         return False
     return True
 

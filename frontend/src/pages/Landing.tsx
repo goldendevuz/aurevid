@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth";
 import { Footer, LanguageSelect, Logo } from "../components/Layout";
@@ -11,7 +12,6 @@ const SAMPLE_WALL = [
   {
     id: "s1",
     title: "Golden Leaf Descent",
-    model: "Wan 2.1 Video",
     kind: "video",
     src: "/samples/golden_leaf.mp4",
     aspect: "16:9",
@@ -20,7 +20,6 @@ const SAMPLE_WALL = [
   {
     id: "s2",
     title: "Cyber Synth Highway",
-    model: "Seedance 2.5",
     kind: "video",
     src: "/samples/cyber_synth.mp4",
     aspect: "16:9",
@@ -29,7 +28,6 @@ const SAMPLE_WALL = [
   {
     id: "s3",
     title: "Aurora Drift Particles",
-    model: "Kling 1.5",
     kind: "video",
     src: "/samples/aurora_drift.mp4",
     aspect: "16:10",
@@ -38,25 +36,22 @@ const SAMPLE_WALL = [
   {
     id: "s4",
     title: "Astronaut in Sakura Bloom",
-    model: "FLUX.1 Schnell",
     kind: "image",
-    gradient: "linear-gradient(135deg, #1e1b4b, #4338ca, #ec4899)",
+    gradient: "var(--sample-gradient-1)",
     aspect: "1:1",
     prompt: "Astronaut meditating under glowing pink Japanese cherry blossom trees on an alien planet, cinematic 8K, volumetric lighting",
   },
   {
     id: "s5",
     title: "Emerald Forest Sanctuary",
-    model: "FLUX.1 Pro",
     kind: "image",
-    gradient: "linear-gradient(135deg, #064e3b, #047857, #10b981)",
+    gradient: "var(--sample-gradient-2)",
     aspect: "4:3",
     prompt: "Ancient mossy forest shrine with morning rays filtering through dense canopy, hyperrealistic texture, octane render",
   },
   {
     id: "s6",
     title: "Solar Flare Cityscape",
-    model: "Seedance 2.5",
     kind: "video",
     src: "/samples/cyber_synth.mp4",
     aspect: "16:9",
@@ -65,16 +60,14 @@ const SAMPLE_WALL = [
   {
     id: "s7",
     title: "Obsidian Crystal Cavern",
-    model: "FLUX.1 Dev",
     kind: "image",
-    gradient: "linear-gradient(135deg, #0f172a, #334155, #64748b)",
+    gradient: "var(--sample-gradient-3)",
     aspect: "3:4",
     prompt: "Giant geometric obsidian crystals embedded in dark volcanic basalt, subtle blue luminescence, ultra-detailed micro-surface",
   },
   {
     id: "s8",
     title: "Bioluminescent Jellyfish Horizon",
-    model: "Wan 2.1",
     kind: "video",
     src: "/samples/aurora_drift.mp4",
     aspect: "16:9",
@@ -83,16 +76,14 @@ const SAMPLE_WALL = [
   {
     id: "s9",
     title: "Desert Sandstorm Mirage",
-    model: "FLUX.1 Schnell",
     kind: "image",
-    gradient: "linear-gradient(135deg, #451a03, #9a3412, #f59e0b)",
+    gradient: "var(--sample-gradient-4)",
     aspect: "16:9",
     prompt: "Endless golden dunes under heat distortion waves, distant futuristic nomad caravan with reflective solar sails",
   },
   {
     id: "s10",
     title: "Deep Space Quantum Core",
-    model: "Seedance 2.5",
     kind: "video",
     src: "/samples/golden_leaf.mp4",
     aspect: "16:9",
@@ -103,6 +94,7 @@ const SAMPLE_WALL = [
 export default function Landing() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [heroPrompt, setHeroPrompt] = useState("");
 
   const handlePromptSubmit = (e: React.FormEvent) => {
@@ -135,7 +127,7 @@ export default function Landing() {
             </a>
           </nav>
           <div className="flex items-center gap-2.5">
-            <LanguageSelect />
+            <LanguageSelect className="hidden sm:inline-block" />
             {!loading && (
               user ? (
                 <Link
@@ -146,12 +138,12 @@ export default function Landing() {
                 </Link>
               ) : (
                 <>
-                  <Link to="/login" className="rounded-full px-3.5 py-1.5 text-xs font-medium text-muted hover:text-ink transition">
+                  <Link to="/login" className="whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium text-muted hover:text-ink transition">
                     Sign in
                   </Link>
                   <Link
                     to="/register"
-                    className="rounded-full bg-accent px-4 py-1.5 text-xs font-semibold text-accent-ink hover:bg-accent/90 transition"
+                    className="whitespace-nowrap rounded-full bg-accent px-4 py-1.5 text-xs font-semibold text-accent-ink hover:bg-accent/90 transition"
                   >
                     Get Started
                   </Link>
@@ -176,7 +168,7 @@ export default function Landing() {
           </h1>
 
           <p className="mt-4 max-w-2xl mx-auto text-base sm:text-lg text-muted">
-            The multi-provider AI studio that brings Seedance 2.5, FLUX, Wan 2.1, Kling and OpenRouter frontier models under one unified, privacy-first interface.
+            The multi-provider AI studio for image and video: Seedance, FLUX and Wan under one unified, privacy-first interface, with prices shown in cents.
           </p>
 
           {/* Prompt Entry Input (redirects to /create with text prefilled) */}
@@ -239,7 +231,7 @@ export default function Landing() {
                   Video Clips
                 </h3>
                 <p className="mt-1 text-xs text-muted leading-relaxed">
-                  Cinematic text-to-video & image-to-video with Seedance 2.5, Wan 2.1, Kling, and native audio support.
+                  Cinematic text-to-video & image-to-video with Seedance and Wan, and native audio support.
                 </p>
               </div>
               <span className="mt-4 text-xs font-medium text-accent flex items-center gap-1">
@@ -313,7 +305,7 @@ export default function Landing() {
                     />
                   )}
                   <span className="absolute left-2.5 top-2.5 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-semibold text-ink backdrop-blur">
-                    {sample.model}
+                    {t("landing.sampleBadge")}
                   </span>
                 </div>
                 <div className="p-3.5">
@@ -354,7 +346,7 @@ export default function Landing() {
                 <span className="rounded-lg bg-surface-3 px-2.5 py-1 font-mono text-xs font-bold text-accent">02</span>
                 <h3 className="mt-4 text-base font-semibold text-ink">Select Frontier AI Model</h3>
                 <p className="mt-2 text-xs text-muted leading-relaxed">
-                  Choose from Seedance, FLUX, Wan, Kling, or bring your own OpenRouter key to pay wholesale rates directly.
+                  Choose from Seedance, FLUX and Wan, or bring your own OpenRouter key to pay provider rates directly.
                 </p>
               </div>
               <div className="rounded-2xl border border-line bg-surface-1 p-6">
