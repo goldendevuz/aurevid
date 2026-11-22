@@ -180,6 +180,18 @@ export default function Studio() {
     return () => current.forEach((stop) => stop());
   }, [watch, loadProviders, loadStories]);
 
+  useEffect(() => {
+    const onKeysUpdated = () => {
+      void loadProviders();
+    };
+    window.addEventListener("aurevid:keys-updated", onKeysUpdated);
+    window.addEventListener("focus", onKeysUpdated);
+    return () => {
+      window.removeEventListener("aurevid:keys-updated", onKeysUpdated);
+      window.removeEventListener("focus", onKeysUpdated);
+    };
+  }, [loadProviders]);
+
   // All (provider, model) pairs of the current mode.
   // A multi-scene video needs text-to-video models that make 5 s clips.
   const hasStoryModels = useMemo(() => providers.some((p) => p.models.some(storyCapable)), [providers]);
@@ -191,6 +203,10 @@ export default function Studio() {
         // Our own Modal Wan GPU clips are 480p-class drafts: listed, but never first.
         .sort((a, b) => Number(a.p.id === "modal_video") - Number(b.p.id === "modal_video")),
     [providers, mode, multiWanted],
+  );
+  const inactiveModels = useMemo(
+    () => providers.flatMap((p) => p.inactive_models ?? []).filter((m) => m.kind === mode),
+    [providers, mode],
   );
   const selected = choices.find(({ p, m }) => `${p.id}|${m.id}` === modelKey);
   const provider = selected?.p;
@@ -1191,6 +1207,7 @@ export default function Studio() {
       {picking && (
         <ModelPicker
           choices={choices}
+          inactive={inactiveModels}
           value={modelKey}
           mode={mode}
           onSelect={setModelKey}

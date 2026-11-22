@@ -21,6 +21,7 @@ function KeyForm({ provider, status, onSaved }: { provider: Provider; status?: P
       await api(`/api/me/keys/${provider.id}`, { method: "PUT", body: { values } });
       setValues({}); // never keep the secret in memory longer than needed
       setSaved(true);
+      window.dispatchEvent(new Event("aurevid:keys-updated"));
       onSaved();
     } catch (err) {
       setError(err);
@@ -28,6 +29,7 @@ function KeyForm({ provider, status, onSaved }: { provider: Provider; status?: P
   };
   const remove = async () => {
     await api(`/api/me/keys/${provider.id}`, { method: "DELETE" });
+    window.dispatchEvent(new Event("aurevid:keys-updated"));
     onSaved();
   };
 

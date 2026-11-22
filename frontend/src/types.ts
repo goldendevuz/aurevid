@@ -50,6 +50,21 @@ export interface QuotaView {
   blocked_seconds: number;
 }
 
+export interface InactiveModel {
+  provider_id: string;
+  provider_name: string;
+  id: string;
+  label: string;
+  kind: "image" | "video";
+  commercial_use: "yes" | "no" | "unclear" | "byok_only";
+  reason: string;
+  price_text: string;
+  price_cents: number;
+  min_usd_per_second?: number | null;
+  key_url?: string | null;
+  settings_path?: string;
+}
+
 export interface Provider {
   id: string;
   name: string;
@@ -58,6 +73,7 @@ export interface Provider {
   byok_fields: string[];
   requires_key: boolean;
   models: ModelInfo[];
+  inactive_models?: InactiveModel[];
   notes: string;
   available: boolean;
   key_source: "server" | "user" | "none";
