@@ -444,7 +444,6 @@
     "upscale_unsupported": "This model cannot output 4K/8K.",
     "upscaler_disabled": "Upscaling is turned off on this server.",
     "already_that_large": "This image is already at that resolution.",
-    "too_many_active_jobs": "You already have {{limit}} jobs in progress. Wait for one to finish.",
     "queue_full": "The server is busy right now. Try again in about {{minutes}} min.",
     "cannot_target_self": "You can't do this to your own account.",
     "job_not_queued": "Only queued jobs can be cancelled.",

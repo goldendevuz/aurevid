@@ -50,15 +50,6 @@ async def _post(client, n=1):
     ]
 
 
-async def test_per_user_active_limit(alice):
-    get_settings().max_active_jobs_per_user = 2
-    codes = [r.status_code for r in await _post(alice, 3)]
-    assert codes == [201, 201, 429]
-    r = (await _post(alice))[0]
-    assert r.json()["detail"]["code"] == "too_many_active_jobs" and r.headers["retry-after"]
-    assert (await alice.get("/api/credits")).json()["balance"] == 8  # refused job not charged
-
-
 async def test_global_queue_backpressure(alice, bob):
     get_settings().max_queue_length = 2
     await _post(alice, 2)

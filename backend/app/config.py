@@ -121,7 +121,6 @@ class Settings(BaseSettings):
     worker_slots: int = 3  # jobs one worker process runs at the same time
     cpu_job_concurrency: int = 1  # heavy local CPU jobs (AI upscaling) at once, across workers
     provider_concurrency: int = 2  # in-flight jobs per provider, across workers
-    max_active_jobs_per_user: int = 3  # queued + running
     max_queue_length: int = 200  # all users; beyond this new jobs are refused (back-pressure)
     worker_poll_seconds: float = 1.0
     job_timeout_seconds: int = 180

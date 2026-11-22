@@ -462,8 +462,6 @@ async def test_story_scenes_carry_the_resolution_and_are_charged_each(alice):
         "resolution": "480p",
         "scenes": ["a lantern at dawn", "the lantern at dusk"],
     }
-    s = get_settings()
-    s.max_active_jobs_per_user = 4
     r = await alice.post("/api/stories", json=body, headers=csrf_headers(alice))
     assert r.status_code == 201, r.text
     story = r.json()

@@ -97,7 +97,6 @@ Adapters flag provider-side limits with `ProviderError(..., quota=True)`. Paid p
 
 | Control | Setting | Effect |
 |---|---|---|
-| Per-user admission | `MAX_ACTIVE_JOBS_PER_USER` (3) | queued+running per user; beyond → 429 `too_many_active_jobs` |
 | Global back-pressure | `MAX_QUEUE_LENGTH` (200) | beyond → 503 `queue_full` + Retry-After, nothing charged |
 | Fairness | (always) | round-robin: each user's 1st job, then 2nd…; users with work running go behind |
 | CPU lane | `CPU_JOB_CONCURRENCY` (1) | local upscaling never runs more than N at once, across workers |

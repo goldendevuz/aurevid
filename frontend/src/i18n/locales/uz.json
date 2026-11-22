@@ -444,7 +444,6 @@
     "upscale_unsupported": "Bu model 4K/8K chiqara olmaydi.",
     "upscaler_disabled": "Bu serverda kattalashtirish o'chirilgan.",
     "already_that_large": "Bu rasm allaqachon shu o'lchamda.",
-    "too_many_active_jobs": "Sizda allaqachon {{limit}} ta jarayon bor. Bittasi tugashini kuting.",
     "queue_full": "Server hozir band. Taxminan {{minutes}} daqiqadan keyin urining.",
     "cannot_target_self": "Buni o'z hisobingizga qilib bo'lmaydi.",
     "job_not_queued": "Faqat navbatdagi jobni bekor qilish mumkin.",
