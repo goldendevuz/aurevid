@@ -43,7 +43,28 @@ describe("locales", () => {
       "payments_disabled", "unknown_pack", "payment_gateway_error",
       "edit_unavailable", "voice_unavailable", "audio_too_large", "invalid_audio",
       "transcription_failed", "quality_unsupported", "resolution_unsupported", "server_key_draft_only",
+      "expand_unavailable", "expand_busy", "expand_timeout", "expand_empty", "expand_failed",
     ];
     for (const c of codes) expect(Object.keys(en.errors)).toContain(c);
+  });
+});
+
+describe("translation keys used in code", () => {
+  const has = (key: string) =>
+    key.split(".").reduce<unknown>((o, p) => (o && typeof o === "object" ? (o as Record<string, unknown>)[p] : undefined), en) !== undefined;
+  const sources = import.meta.glob<string>(["../**/*.ts", "../**/*.tsx", "!../**/*.test.ts", "!../**/*.test.tsx"], {
+    query: "?raw",
+    import: "default",
+    eager: true,
+  });
+  it("every literal t(\"...\") key exists in en.json", () => {
+    expect(Object.keys(sources).length).toBeGreaterThan(10);
+    const missing: string[] = [];
+    for (const [f, src] of Object.entries(sources)) {
+      for (const m of src.matchAll(/\bt\(\s*["']([A-Za-z0-9_.]+)["']/g)) {
+        if (!has(m[1])) missing.push(`${f}: ${m[1]}`);
+      }
+    }
+    expect(missing).toEqual([]);
   });
 });

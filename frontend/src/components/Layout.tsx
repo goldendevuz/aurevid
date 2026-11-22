@@ -1,29 +1,22 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { useAuth } from "../auth";
 import { LANGUAGES } from "../i18n";
 import type { Locale, User } from "../types";
-import { Icon, type IconName } from "./icons";
+import { Icon } from "./icons";
 
 const SOURCE_URL = import.meta.env.VITE_SOURCE_URL as string | undefined;
 
-export function LogoMark({ size = 26 }: { size?: number }) {
+export function LogoMark({ size = 28 }: { size?: number }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden>
-      <defs>
-        <linearGradient id="av-g" x1="4" y1="28" x2="28" y2="4" gradientUnits="userSpaceOnUse">
-          <stop offset="0" stopColor="#ff3e8a" />
-          <stop offset="0.55" stopColor="#ff9a3c" />
-          <stop offset="1" stopColor="#ffe08a" />
-        </linearGradient>
-      </defs>
-      <rect width="32" height="32" rx="9" fill="#1a0b2c" />
-      <rect x="0.5" y="0.5" width="31" height="31" rx="8.5" fill="none" stroke="#ff3e8a" strokeOpacity="0.45" />
-      <path d="M16 6.5 7.5 25.5h4l1.8-4.4h5.4l1.8 4.4h4L16 6.5Zm0 7.2 1.9 4.7h-3.8l1.9-4.7Z" fill="url(#av-g)" />
-      <circle cx="24.6" cy="8.4" r="2.4" fill="url(#av-g)" />
+    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" aria-hidden className="shrink-0">
+      <rect width="32" height="32" rx="8" fill="#09090b" />
+      <rect x="0.5" y="0.5" width="31" height="31" rx="7.5" stroke="rgba(255,255,255,0.12)" />
+      <path d="M16 6.5 7.5 25.5h4.2l1.8-4.4h5l1.8 4.4h4.2L16 6.5Zm0 6.8 1.8 4.5h-3.6l1.8-4.5Z" fill="#c8ff2e" />
+      <circle cx="24.5" cy="8" r="2.2" fill="#c8ff2e" />
     </svg>
   );
 }
@@ -38,14 +31,15 @@ export function Logo() {
         if (pathname === "/" && !hash) window.scrollTo({ top: 0, behavior: "smooth" });
         else window.scrollTo(0, 0);
       }}
-      className="flex items-center gap-2.5 text-lg font-semibold tracking-tight">
+      className="flex items-center gap-2.5 text-base font-semibold tracking-[-0.02em] text-text"
+    >
       <LogoMark />
-      <span className="hidden font-display text-xl uppercase tracking-[0.06em] text-white sm:inline">aurevid</span>
+      <span className="font-semibold text-lg tracking-[-0.02em] text-text">aurevid</span>
     </Link>
   );
 }
 
-export function LanguageSelect() {
+export function LanguageSelect({ className = "" }: { className?: string }) {
   const { t, i18n } = useTranslation();
   const { user, setUser } = useAuth();
   const change = async (lng: Locale) => {
@@ -57,7 +51,7 @@ export function LanguageSelect() {
       aria-label={t("nav.language")}
       value={i18n.language}
       onChange={(e) => void change(e.target.value as Locale)}
-      className="rounded-lg border border-line bg-bg/70 px-2 py-1.5 text-xs text-ink transition hover:border-white/20"
+      className={`rounded-lg border border-border bg-surface-2 px-2 py-1 text-xs text-text-2 transition hover:border-border-strong hover:text-text focus:border-accent focus:outline-none ${className}`}
     >
       {LANGUAGES.map((l) => (
         <option key={l.code} value={l.code}>
@@ -68,89 +62,250 @@ export function LanguageSelect() {
   );
 }
 
-interface NavItem {
-  to: string;
-  label: string;
-  icon: IconName;
-  end?: boolean;
-}
-
 export default function Layout({ children }: { children?: ReactNode }) {
   const { t } = useTranslation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const items: NavItem[] = [
-    { to: "/create", label: t("nav.studio"), icon: "sparkle" },
-    { to: "/marketing", label: t("nav.marketing"), icon: "megaphone" },
-    { to: "/history", label: t("nav.history"), icon: "history" },
-    { to: "/credits", label: t("nav.usage"), icon: "coins" },
-    { to: "/settings", label: t("nav.settings"), icon: "settings" },
-    ...(user?.is_admin ? [{ to: "/admin", label: t("nav.admin"), icon: "shield" as IconName }] : []),
+  const { pathname } = useLocation();
+  const [scrolled, setScrolled] = useState(false);
+  const [avatarOpen, setAvatarOpen] = useState(false);
+  const avatarRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const onScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  useEffect(() => {
+    const onClickOutside = (e: MouseEvent) => {
+      if (avatarRef.current && !avatarRef.current.contains(e.target as Node)) {
+        setAvatarOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, []);
+
+  const isMarketing = pathname === "/" || pathname === "/terms";
+  const headerHeight = isMarketing && !scrolled ? "h-14" : "h-11";
+
+  // Desktop links: Explore / Create / Library / Pricing
+  const navLinks = [
+    { to: "/", label: t("nav.explore", { defaultValue: "Explore" }), end: true },
+    { to: "/create", label: t("nav.studio", { defaultValue: "Create" }) },
+    { to: "/library", label: t("nav.library", { defaultValue: "Library" }) },
+    { to: "/credits", label: t("nav.pricing", { defaultValue: "Pricing" }) },
   ];
-  const link = ({ isActive }: { isActive: boolean }) =>
-    `flex items-center gap-2 rounded-full px-3.5 py-1.5 text-sm font-medium transition ${
-      isActive ? "btn-aurora" : "text-muted hover:bg-white/[0.06] hover:text-ink"
-    }`;
-  const tab = ({ isActive }: { isActive: boolean }) =>
-    `flex min-w-0 flex-1 flex-col items-center gap-0.5 rounded-xl py-1.5 text-[10px] font-medium ${
-      isActive ? "neon-text" : "text-muted"
-    }`;
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <header className="sticky top-0 z-30 bg-gradient-to-b from-bg via-bg/80 to-transparent">
-        <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-3 sm:px-6">
-          <Logo />
-          <nav aria-label="Main" className="glass ml-4 hidden gap-0.5 rounded-full p-1 md:flex">
-            {items.map((i) => (
-              <NavLink key={i.to} to={i.to} end={i.end} className={link}>
-                <Icon name={i.icon} size={16} />
-                {i.label}
+    <div className="flex min-h-screen flex-col bg-bg text-text">
+      <header
+        className={`sticky top-0 z-40 w-full border-b border-border bg-bg/85 backdrop-blur-md transition-all duration-200 ${headerHeight}`}
+      >
+        <div className="mx-auto flex h-full max-w-7xl items-center justify-between px-4 sm:px-6">
+          {/* Left: Logo */}
+          <div className="flex items-center gap-6">
+            <Logo />
+          </div>
+
+          {/* Centre: Desktop Links */}
+          <nav aria-label="Main" className="hidden items-center gap-6 md:flex">
+            {navLinks.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                className={({ isActive }) =>
+                  `text-sm transition-colors duration-150 py-1 ${
+                    isActive
+                      ? "text-accent font-semibold relative after:absolute after:-bottom-2.5 after:left-1/2 after:-translate-x-1/2 after:w-4 after:h-[2px] after:bg-accent after:rounded-full"
+                      : "text-text-2 hover:text-text font-medium"
+                  }`
+                }
+              >
+                {item.label}
               </NavLink>
             ))}
           </nav>
-          <div className="ml-auto flex items-center gap-2 sm:gap-3">
-            {user && (
-              <Link
-                to="/credits"
-                className="glass flex items-center gap-1.5 whitespace-nowrap rounded-full px-3 py-1.5 font-mono text-xs font-semibold text-ink transition hover:border-accent/50"
-              >
-                <Icon name="bolt" size={14} className="text-accent" />
-                {t("nav.credits", { count: user.credit_balance })}
-              </Link>
+
+          {/* Right: Credits / Auth controls */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {user ? (
+              <>
+                <Link
+                  to="/credits"
+                  className="flex items-center gap-1.5 rounded-full border border-border bg-surface-2 px-3 py-1 font-mono text-xs font-semibold text-text transition hover:border-border-strong hover:bg-surface-3"
+                  title={t("nav.credits", { count: user.credit_balance })}
+                >
+                  <Icon name="bolt" size={13} className="text-accent" />
+                  <span className="tabular-nums">{user.credit_balance}</span>
+                </Link>
+
+                <Link
+                  to="/credits"
+                  className="hidden rounded-lg border border-border bg-surface-2 px-3 py-1 text-xs font-medium text-text transition hover:bg-surface-3 sm:inline-flex"
+                >
+                  {t("nav.upgrade", { defaultValue: "Upgrade" })}
+                </Link>
+
+                <LanguageSelect className="hidden sm:inline-block" />
+
+                {/* Avatar menu */}
+                <div ref={avatarRef} className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setAvatarOpen((v) => !v)}
+                    aria-expanded={avatarOpen}
+                    aria-label="User menu"
+                    className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-surface-2 text-xs font-semibold text-text transition hover:bg-surface-3 hover:border-border-strong"
+                  >
+                    {user.email ? user.email.slice(0, 2).toUpperCase() : <Icon name="settings" size={15} />}
+                  </button>
+
+                  {avatarOpen && (
+                    <div className="absolute right-0 top-full mt-2 w-48 rounded-xl border border-border bg-surface-1 p-1.5 shadow-xl backdrop-blur-xl">
+                      <div className="border-b border-border px-2.5 py-1.5 text-xs text-text-3 truncate">
+                        {user.email}
+                      </div>
+                      <Link
+                        to="/credits"
+                        onClick={() => setAvatarOpen(false)}
+                        className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-text-2 hover:bg-surface-2 hover:text-text transition"
+                      >
+                        <Icon name="coins" size={14} />
+                        {t("nav.usage", { defaultValue: "Usage & Credits" })}
+                      </Link>
+                      <Link
+                        to="/settings"
+                        onClick={() => setAvatarOpen(false)}
+                        className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-text-2 hover:bg-surface-2 hover:text-text transition"
+                      >
+                        <Icon name="settings" size={14} />
+                        {t("nav.settings", { defaultValue: "Settings" })}
+                      </Link>
+                      <Link
+                        to="/settings"
+                        onClick={() => setAvatarOpen(false)}
+                        className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-text-2 hover:bg-surface-2 hover:text-text transition"
+                      >
+                        <Icon name="key" size={14} />
+                        {t("settings.keys", { defaultValue: "Keys" })}
+                      </Link>
+                      {user.is_admin && (
+                        <Link
+                          to="/admin"
+                          onClick={() => setAvatarOpen(false)}
+                          className="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-text-2 hover:bg-surface-2 hover:text-text transition"
+                        >
+                          <Icon name="shield" size={14} />
+                          {t("nav.admin", { defaultValue: "Admin" })}
+                        </Link>
+                      )}
+                      <div className="my-1 border-t border-border" />
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          setAvatarOpen(false);
+                          await logout();
+                          navigate("/login");
+                        }}
+                        className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium text-danger hover:bg-danger/10 transition"
+                      >
+                        <Icon name="logout" size={14} />
+                        {t("nav.logout", { defaultValue: "Sign out" })}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <>
+                <LanguageSelect />
+                <Link
+                  to="/login"
+                  className="rounded-lg px-3 py-1.5 text-xs font-medium text-text-2 transition hover:bg-surface-2 hover:text-text"
+                >
+                  {t("nav.login", { defaultValue: "Log in" })}
+                </Link>
+                <Link
+                  to="/register"
+                  className="rounded-lg bg-accent px-3 py-1.5 text-xs font-semibold text-accent-ink shadow-[inset_0_-2px_0_rgba(0,0,0,0.25)] transition hover:opacity-95"
+                >
+                  {t("nav.signup", { defaultValue: "Sign up" })}
+                </Link>
+              </>
             )}
-            <LanguageSelect />
-            <button
-              onClick={async () => {
-                await logout();
-                navigate("/login");
-              }}
-              className="grid h-8 w-8 place-items-center rounded-lg text-muted transition hover:bg-white/[0.06] hover:text-ink"
-              aria-label={t("nav.logout")}
-              title={t("nav.logout")}
-            >
-              <Icon name="logout" size={17} />
-            </button>
           </div>
         </div>
       </header>
+
       <Announcements />
-      <div className="blueprint flex flex-1 flex-col">
-        <main className="mx-auto w-full max-w-7xl flex-1 px-4 pb-8 pt-6 sm:px-6 md:pt-8">
-          {children ?? <Outlet />}
-        </main>
-      </div>
+
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 pb-20 pt-4 sm:px-6 md:pb-8 md:pt-6">
+        {children ?? <Outlet />}
+      </main>
+
       <Footer clearTabBar />
+
+      {/* Mobile Fixed Bottom Tab Bar (<1024px) */}
       <nav
-        aria-label="Main"
-        className="fixed inset-x-0 bottom-0 z-30 flex gap-1 border-t border-accent/25 bg-bg/90 px-2 pb-[max(0.4rem,env(safe-area-inset-bottom))] pt-1.5 backdrop-blur-xl md:hidden"
+        aria-label="Mobile Navigation"
+        className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-around border-t border-border bg-bg/95 px-2 pb-[max(0.6rem,env(safe-area-inset-bottom))] pt-1 backdrop-blur-xl md:hidden overflow-x-hidden"
       >
-        {items.map((i) => (
-          <NavLink key={i.to} to={i.to} end={i.end} className={tab}>
-            <Icon name={i.icon} size={20} />
-            <span className="max-w-full truncate">{i.label}</span>
-          </NavLink>
-        ))}
+        <NavLink
+          to="/"
+          end
+          className={({ isActive }) =>
+            `flex min-w-0 flex-1 flex-col items-center gap-0.5 py-1 text-[11px] font-medium transition ${
+              isActive ? "text-accent" : "text-text-3 hover:text-text"
+            }`
+          }
+        >
+          <Icon name="search" size={18} />
+          <span>{t("nav.explore", { defaultValue: "Explore" })}</span>
+        </NavLink>
+
+        {/* Center Create Button: accent, larger, raised */}
+        <NavLink
+          to="/create"
+          className={({ isActive }) =>
+            `-mt-3 flex h-11 w-12 flex-col items-center justify-center rounded-xl bg-accent text-accent-ink shadow-[inset_0_-2px_0_rgba(0,0,0,0.28)] transition hover:opacity-95 active:translate-y-[1px] ${
+              isActive ? "ring-2 ring-accent ring-offset-2 ring-offset-bg" : ""
+            }`
+          }
+        >
+          <Icon name="sparkle" size={20} />
+          <span className="text-[10px] font-bold leading-none mt-0.5">
+            {t("nav.studio", { defaultValue: "Create" })}
+          </span>
+        </NavLink>
+
+        <NavLink
+          to="/library"
+          className={({ isActive }) =>
+            `flex min-w-0 flex-1 flex-col items-center gap-0.5 py-1 text-[11px] font-medium transition ${
+              isActive ? "text-accent" : "text-text-3 hover:text-text"
+            }`
+          }
+        >
+          <Icon name="history" size={18} />
+          <span>{t("nav.library", { defaultValue: "Library" })}</span>
+        </NavLink>
+
+        <NavLink
+          to="/settings"
+          className={({ isActive }) =>
+            `flex min-w-0 flex-1 flex-col items-center gap-0.5 py-1 text-[11px] font-medium transition ${
+              isActive ? "text-accent" : "text-text-3 hover:text-text"
+            }`
+          }
+        >
+          <Icon name="settings" size={18} />
+          <span>{t("nav.account", { defaultValue: "Account" })}</span>
+        </NavLink>
       </nav>
     </div>
   );
@@ -159,16 +314,45 @@ export default function Layout({ children }: { children?: ReactNode }) {
 export function Footer({ clearTabBar = false }: { clearTabBar?: boolean }) {
   const { t } = useTranslation();
   return (
-    <footer className={`border-t border-white/[0.06] pt-5 text-center text-xs text-muted ${clearTabBar ? "pb-24 md:pb-5" : "pb-5"}`}>
-      <Link to="/terms" className="hover:text-ink">{t("nav.terms")}</Link>
-      <span className="mx-2">·</span>
-      {SOURCE_URL ? (
-        <a href={SOURCE_URL} rel="noopener noreferrer" target="_blank" className="hover:text-ink">
-          Source code (AGPL-3.0)
-        </a>
-      ) : (
-        <span>AGPL-3.0</span>
-      )}
+    <footer
+      className={`border-t border-border bg-surface-1/40 py-8 text-xs text-text-3 ${
+        clearTabBar ? "pb-24 md:pb-8" : "pb-8"
+      }`}
+    >
+      <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-4 sm:flex-row sm:px-6">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+          <Link to="/" className="hover:text-text transition">
+            {t("nav.explore", { defaultValue: "Explore" })}
+          </Link>
+          <Link to="/create" className="hover:text-text transition">
+            {t("nav.studio", { defaultValue: "Create" })}
+          </Link>
+          <Link to="/library" className="hover:text-text transition">
+            {t("nav.library", { defaultValue: "Library" })}
+          </Link>
+          <Link to="/credits" className="hover:text-text transition">
+            {t("nav.pricing", { defaultValue: "Pricing" })}
+          </Link>
+          <Link to="/terms" className="hover:text-text transition">
+            {t("nav.terms", { defaultValue: "Terms" })}
+          </Link>
+          <Link to="/terms" className="hover:text-text transition">
+            {t("nav.privacy", { defaultValue: "Privacy" })}
+          </Link>
+          {SOURCE_URL ? (
+            <a href={SOURCE_URL} rel="noopener noreferrer" target="_blank" className="hover:text-text transition">
+              GitHub ↗
+            </a>
+          ) : (
+            <span>AGPL-3.0</span>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
+          <span>License AGPL-3.0</span>
+          <span>·</span>
+          <LanguageSelect />
+        </div>
+      </div>
     </footer>
   );
 }
@@ -191,9 +375,11 @@ function Announcements() {
       return [];
     }
   });
+
   useEffect(() => {
     api<Banner[]>("/api/announcements").then(setItems).catch(() => setItems([]));
   }, []);
+
   const hide = (id: string) => {
     const next = [...hidden, id];
     setHidden(next);
@@ -203,7 +389,13 @@ function Announcements() {
       /* ignore */
     }
   };
-  const tone = { info: "border-series-2/40 bg-series-2/10", warning: "border-accent-3/40 bg-accent-3/10", success: "border-ok/40 bg-ok/10" };
+
+  const tone = {
+    info: "border-info/40 bg-info/10 text-text",
+    warning: "border-warning/40 bg-warning/10 text-text",
+    success: "border-success/40 bg-success/10 text-text",
+  };
+
   return (
     <>
       {items
@@ -211,10 +403,15 @@ function Announcements() {
         .map((a) => {
           const text = (i18n.language === "uz" && a.text_uz) || (i18n.language === "ru" && a.text_ru) || a.text_en;
           return (
-            <div key={a.id} role="status" className={`border-b px-4 py-2 text-sm text-ink ${tone[a.level]}`}>
+            <div key={a.id} role="status" className={`border-b px-4 py-2 text-sm ${tone[a.level]}`}>
               <div className="mx-auto flex max-w-7xl items-start justify-between gap-3">
-                <p>{a.level === "warning" ? "⚠ " : a.level === "success" ? "✓ " : "ℹ "}{text}</p>
-                <button onClick={() => hide(a.id)} aria-label="×" className="text-muted hover:text-ink">✕</button>
+                <p>
+                  {a.level === "warning" ? "⚠ " : a.level === "success" ? "✓ " : "ℹ "}
+                  {text}
+                </p>
+                <button onClick={() => hide(a.id)} aria-label="×" className="text-text-3 hover:text-text">
+                  ✕
+                </button>
               </div>
             </div>
           );

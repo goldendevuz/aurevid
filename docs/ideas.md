@@ -41,9 +41,24 @@ P3 = keyinroq.
 | 21 | **Post-production qatlami: kamera harakati + LUT + soundscape** (generatsiya qilingan klip/rasm ustiga) | goldendevuz/aurevid-aistudio (Kinoframe) g'oyasi: dolly zoom/orbit kabi harakatlar, 6 ta rang LUT, 4 ta linza, ovoz muhiti, brauzerda WebM eksport. Modelsiz, GPU'siz, arzon. Ko'p sahnali videoga (#18) sahnalar orasida o'tish/rang uyg'unligi sifatida ham mos. Manba kodi litsenziyasini avval tekshirish kerak. |
 | 22 | **BYOK provayder: VidoGrid** (foydalanuvchi o'z `vidogrid-` kalitini kiritadi) | REST API: `x-api-key`, vebhuk/polling, kredit oldindan bloklanadi, xatoda qaytariladi; Veo, Grok, Seedance, Kling, Muse video va Nano Banana rasm. Bepul reja API'da video bermaydi (`403 PREMIUM_PLAN_REQUIRED`), kalit yaratish ham kredit talab qiladi, shuning uchun faqat foydalanuvchi o'zi to'lasa foydali. Veb-studiyadagi "free Grok"ni API sifatida ishlatmaymiz (shartlarga zid). OpenAPI sarlavhasi "GeminiGen": reseller, shuning uchun yopiq modellar tijoriy litsenziyasini avval aniqlash (`commercial_use` qoidasi). #19 bilan bir naqsh (`resolve_credentials`). |
 | 23 | ✅ **Nashr sifati: halol o'lchamlar, "Qoralama" belgisi, rasm "Publish quality", video Draft/Standard/Publish/Premium (Seedance, OpenRouter BYOK)** | Kontent yaratuvchi "sal ham xira bo'lmagan" natija xohlaydi; Modal Wan 832x480 berar, UI esa "large" deb yozar edi | Egasining talabi (2026-11-22) | P1 | M | **Bajarildi (PR kutilmoqda):** `docs/design.md` oxirgi bo'lim. Tekshirilmagan: haqiqiy OpenRouter/Cloudflare chaqiruvlari (faqat mock), klein'ning 1920 px sifati, serverdagi 2K/4K vaqti. Seedance tijoriy huquqi hujjatlashtirilgan, egasi tasdiqlashi kerak (`MODEL_LICENSES.md`). |
+| 24 | **Avatar/gapiruvchi bosh modellari (HeyGen)** | Rasm va audiodan gapiruvchi bosh yasash; P2 da o'tkazib yuborildi, chunki audio bilan sinxron gapirish alohida avatar quvurini talab qiladi. | OpenRouter heygen | P3 | M | Kelajakda alohida "Avatar" rejimi sifatida ko'rib chiqish. |
+| 25 | **Video-to-video tahrirlash va upscale (BFL flux-video-edit, flux-video-upscale)** | Mavjud videoni o'zgartirish; P2 da o'tkazib yuborildi, chunki Aurevid text-to-video va image-to-video ga yo'naltirilgan. | OpenRouter BFL | P3 | M | Post-production qatlami bilan birlashtirish mumkin. |
+| 26 | **Runway Aleph-2 video modeli** | Video generatsiyasi; P2 da talab bo'yicha o'tkazib yuborildi. | OpenRouter runway/aleph-2 | P3 | S | Narx va parametrlari barqarorlashgach qayta baholash. |
 
 ## Allaqachon bor (raqiblarda ham bor, bizda ham)
 
 - Rasmni jonlantirish, navbat va progress (fal Video Generator): Studio, SSE, adolatli navbat.
 - Endpoint bo'yicha rate limit (Mux namunasi): `ratelimit.py`, kunlik limit.
 - Bir nechta provayder (AI SDK Image Generator): provayder registri.
+
+## O'tkazib yuborilgan / Rad etilgan narsalar (PROMPT.md bo'yicha)
+
+Quyidagi funksiyalar va elementlar Aurevid arxitekturasi va mahsulot yo'nalishini ixcham hamda generative AI'ga yo'naltirilgan holda saqlash maqsadida ataylab o'tkazib yuborildi:
+
+1. **Effektlar va filtrlar studiyasi (Effects & Filters Studio):** Aurevid toza generativ AI vositasi hisoblanadi; 2D post-processing, sticker yoki Instagram-uslubidagi filtrlar qo'shilmadi.
+2. **Hamjamiyat ijtimoiy lentalari (Community / Social Feed):** Foydalanuvchining shaxsiy kutubxonasi (`/library`) va shaxsiy ijodiy xavfsizligini ta'minlash maqsadida umumiy feed va ijtimoiy tarmoq elementlari kiritilmadi.
+3. **Mustaqil Ovoz Studiyasi / Musiqa generatori (Standalone Audio Studio):** Aurevid video va rasm yaratishga yo'naltirilgan. Audio faqat video modellarining (masalan, Seedance, Wan) ajralmas atributi sifatida boshqariladi; alohida musiqa studiyasi ortiqcha yuk.
+4. **Mega menyu (Mega Menu Navigation):** Navigatsiya maksimal sodda va qulay (Landing, Create, Pricing, Library) 4 ta asosiy tugmadan iborat bo'lib qoldi; ko'p qavatli mega-menyular kiritilmadi.
+5. **Kuki rozilik banneri (Cookie Consent Banner):** Aurevid hech qanday uchinchi tomon kuzatuvchi yoki marketing kukilaridan foydalanmaydi (faqat birinchi tomon xavfsiz sessiya kukisi ishlatiladi), shuning uchun bezovta qiluvchi bannerlar qo'shilmadi.
+6. **Reklama va e'lonlar paneli (Promo / Announcement Top Bar):** Interfeysni qorong'u, chalg'itmaydigan Dark Studio uslubida saqlash uchun tepaga yopishgan qizil/sariq promo-bannerlar rad etildi.
+

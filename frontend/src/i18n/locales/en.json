@@ -16,7 +16,14 @@
     "credits": "{{count}} credits",
     "admin": "Admin",
     "marketing": "Marketing",
-    "home": "Home"
+    "home": "Home",
+    "explore": "Explore",
+    "library": "Library",
+    "pricing": "Pricing",
+    "upgrade": "Upgrade",
+    "account": "Account",
+    "privacy": "Privacy",
+    "signup": "Sign up"
   },
   "auth": {
     "loginTitle": "Welcome back",
@@ -54,6 +61,7 @@
     "commercial_yes": "Commercial use allowed",
     "commercial_no": "Non-commercial only",
     "commercial_unclear": "Commercial use: check terms",
+    "commercial_byok_only": "Check the model's terms",
     "aspect": "Aspect ratio",
     "size": "Size",
     "size_small": "Small",
@@ -111,6 +119,12 @@
     "pickModel": "Choose an image model",
     "pickVideoModel": "Choose a video model",
     "pickModelHint": "Models marked with a lock need an API key. Free ones work right away.",
+    "inactiveTitle": "Inactive — connect your key",
+    "needsProviderKey": "Needs your {{provider}} key",
+    "connectKey": "Connect key",
+    "fromPricePerSecond": "from ≈ {{cents}}¢ / s",
+    "expandSection": "Expand",
+    "collapseSection": "Collapse",
     "filterAll": "All",
     "noModelsInFilter": "No models match this filter.",
     "upToImages": "up to {{count}} images",
@@ -162,7 +176,14 @@
     "tierHint_standard": "Standard: 720p with Seedance Mini. Costs cents.",
     "tierHint_publish": "Publish: 720p with Seedance 2.5 Flash, better motion and detail.",
     "tierHint_premium": "Premium: 1080p with Seedance 2.5, the sharpest and the most expensive.",
-    "premiumWarning": "Premium 1080p costs about {{amount}} per clip, billed to your OpenRouter key."
+    "premiumWarning": "Premium 1080p costs about {{amount}} per clip, billed to your OpenRouter key.",
+    "expand": "Expand prompt",
+    "expanding": "Expanding…",
+    "expandUndo": "Undo",
+    "expandError": "Could not expand the prompt.",
+    "prompt": "Prompt",
+    "searchModels": "Search models",
+    "featuredModels": "Featured"
   },
   "job": {
     "queued": "Queued",
@@ -391,7 +412,12 @@
     "job_in_story": "This clip is a scene of a multi-scene video. Delete the whole video instead.",
     "quality_unsupported": "Publish quality is not available for this model.",
     "resolution_unsupported": "This resolution is not supported by the model.",
-    "server_key_draft_only": "The free allowance only covers the 480p draft. Add your own OpenRouter key for 720p and 1080p."
+    "server_key_draft_only": "The free allowance only covers the 480p draft. Add your own OpenRouter key for 720p and 1080p.",
+    "expand_unavailable": "Prompt expansion is not available. Add your OpenRouter key in Settings.",
+    "expand_busy": "The AI is busy. Try expanding again in a moment.",
+    "expand_timeout": "Prompt expansion timed out. Try again.",
+    "expand_empty": "The AI returned an empty response. Try again.",
+    "expand_failed": "Prompt expansion failed. Try again."
   },
   "admin": {
     "title": "Admin panel",
@@ -702,7 +728,8 @@
       "title": "Live models",
       "count": "{{count}} models"
     },
-    "create": "Create"
+    "create": "Create",
+    "sampleBadge": "Sample"
   },
   "price": {
     "selection": "{{count}} credits",

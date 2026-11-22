@@ -6,6 +6,12 @@
 
 ## Nima qila oladi
 
+- **Dark Studio v4 interfeysi**: Geist Variable shriftlariga asoslangan professional, yuqori zichlikdagi interfeys, 400-440px yopishqoq boshqaruv paneli, natijalar zichligi (2, 3 yoki 4 ustun), klaviatura bilan boshqariladigan lightbox modal oynasi, ommaviy yuklash/o'chirish imkoniyatiga ega kutubxona va mobil pastki panel.
+- **Promptni boyitish (Expand Prompt)**: Bitta tugma orqali oddiy matnni boy kinoviy sahnalar, yorug'lik, kamera harakatlari va audio tasvirlariga ajratish (`POST /api/prompt/expand`), darhol bekor qilish (Undo).
+- **Director rejimi (`/create?mode=director`)**: Rejissyorlik oqimi — chat uslubida g'oya kiritish, davomiylikni tanlash (5, 10, 15 soniya), tahrirlanadigan reja kartasi (boshlang'ich kadr, vaqt belgilari, rejissura va audio), oldindan aniq narx hisobi va bitta klip yoki ko'p sahnali Story'ga avtomatik yo'naltirish.
+- **OpenRouter orqali 12 ta video modeli**: ByteDance Seedance v1 Pro/Lite, MiniMax Hailuo 01 / 2.3, Wan 2.1 T2V va I2V, Kling v1.6 Pro / Standard, Google Veo 2, OpenAI Sora, xAI Grok Imagine Video modellari va sentlarda ko'rsatiladigan shaffof narxlar.
+- **Faol bo'lmagan modellar bo'limi**: ModelPicker'da ulanmagan modellarni ko'rsatish, texnik parametrlari, sentlardagi narxlari va to'g'ridan-to'g'ri o'z kalitini ulash havolalari.
+- **Ko'p sahnali video**: 2-4 ta sahnani bitta yaxlit hikoyaga birlashtirish (`ffmpeg`), sahnalarni alohida qayta urinish.
 - Prompt yozasiz, modelni tanlaysiz (har birida "Bepul" yoki "Pullik" belgisi va tijoriy foydalanish holati ko'rinadi)
 - Nisbat, o'lcham va rasmlar soni (1-4)
 - Video: matndan video va **Jonlantirish** (istalgan rasmingizdan video). Video uchun bepul servis

@@ -59,7 +59,7 @@ export default function ResultPanel({
   } else if (job && running) {
     body = (
       <div className="grid place-items-center gap-4 rounded-2xl border border-white/10 bg-bg/50 px-6 py-14 text-center">
-        <div className="neon-orbit" aria-hidden />
+        <div className="orbit-spinner" aria-hidden />
         <div>
           <h3 className="text-2xl">{t("studio.panel.generatingTitle")}</h3>
           <p className="mt-1 text-sm text-muted">{t("studio.panel.generatingHint")}</p>

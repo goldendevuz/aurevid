@@ -39,7 +39,11 @@ def enabled_providers() -> dict[str, ImageProvider]:
         providers.append(MockProvider())
     out: dict[str, ImageProvider] = {}
     for p in providers:
-        allowed = [m for m in p.info.models if s.allow_unclear_models or m.commercial_use == "yes"]
+        allowed = [
+            m
+            for m in p.info.models
+            if s.allow_unclear_models or m.commercial_use in ("yes", "byok_only")
+        ]
         if not allowed:
             continue
         if len(allowed) != len(p.info.models):

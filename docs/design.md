@@ -50,66 +50,123 @@ and layouts were designed for Aurevid and do not copy any other product's artwor
   toggles, labelled icon-only buttons, `prefers-reduced-motion` respected.
 - **Charts:** series colours stay a CVD-safe gold/blue pair, separate from the brand gradient.
 
-## Neon Coast (v3, current, temporary)
+## Aurevid Dark Studio (v4, current)
 
-> **Status:** a temporary production theme that follows the current synthwave/coastal-night trend.
-> A full redesign may replace it next month. Earlier directions are archived in git and can be
-> restored or mixed: **Solar Darkroom** (black + yellow-lime accent `#d4ff3a`, commit `67c5c8c`,
-> PR #20) and **Mono** (black stage, grey layers, white pill actions, Geist; commit `f06e03d`,
-> PR #22, branch `feat/mono-redesign`). Keep new pages on the shared tokens (`accent`, `aurora`,
-> `glass`, `btn-aurora`) so a theme swap stays a CSS change, and keep scenery in `Scenery.tsx` only.
+> **Direction:** "dark studio": quiet, neutral, premium; colour appears only where it means something.
+> Replaces Neon Coast. Removes hot-pink/orange/teal neon accents, the Anton poster display font,
+> Kaushan script and the blueprint grid/scenery. Headings use Geist 600 with tight tracking (-0.02em);
+> numbers use tabular figures (`font-variant-numeric: tabular-nums`).
 
-A night sky over a sunset coast, in the spirit of 80s synthwave posters. All artwork (sun, palms,
-skyline, grid) is original SVG/CSS drawn for Aurevid; no game, film or brand artwork is used.
+### 1. Palette & Surface Tokens
+| Token | Value | Role |
+|---|---|---|
+| `--bg` | `#09090b` | Page background (near-black, slightly cool) |
+| `--surface-1` | `#111113` | Panels, cards, modal backings |
+| `--surface-2` | `#17171a` | Inputs, tiles, secondary controls |
+| `--surface-3` | `#1f1f23` | Hover states, raised elements |
+| `--border` | `rgb(255 255 255 / 0.08)` | Subtle component borders |
+| `--border-strong` | `rgb(255 255 255 / 0.16)` | Active/focus component borders |
+| `--text` | `#f4f4f5` | Primary body text and headings |
+| `--text-2` | `#a1a1aa` | Secondary labels, descriptions |
+| `--text-3` | `#6b6b74` | Tertiary labels, captions, timestamps |
+| `--accent` | `#c8ff2e` | Primary CTA, active nav indicator, focus ring, selected state ONLY |
+| `--accent-ink` | `#0b0f00` | Text on accent |
+| `--info` | `#6aa8ff` | Informational links, chips |
+| `--success` | `#4ade80` | Success states, ready badges |
+| `--warning` | `#fbbf24` | Warning banners, rate alerts |
+| `--danger` | `#f87171` | Error states, destructive actions |
 
-- **Stage:** deep purple `#12071f`, panels `#1a0b2c` / `#24113b`, hairlines `#3a2257`, text `#f6ecff`,
-  muted `#b3a0cc`. A fixed violet-to-sunset sky drifts slowly behind the app, with faint scanlines.
-- **Colour:** pink `#ff3e8a` (accent), orange `#ff9a3c`, teal neon `#19e3d3` (focus ring, secondary
-  glow). The sunset gradient (pink -> orange) fills primary buttons; the headline gradient runs gold ->
-  orange -> pink -> violet. Chart series are an orange/teal pair.
-- **Type:** Anton (OFL) for uppercase poster headlines, Kaushan Script (OFL) for one brush accent line
-  per hero, Geist (OFL) for body text. Anton and Kaushan have no Cyrillic, so Russian headings fall
-  back to Geist glyph by glyph.
-- **Scenery:** `components/Scenery.tsx` stages the landing hero: a striped sun (`.sun-glow`), a
-  skyline with flickering windows (`.neon-flicker`), two swaying palms (`.palm-sway`) and a scrolling
-  perspective grid (`.grid-floor`). Hero sample tiles use the `.postcard` frame.
-- **Motion:** every scenery animation and the sky drift are disabled under `prefers-reduced-motion`.
-- **Token names** (`accent`, `aurora`, `glass`, `btn-aurora`) are unchanged, so every page follows.
+### 2. Radii & Elevation
+- `--radius-sm`: `8px` (chips, compact buttons, badges)
+- `--radius-md`: `12px` (buttons, input tiles, popovers)
+- `--radius-lg`: `16px` (cards, panels)
+- `--radius-xl`: `24px` (modals, sheets)
+- `--shadow-pop`: `0 12px 40px rgb(0 0 0 / 0.5)`
 
-### Neon Coast additions (workspace, marquee, mono data)
+### 3. Typography
+- `--font-sans`: `"Geist Variable"`, `"Geist"`, system-ui, sans-serif
+- `--font-mono`: `"JetBrains Mono Variable"`, `"JetBrains Mono"`, ui-monospace
+- Headings: Geist 600, tight tracking (`-0.02em`), sizes on a 12/14/16/20/28/40/56 scale
+- Body: 14–15px
+- Numbers: `font-variant-numeric: tabular-nums` for all numbers (credits, costs, timers, counters)
 
-Borrowed ideas, built on the shared tokens so a theme swap stays a CSS change:
+### 4. Buttons & Interaction
+- **Primary button ("Generate"):** solid accent button (`--accent`, `#c8ff2e`) with a 2px lower lip (`box-shadow: inset 0 -2px 0 rgb(0 0 0 / 0.28)`); pressing removes the lip (`translateY(1px)` and flat shadow).
+- **Secondary button:** surface-2 (`#17171a`) with 1px border.
+- **Ghost button:** transparent with muted text, hover background surface-2.
+- **Focus ring:** 2px solid `--accent`. Disabled: 50% opacity.
+- **Motion:** 120–180ms ease-out for hover/press, 220ms for popovers/modals; respects `prefers-reduced-motion`.
 
-- **Lime `--color-accent-4` (`#c8ff2e`)**, owner-approved, used sparingly: ok-status dots (available provider in
-  `ModelPicker`, hero tile badges), "live/ready" badges (`Badge tone="live"`, the marquee header) and key highlights. Never a main button colour.
-- **Mono data font:** `--font-mono` = JetBrains Mono Variable (`@fontsource-variable/jetbrains-mono`) for prompt counters,
-  prices/credits, times and model names. Headlines stay Anton, body Geist.
-- **`ModelMarquee`** (landing, under the hero): slow endless strip of model chips (mono text, provider dot, faded edges via
-  `mask-image`, list duplicated for a seamless loop, paused on hover). `prefers-reduced-motion` turns it into a static wrapping list.
-  It lists only what the registry really offers, from the public, credential-free `GET /api/catalog/models`
-  (same `enabled_providers()` as `/api/providers`, so the commercial-use filter applies). Nothing is hard-coded; if the request
-  fails the strip is not rendered.
-- **Routes:** `/` is always the Landing page (signed-in people get a "Create" button instead of sign-up links); the Studio lives at
-  `/create` (`/studio` redirects there, router state kept). Sign-in and register land on `/create` unless `state.next` says otherwise,
-  and a protected page remembers where you wanted to go. The logo goes to `/` and scrolls to the top, even when already there.
-- **Favicon:** original Neon Coast mark (striped pink-to-orange sun and a teal horizon line on dark purple), `favicon.svg` plus
-  `favicon-32.png` and `apple-touch-icon.png`; `index.html` links carry `?v=2` to bust caches.
-- **Studio workspace (lg+):** two columns. Left = composer (mode, model, prompt, options, presets), right = sticky
-  `ResultPanel` with states empty ("Ready to generate"), generating (neon orbit), error (credits-exhausted gets its own card
-  linking to `/credits`) and result (the latest job rendered by the existing `JobCard`). The panel only reads state `Studio`
-  already has (`focusId`, `error`, `compareRun`); generation logic is unchanged. Below lg it stays one column as before
-  (panel hidden, inline error, compare results below the composer). No resizable handle.
-- **Multi-scene video (video mode):** a second `Segmented` (Single / Multi-scene) under the Image/Video one, shown only when a
-  text-to-video model offers 5 s clips (`storyCapable`). Multi-scene swaps the single prompt for 2-4 numbered scene fields
-  (add / remove), a fixed "5 s per scene" chip and a summed price line; the start-image upload, presets, examples, upscale and
-  voice button are hidden. `StoryCard` (glass card, same radius as `JobCard`) shows a progress bar while generating or joining,
-  the joined video with Download/Delete when ready, and a per-scene grid (first-frame thumbnail, status chip, Retry on a failed
-  scene). It appears in `ResultPanel`, in Studio's "Recent results" (merged with jobs by date) and in a "Multi-scene videos"
-  block at the top of History. Scene jobs are hidden from `GET /api/jobs` (they live inside their story).
-- **Blueprint sheet:** `.blueprint` on the inner-page wrapper in `Layout`: thin grid and heavier lines every 128 px from
-  `--hairline`, ruler ticks on the top and left edges, sides faded. Not used on the landing hero (it keeps the scenery).
-- **Provider dots:** `ProviderDot` / `--color-provider-1..5` (plain `:root` variables, because `@theme` drops unused
-  variables), shown in `ModelPicker`, `ModelSwatch` and the marquee.
+### 5. Logo Mark & Favicon
+A clean geometric "A" mark in `--accent` (`#c8ff2e`) on `--bg` (`#09090b`) background, matching the favicon.
+
+### 6. Light Theme Tokens (Archived for future reference)
+```css
+/*
+:root[data-theme="light"] {
+  --bg: #fafafa;
+  --surface-1: #ffffff;
+  --surface-2: #f4f4f5;
+  --surface-3: #e4e4e7;
+  --border: rgb(0 0 0 / 0.08);
+  --border-strong: rgb(0 0 0 / 0.16);
+  --text: #09090b;
+  --text-2: #71717a;
+  --text-3: #a1a1aa;
+  --accent: #18181b;
+  --accent-ink: #ffffff;
+  --info: #2563eb;
+  --success: #16a34a;
+  --warning: #d97706;
+  --danger: #dc2626;
+}
+*/
+```
+
+
+### 7. Layout & Core Pages (Dark Studio v4)
+
+- **Studio Generator (`/create`):**
+  - **Two-Column Workspace (lg+):**
+    - Left Control Panel (400–440px, sticky): Mode tabs (Image / Video), Scene tabs (Single / Multi-scene / Director), reference dropzones (start/end image frames with upload and preview), prompt card with autogrow textarea, char counter, voice button, audio toggle, Expand prompt button with Undo, model selector row, setting tiles 2-column grid (aspect ratio popover with shape icons, duration popover, resolution popover with draft badge, quality tier), and sticky bottom action bar with primary Generate button and cost line.
+    - Right Canvas: Top toolbar with History vs. How-it-works tabs, filter chips (All / Image / Video / Favorites), density grid switcher (2, 3, or 4 columns), list/grid view toggle. Result tiles render live status, progress bar, action overlay, and detailed metadata.
+  - **Lightbox Modal:** Fullscreen blurred backdrop, media stage, glass side panel with prompt (one-click copy), technical details (model, dimensions, duration, cost, timestamp), action grid (Recreate, Animate, Upscale, Download, Share, Favorite), and keyboard navigation (Left/Right arrows, Esc to dismiss, focus trapped).
+  - **Mobile (<1024px):** Control panel stacks naturally above the results canvas; Generate bar sticks above the mobile bottom tab bar; popovers and model picker open as accessible bottom sheets. No horizontal scroll at 390px.
+
+- **Director Flow (`/create?mode=director`):**
+  - A guided storyboarding flow accessible via the "Director" tab in Video mode.
+  - Chat-style idea prompt input with video duration selection (5s, 10s, 15s), aspect ratio, and model tier.
+  - One-click "Draft plan" calls `/api/prompt/expand` to generate a structured **Plan Card** detailing:
+    1. Opening frame (editable inline).
+    2. Timeline beats table (time ranges, scene names, and prompt descriptions editable per row).
+    3. Look & cinematography style (editable inline).
+    4. Soundscape & audio cues (editable inline).
+  - Real-time cost estimate line with model label and USD/credits.
+  - **Approve & Generate** automatically determines payload: creates a single-clip job when duration <= model max clip duration, or decomposes into a multi-scene Story when duration exceeds single-clip maximums.
+  - Clean hint banner with link to Settings/Account when prompt expansion is unavailable (`expand_available=false`).
+
+- **Home / Explore (`/`):**
+  - Hero with headline, value proposition, and an interactive prompt bar that redirects to `/create` with the text prefilled.
+  - 3 "Start here" cards for quick access to Image generation, Video clips, and Multi-Scene stories.
+  - Media wall showcasing 10 sample outputs using Aurevid's built-in sample files and smooth gradients (no third-party media).
+  - `ModelMarquee` dynamic strip streaming live models from `/api/catalog/models`.
+  - 3-step workflow strip and Free & Open Source AGPL-3.0 banner.
+
+- **Pricing (`/pricing`):**
+  - Credit pack cards for local inPAY payments.
+  - Transparent "What 1 credit buys" comparison table in cents across image and video tiers.
+  - BYOK (Bring Your Own Key) zero-markup explainer card.
+  - Interactive FAQ accordion for common billing and model questions.
+
+- **Library (`/library`):**
+  - User assets grid with filter chips (All, Image, Video, Story, Favorites).
+  - List / grid view switcher.
+  - Multi-asset selection mode enabling bulk download and bulk deletion.
+  - Clean empty state with quick link to `/create`.
+
+- **Authentication (`/auth`):**
+  - Centered Dark Studio card with email and password inputs, consent checkbox, and descriptive error states.
+
 
 
 ## Publishable output: honest sizes, Draft badge, Publish quality, video tiers

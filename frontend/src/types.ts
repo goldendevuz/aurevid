@@ -8,6 +8,7 @@ export interface User {
   is_admin: boolean;
   credit_balance: number;
   created_at: string;
+  expand_available: boolean;
 }
 
 export interface ModelInfo {
@@ -15,7 +16,7 @@ export interface ModelInfo {
   label: string;
   kind: "image" | "video" | "upscale";
   license: string;
-  commercial_use: "yes" | "no" | "unclear";
+  commercial_use: "yes" | "no" | "unclear" | "byok_only";
   aspect_ratios: string[];
   credit_cost: number;
   max_count: number;
@@ -49,6 +50,21 @@ export interface QuotaView {
   blocked_seconds: number;
 }
 
+export interface InactiveModel {
+  provider_id: string;
+  provider_name: string;
+  id: string;
+  label: string;
+  kind: "image" | "video";
+  commercial_use: "yes" | "no" | "unclear" | "byok_only";
+  reason: string;
+  price_text: string;
+  price_cents: number;
+  min_usd_per_second?: number | null;
+  key_url?: string | null;
+  settings_path?: string;
+}
+
 export interface Provider {
   id: string;
   name: string;
@@ -57,6 +73,7 @@ export interface Provider {
   byok_fields: string[];
   requires_key: boolean;
   models: ModelInfo[];
+  inactive_models?: InactiveModel[];
   notes: string;
   available: boolean;
   key_source: "server" | "user" | "none";

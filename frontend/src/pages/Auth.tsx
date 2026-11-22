@@ -49,41 +49,43 @@ export default function AuthPage({ mode }: { mode: "login" | "register" }) {
   ];
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-bg text-ink">
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 py-4 sm:px-6">
         <Logo />
         <LanguageSelect />
       </div>
       <main className="mx-auto grid w-full max-w-7xl flex-1 items-center gap-10 px-4 pb-10 sm:px-6 lg:grid-cols-[1.1fr_0.9fr] lg:gap-16">
         <section className="hidden lg:block">
-          <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[11px] font-medium text-muted">
-            <Icon name="sparkle" size={13} className="text-accent" />
+          <p className="mb-5 inline-flex items-center gap-2 rounded-full border border-line bg-surface-1 px-3.5 py-1 text-xs font-semibold text-accent">
+            <Icon name="sparkle" size={13} />
             {t("auth.heroEyebrow")}
           </p>
-          <h2 className="text-5xl leading-[1] xl:text-7xl">
-            {t("auth.heroLead")} <span className="font-script aurora-text block pt-2 text-4xl xl:text-6xl">{t("auth.heroAccent")}</span>
+          <h2 className="text-4xl sm:text-5xl font-bold tracking-tight leading-tight">
+            {t("auth.heroLead")}{" "}
+            <span className="text-accent block pt-1 font-semibold">{t("auth.heroAccent")}</span>
           </h2>
-          <p className="mt-5 max-w-lg text-base text-muted">{t("auth.heroSub")}</p>
+          <p className="mt-4 max-w-lg text-sm text-muted leading-relaxed">{t("auth.heroSub")}</p>
           <ul className="mt-8 space-y-4">
             {features.map((f) => (
               <li key={f.key} className="flex items-start gap-3.5">
-                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-white/10 bg-white/[0.04] text-accent">
-                  <Icon name={f.icon} size={19} />
+                <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-line bg-surface-1 text-accent">
+                  <Icon name={f.icon} size={18} />
                 </span>
-                <span>
-                  <span className="block text-sm font-semibold">{t(`auth.feat_${f.key}`)}</span>
-                  <span className="block text-sm text-muted">{t(`auth.feat_${f.key}_desc`)}</span>
-                </span>
+                <div>
+                  <span className="block text-sm font-semibold text-ink">{t(`auth.feat_${f.key}`)}</span>
+                  <span className="block text-xs text-muted mt-0.5">{t(`auth.feat_${f.key}_desc`)}</span>
+                </div>
               </li>
             ))}
           </ul>
         </section>
+
         <section className="mx-auto w-full max-w-md">
-          <div className="glass ring-aurora rounded-[28px] p-6 sm:p-8">
-            <h1 className="text-3xl tracking-[0.02em]">
+          <div className="rounded-3xl border border-line bg-surface-1 p-6 sm:p-8 shadow-2xl">
+            <h1 className="text-2xl font-bold tracking-tight">
               {register ? t("auth.registerTitle") : t("auth.loginTitle")}
             </h1>
-            <p className="mt-1.5 text-sm text-muted">{register ? t("auth.bonus") : t("app.tagline")}</p>
+            <p className="mt-1 text-xs text-muted">{register ? t("auth.bonus") : t("app.tagline")}</p>
             <form onSubmit={submit} className="mt-6 space-y-4">
               <div>
                 <Label htmlFor="email">{t("auth.email")}</Label>
@@ -113,8 +115,8 @@ export default function AuthPage({ mode }: { mode: "login" | "register" }) {
                 {register && <p className="mt-1.5 text-[11px] text-muted">{t("auth.passwordHint")}</p>}
               </div>
               {register && (
-                <label className="flex items-start gap-2.5 text-xs text-muted">
-                  <input type="checkbox" checked={accept} onChange={(e) => setAccept(e.target.checked)} className="mt-0.5 h-4 w-4 accent-white" />
+                <label className="flex items-start gap-2.5 text-xs text-muted cursor-pointer select-none">
+                  <input type="checkbox" checked={accept} onChange={(e) => setAccept(e.target.checked)} className="mt-0.5 h-4 w-4 accent-white rounded" />
                   <span>
                     {t("auth.acceptTerms")} ·{" "}
                     <Link to="/terms" className="underline hover:text-ink">{t("auth.readTerms")}</Link>

@@ -17,7 +17,7 @@ async def test_public_models_match_registry_and_need_no_login():
         (p.info.id, m.id)
         for p in enabled_providers().values()
         for m in p.info.models
-        if m.kind in ("image", "video")
+        if m.kind in ("image", "video") and m.commercial_use == "yes"
     }
     assert got == want and got
     assert set(r.json()[0]) == {"provider_id", "provider", "id", "label", "kind"}
