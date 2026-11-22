@@ -5,8 +5,6 @@ import ts from "typescript";
 // Allowlist for brand, vendor names, and admin page per Q1 instructions.
 // Size limit: <= 15 entries.
 export const ALLOWLIST: Record<string, string[]> = {
-  // Admin is allowed to remain English as internal admin tooling
-  "../pages/Admin.tsx": ["__ALL__"],
   "../components/Layout.tsx": ["Aurevid", "aurevid"],
   "../components/ModelPicker.tsx": ["Seedance", "FLUX", "Wan", "OpenRouter"],
   "../pages/Landing.tsx": ["Aurevid", "AGPL-3.0"],

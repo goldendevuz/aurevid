@@ -197,7 +197,7 @@ function UserDetail({ id, onChanged, onClose }: { id: string; onChanged: () => v
       </div>
       <div className="mt-3 flex flex-wrap gap-2 text-xs">
         <Badge tone="paid">{u.credit_balance} cr</Badge>
-        {u.is_admin && <Badge tone="ok">admin</Badge>}
+        {u.is_admin && <Badge tone="ok">{t("admin.badge_admin")}</Badge>}
         {u.is_internal && <Badge tone="muted">{t("admin.internal")}</Badge>}
         {u.is_blocked && <Badge tone="danger">{t("admin.blocked")}</Badge>}
         <Badge tone="muted">{t("admin.keys")}: {data.provider_keys.join(", ") || "—"}</Badge>
@@ -262,17 +262,17 @@ function Users() {
         actions={
           <>
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("admin.search")} className="rounded-lg border border-line bg-bg/70 px-2 py-1.5 text-xs" />
-            <Select label="filter" value={filter} onChange={setFilter} options={["all", "customers", "internal", "blocked", "admins"].map((v) => [v, t(`admin.f_${v}`)])} />
-            <Select label="activity" value={activity} onChange={setActivity} options={["all", "activated", "unactivated", "tried_failed"].map((v) => [v, t(`admin.a_${v}`)])} />
-            <Select label="sort" value={sort} onChange={setSort} options={["newest", "oldest", "balance_desc", "balance_asc", "jobs_desc", "last_active"].map((v) => [v, t(`admin.s_${v}`)])} />
-            <a className="text-xs text-accent hover:underline" href={`/api/admin/export/users.csv?${qs({ filter, activity })}`} download>⬇ CSV</a>
+            <Select label={t("admin.lbl_filter")} value={filter} onChange={setFilter} options={["all", "customers", "internal", "blocked", "admins"].map((v) => [v, t(`admin.f_${v}`)])} />
+            <Select label={t("admin.lbl_activity")} value={activity} onChange={setActivity} options={["all", "activated", "unactivated", "tried_failed"].map((v) => [v, t(`admin.a_${v}`)])} />
+            <Select label={t("admin.lbl_sort")} value={sort} onChange={setSort} options={["newest", "oldest", "balance_desc", "balance_asc", "jobs_desc", "last_active"].map((v) => [v, t(`admin.s_${v}`)])} />
+            <a className="text-xs text-accent hover:underline" href={`/api/admin/export/users.csv?${qs({ filter, activity })}`} download>{t("admin.csv")}</a>
           </>
         }
       >
         <ErrorText error={error} />
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
-            <thead><tr><th className={th}>Email</th><th className={th}>{t("admin.created")}</th><th className={th}>{t("admin.credits")}</th><th className={th}>{t("admin.jobs")}</th><th className={th}>{t("admin.lastActive")}</th><th className={th} /></tr></thead>
+            <thead><tr><th className={th}>{t("admin.email")}</th><th className={th}>{t("admin.created")}</th><th className={th}>{t("admin.credits")}</th><th className={th}>{t("admin.jobs")}</th><th className={th}>{t("admin.lastActive")}</th><th className={th} /></tr></thead>
             <tbody>
               {data?.items.map((u: Json) => (
                 <tr key={u.id} className="cursor-pointer border-t border-line hover:bg-raised" onClick={() => setOpen(u.id)}>
@@ -282,7 +282,7 @@ function Users() {
                   <td className={`${td} tabular-nums`}>{u.done}/{u.jobs}</td>
                   <td className={`${td} text-muted`}>{u.last_active ?? "—"}</td>
                   <td className={`${td} space-x-1`}>
-                    {u.is_admin && <Badge tone="ok">admin</Badge>}
+                    {u.is_admin && <Badge tone="ok">{t("admin.badge_admin")}</Badge>}
                     {u.is_internal && <Badge tone="muted">{t("admin.internal")}</Badge>}
                     {u.is_blocked && <Badge tone="danger">{t("admin.blocked")}</Badge>}
                   </td>
@@ -327,17 +327,17 @@ function Jobs({ internal }: { internal: boolean }) {
         actions={
           <>
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("admin.searchJobs")} className="rounded-lg border border-line bg-bg/70 px-2 py-1.5 text-xs" />
-            <Select label="status" value={status} onChange={setStatus} options={[["", t("admin.f_all")], ...["queued", "running", "done", "failed"].map((v) => [v, t(`admin.status_${v}`)] as [string, string])]} />
-            <Select label="kind" value={kind} onChange={setKind} options={[["", t("admin.f_all")], ["image", "image"], ["video", "video"], ["upscale", "upscale"]]} />
-            <Select label="range" value={range} onChange={setRange} options={["today", "7d", "30d", "90d", "all"].map((v) => [v, t(`admin.r_${v}`)])} />
-            <a className="text-xs text-accent hover:underline" href={`/api/admin/export/jobs.csv?${qs({ range: range === "today" ? "7d" : range, include_internal: internal })}`} download>⬇ CSV</a>
+            <Select label={t("admin.lbl_status")} value={status} onChange={setStatus} options={[["", t("admin.f_all")], ...["queued", "running", "done", "failed"].map((v) => [v, t(`admin.status_${v}`)] as [string, string])]} />
+            <Select label={t("admin.lbl_kind")} value={kind} onChange={setKind} options={[["", t("admin.f_all")], ["image", "image"], ["video", "video"], ["upscale", "upscale"]]} />
+            <Select label={t("admin.lbl_range")} value={range} onChange={setRange} options={["today", "7d", "30d", "90d", "all"].map((v) => [v, t(`admin.r_${v}`)])} />
+            <a className="text-xs text-accent hover:underline" href={`/api/admin/export/jobs.csv?${qs({ range: range === "today" ? "7d" : range, include_internal: internal })}`} download>{t("admin.csv")}</a>
           </>
         }
       >
         <ErrorText error={error} />
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
-            <thead><tr><th className={th}>{t("admin.created")}</th><th className={th}>{t("admin.user")}</th><th className={th}>{t("admin.type")}</th><th className={th}>Status</th><th className={th}>{t("admin.time")}</th><th className={th}>{t("admin.credits")}</th><th className={th} /></tr></thead>
+            <thead><tr><th className={th}>{t("admin.created")}</th><th className={th}>{t("admin.user")}</th><th className={th}>{t("admin.type")}</th><th className={th}>{t("admin.status")}</th><th className={th}>{t("admin.time")}</th><th className={th}>{t("admin.credits")}</th><th className={th} /></tr></thead>
             <tbody>
               {data?.items.map((j: Json) => (
                 <tr key={j.id} className="border-t border-line">
@@ -394,14 +394,14 @@ function Payments() {
         actions={
           <>
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t("admin.searchPayments")} className="rounded-lg border border-line bg-bg/70 px-2 py-1.5 text-xs" />
-            <Select label="status" value={status} onChange={setStatus} options={[["", t("admin.f_all")], ...["created", "pending", "paid", "failed", "expired"].map((v) => [v, t(`admin.status_${v}`)] as [string, string])]} />
+            <Select label={t("admin.lbl_status")} value={status} onChange={setStatus} options={[["", t("admin.f_all")], ...["created", "pending", "paid", "failed", "expired"].map((v) => [v, t(`admin.status_${v}`)] as [string, string])]} />
           </>
         }
       >
         <ErrorText error={error} />
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
-            <thead><tr><th className={th}>{t("admin.created")}</th><th className={th}>{t("admin.user")}</th><th className={th}>{t("admin.pack")}</th><th className={th}>{t("admin.amount")}</th><th className={th}>Status</th><th className={th}>{t("admin.paidAt")}</th></tr></thead>
+            <thead><tr><th className={th}>{t("admin.created")}</th><th className={th}>{t("admin.user")}</th><th className={th}>{t("admin.pack")}</th><th className={th}>{t("admin.amount")}</th><th className={th}>{t("admin.status")}</th><th className={th}>{t("admin.paidAt")}</th></tr></thead>
             <tbody>
               {data?.items.map((o: Json) => (
                 <tr key={o.id} className="border-t border-line">
@@ -459,8 +459,8 @@ function Media() {
       title={t("admin.tab_media")}
       actions={
         <>
-          <Select label="kind" value={kind} onChange={setKind} options={[["video", t("admin.m_video")], ["image", t("admin.m_image")], ["all", t("admin.f_all")]]} />
-          <Select label="shared" value={shared} onChange={setShared} options={[["", t("admin.f_all")], ["1", t("admin.m_sharedOnly")]]} />
+          <Select label={t("admin.lbl_kind")} value={kind} onChange={setKind} options={[["video", t("admin.m_video")], ["image", t("admin.m_image")], ["all", t("admin.f_all")]]} />
+          <Select label={t("admin.lbl_shared")} value={shared} onChange={setShared} options={[["", t("admin.f_all")], ["1", t("admin.m_sharedOnly")]]} />
         </>
       }
     >
@@ -517,7 +517,7 @@ function Analytics({ internal }: { internal: boolean }) {
   const r = ret.data;
   return (
     <div className="grid gap-4 lg:grid-cols-2">
-      <Section title={t("admin.funnel")} actions={<Select label="days" value={days} onChange={setDays} options={[["7", "7d"], ["30", "30d"], ["90", "90d"], ["0", t("admin.r_all")]]} />}>
+      <Section title={t("admin.funnel")} actions={<Select label={t("admin.lbl_days")} value={days} onChange={setDays} options={[["7", "7d"], ["30", "30d"], ["90", "90d"], ["0", t("admin.r_all")]]} />}>
         {funnel.data && (
           <>
             <BarList rows={funnel.data.steps.map((s: Json) => ({ label: t(`admin.step_${s.step}`), value: s.users, note: `${s.of_previous}% · ${s.of_total}%` }))} />
@@ -545,7 +545,7 @@ function Analytics({ internal }: { internal: boolean }) {
         {r && <BarList rows={r.frequency.map((b: Json) => ({ label: t("admin.daysBucket", { b: b.bucket }), value: b.users }))} />}
         {r && (
           <table className="mt-4 w-full text-xs">
-            <thead><tr><th className={th}>Email</th><th className={th}>{t("admin.lastActive")}</th><th className={th}>{t("admin.activeDays")}</th><th className={th}>{t("admin.streak")}</th></tr></thead>
+            <thead><tr><th className={th}>{t("admin.email")}</th><th className={th}>{t("admin.lastActive")}</th><th className={th}>{t("admin.activeDays")}</th><th className={th}>{t("admin.streak")}</th></tr></thead>
             <tbody>
               {r.recent.slice(0, 10).map((u: Json) => (
                 <tr key={u.id} className="border-t border-line"><td className={td}>{u.email}</td><td className={`${td} text-muted`}>{u.last_active}</td><td className={`${td} tabular-nums`}>{u.active_days}</td><td className={`${td} tabular-nums`}>{u.streak}</td></tr>
@@ -558,8 +558,8 @@ function Analytics({ internal }: { internal: boolean }) {
         title={t("admin.cohorts")}
         actions={
           <>
-            <Select label="granularity" value={gran} onChange={setGran} options={[["weekly", t("admin.weekly")], ["monthly", t("admin.monthlyG")]]} />
-            <Select label="metric" value={metric} onChange={setMetric} options={[["activity", t("admin.m_activity")], ["jobs", t("admin.m_jobs")]]} />
+            <Select label={t("admin.lbl_granularity")} value={gran} onChange={setGran} options={[["weekly", t("admin.weekly")], ["monthly", t("admin.monthlyG")]]} />
+            <Select label={t("admin.lbl_metric")} value={metric} onChange={setMetric} options={[["activity", t("admin.m_activity")], ["jobs", t("admin.m_jobs")]]} />
           </>
         }
       >
@@ -623,7 +623,7 @@ function Moderation() {
             <BarList rows={Object.entries(mod.data.by_category as Record<string, number>).map(([k, v]) => ({ label: k, value: v }))} />
             <p className="mt-2 text-[11px] text-muted">{t("admin.privacyNote")}</p>
             <table className="mt-3 w-full text-xs">
-              <thead><tr><th className={th}>Email</th><th className={th}>{t("admin.events")}</th><th className={th}>minors</th><th className={th}>{t("admin.last")}</th><th className={th} /></tr></thead>
+              <thead><tr><th className={th}>{t("admin.email")}</th><th className={th}>{t("admin.events")}</th><th className={th}>{t("admin.minors")}</th><th className={th}>{t("admin.last")}</th><th className={th} /></tr></thead>
               <tbody>
                 {mod.data.users.map((u: Json) => (
                   <tr key={u.user_id} className="border-t border-line">
@@ -684,7 +684,7 @@ function System() {
       <Section title={t("admin.providerLimits")}>
         <p className="mb-2 text-[11px] text-muted">{t("admin.limitsNote", { n: prov.data?.user_scopes ?? 0 })}</p>
         <table className="w-full text-xs">
-          <thead><tr><th className={th}>Provider</th><th className={th}>Scope</th><th className={th}>{t("admin.usedToday")}</th><th className={th}>{t("admin.estimate")}</th><th className={th}>{t("admin.cooldown")}</th><th className={th} /></tr></thead>
+          <thead><tr><th className={th}>{t("admin.provider")}</th><th className={th}>{t("admin.scope")}</th><th className={th}>{t("admin.usedToday")}</th><th className={th}>{t("admin.estimate")}</th><th className={th}>{t("admin.cooldown")}</th><th className={th} /></tr></thead>
           <tbody>
             {prov.data?.shared.map((p: Json) => (
               <tr key={p.provider + p.scope} className="border-t border-line">
@@ -733,7 +733,7 @@ function Announcements() {
     <div className="grid gap-4 lg:grid-cols-2">
       <Section title={t("admin.newAnnouncement")}>
         <form onSubmit={create} className="space-y-2">
-          <Select label="level" value={form.level} onChange={(v) => setForm({ ...form, level: v })} options={[["info", "info"], ["warning", "warning"], ["success", "success"]]} />
+          <Select label={t("admin.lbl_level")} value={form.level} onChange={(v) => setForm({ ...form, level: v })} options={[["info", "info"], ["warning", "warning"], ["success", "success"]]} />
           {(["text_en", "text_uz", "text_ru"] as const).map((k) => (
             <textarea key={k} required={k === "text_en"} maxLength={500} rows={2} value={form[k]} onChange={(e) => setForm({ ...form, [k]: e.target.value })} placeholder={k.slice(5).toUpperCase()} className={inputClass} />
           ))}
@@ -774,7 +774,7 @@ function Audit() {
   return (
     <Section title={t("admin.tab_audit")}>
       <table className="w-full text-xs">
-        <thead><tr><th className={th}>{t("admin.created")}</th><th className={th}>Admin</th><th className={th}>{t("admin.action")}</th><th className={th}>{t("admin.target")}</th><th className={th}>{t("admin.details")}</th></tr></thead>
+        <thead><tr><th className={th}>{t("admin.created")}</th><th className={th}>{t("admin.adminCol")}</th><th className={th}>{t("admin.action")}</th><th className={th}>{t("admin.target")}</th><th className={th}>{t("admin.details")}</th></tr></thead>
         <tbody>
           {data?.map((a) => (
             <tr key={a.id} className="border-t border-line">
