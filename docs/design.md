@@ -214,3 +214,38 @@ publishable by upscaling, so the UI says what a result is instead.
 - **Stories** carry `resolution` per scene (retry too) and use the Seedance models (5 s is one of their
   durations). Clips of one model share a layout, so the ffmpeg join is a lossless copy; mixed sizes re-encode
   to the first clip's size (a 1080p re-encode is the slow case, `STITCH_TIMEOUT_SECONDS`).
+
+## E2E Testing & Screenshot Pipeline
+
+Browser end-to-end testing and canonical UI screenshot capturing are managed through Playwright (`@playwright/test@1.65.1`).
+
+### Running E2E Tests
+Ensure the backend (running with `MOCK_PROVIDER_ENABLED=true` on port 8000) and frontend Vite dev server (port 5173) are active:
+```bash
+cd frontend
+npm run e2e
+```
+This runs the full test suite across Desktop (1440x900) and Mobile (390x844) projects:
+- `no-hscroll.spec.ts`: Asserts `document.documentElement.scrollWidth <= window.innerWidth` across all public and authenticated routes (`/`, `/pricing`, `/auth`, `/library`, `/create`, `/create?mode=director`).
+- `keyboard.spec.ts`: Asserts accessible modal focus trapping (Tab/Shift+Tab cycles only within dialog) and Esc dismissal restoring focus to the trigger button for both `ModelPicker` and `JobDialog` (Lightbox).
+- `states.spec.ts`: Verifies real UI job lifecycle states (`queued`, `running`, `ready`, and `failed`) using the deterministic mock provider.
+
+### Capturing UI Screenshots
+Run the screenshot capture suite:
+```bash
+cd frontend
+SHOTS=1 npm run e2e
+```
+This generates 20 canonical full-page screenshots in `docs/img/ui-v2/` (10 views x 2 viewports):
+- `desktop-home.png` / `mobile-home.png`
+- `desktop-pricing.png` / `mobile-pricing.png`
+- `desktop-auth.png` / `mobile-auth.png`
+- `desktop-studio-image.png` / `mobile-studio-image.png`
+- `desktop-studio-video.png` / `mobile-studio-video.png`
+- `desktop-model-picker.png` / `mobile-model-picker.png` (inactive section expanded)
+- `desktop-director.png` / `mobile-director.png`
+- `desktop-library.png` / `mobile-library.png`
+- `desktop-history-tiles.png` / `mobile-history-tiles.png` (one ready tile, one running tile)
+- `desktop-lightbox.png` / `mobile-lightbox.png`
+
+All generated images are verified to be non-blank and byte-distinct (`verify_shots.py` cmp check: 0 identical pairs).

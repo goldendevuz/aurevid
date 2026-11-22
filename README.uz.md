@@ -72,6 +72,13 @@ cd frontend && npm ci && npm run dev     # http://localhost:5173
 
 Testlar: `cd backend && uv run pytest -q`, `cd frontend && npm test`.
 
+E2E testlar va skrinshotlar (backend `MOCK_PROVIDER_ENABLED=true` va frontend ishlab turganda):
+```bash
+cd frontend
+npm run e2e             # Playwright E2E testlari (hscroll, klaviatura, job holatlari)
+SHOTS=1 npm run e2e     # docs/img/ui-v2/ papkasiga yangi skrinshotlarni olish
+```
+
 ## Litsenziya
 
 AGPL-3.0-or-later. O'zgartirilgan versiyani internet xizmati sifatida ishlatsangiz, foydalanuvchilarga
