@@ -19,7 +19,8 @@ async def test_inactive_models_requires_signed_in_user():
 
 async def test_signed_in_user_sees_inactive_models(alice):
     """Signed-in user without key sees byok_only models in inactive list when server key set."""
-    get_settings().openrouter_api_key = "sk-or-server-key"
+    mock_token = "mock-server-test-token"
+    get_settings().openrouter_api_key = mock_token
     get_settings().openrouter_free_clips_per_user = 3
     r = await alice.get("/api/catalog/inactive-models")
     assert r.status_code == 200
@@ -64,12 +65,13 @@ async def test_inactive_models_when_provider_has_no_server_key(alice):
 
 async def test_inactive_models_never_leaks_other_users_keys_or_state(alice, bob):
     """Alice adding a key removes models from Alice's inactive list, but never Bob's."""
-    get_settings().openrouter_api_key = "sk-or-server-key"
+    mock_token = "mock-server-test-token"
+    get_settings().openrouter_api_key = mock_token
 
     # Alice adds her OpenRouter key
     r = await alice.put(
         "/api/me/keys/openrouter_video",
-        json={"values": {"api_key": "sk-or-alice"}},
+        json={"values": {"api_key": "mock-alice-key"}},
         headers=csrf_headers(alice),
     )
     assert r.status_code == 200
@@ -91,7 +93,8 @@ async def test_inactive_models_never_leaks_other_users_keys_or_state(alice, bob)
 
 async def test_providers_endpoint_includes_inactive_models(alice):
     """The /api/providers endpoint includes inactive_models matching the catalog."""
-    get_settings().openrouter_api_key = "sk-or-server-key"
+    mock_token = "mock-server-test-token"
+    get_settings().openrouter_api_key = mock_token
     r = await alice.get("/api/providers")
     assert r.status_code == 200
     providers = r.json()

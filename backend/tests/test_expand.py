@@ -227,7 +227,8 @@ def _mock_error_response(status_code: int):
 @pytest.fixture
 def server_key():
     s = get_settings()
-    s.openrouter_api_key = "mock-test-key-for-expand"
+    mock_token = "mock-test-key-for-expand"
+    s.openrouter_api_key = mock_token
     yield
     s.openrouter_api_key = ""
 
@@ -442,7 +443,8 @@ class TestExpandRouter:
 class TestExpandAvailable:
     async def test_with_server_key(self, alice):
         s = get_settings()
-        s.openrouter_api_key = "mock-key"
+        mock_token = "mock-key"
+        s.openrouter_api_key = mock_token
         r = await alice.get("/api/me")
         assert r.status_code == 200
         assert r.json()["expand_available"] is True

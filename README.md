@@ -16,6 +16,12 @@ Uzbek, Russian.
 
 ## Features
 
+- **Dark Studio UI System v4**: High-density, professional studio interface built with Geist Variable typography, two-column workspace (400-440px sticky composer), multi-column density switcher (2, 3, 4 columns), full keyboard-accessible lightbox modal, unified asset library with batch actions, and mobile bottom tab navigation.
+- **Expand Prompt**: One-click AI prompt expansion (`POST /api/prompt/expand`) breaking down basic prompts into rich cinematic scenes, lighting, camera direction, and audio cues, with one-click Undo.
+- **Director Mode (`/create?mode=director`)**: Guided storyboarding workflow with chat-style idea input, video duration selection (5s, 10s, 15s), editable plan card (opening frame, beat timeline, look, audio), upfront cost line, and automatic routing to single clip or multi-scene story.
+- **Expanded OpenRouter Video Models**: 12 top-tier commercial video models wired via OpenRouter (ByteDance Seedance v1 Pro/Lite, MiniMax Hailuo 01 / 2.3, Wan 2.1 T2V & I2V, Kling v1.6 Pro / Standard, Google Veo 2, OpenAI Sora, xAI Grok Imagine Video) with exact cost estimates in cents.
+- **Inactive Models Section**: Transparent ModelPicker section displaying unavailable models, specifications, upfront pricing in cents, and direct links to connect user BYOK API keys.
+- **Multi-Scene Video**: Sequence 2-4 scenes into a seamless story stitched with server-side ffmpeg, per-scene retry, and unified story cards.
 - Prompt studio: model picker, aspect ratio (1:1, 16:9, 9:16, 4:3, 3:4), size, 1-4 images
 - Video: text-to-video and **Animate** (image-to-video from any of your images), MP4 player in the gallery
 - 3 original camera presets (Gentle Drift In, Halo Orbit, Skyward Unveil) with image and camera-motion wording

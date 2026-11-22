@@ -7,7 +7,7 @@ Re-run after changing dependencies. Review any license that is not permissive.
 > ISC, PSF, 0BSD, Unlicense, MIT-CMU) except **certifi (MPL-2.0)**, a file-level weak copyleft
 > licence. We use certifi unmodified as a transitive dependency of httpx, which MPL-2.0 permits and
 > which is compatible with AGPL-3.0. If you modify certifi's files, publish those modifications.
-> Fonts: none bundled (system font stack). Icons/logo: drawn for this project.
+> Fonts: @fontsource-variable/geist (SIL Open Font License 1.1), @fontsource-variable/jetbrains-mono (OFL-1.1). Icons/logo: drawn for this project.
 > Bundled model: Real-ESRGAN realesr-general-x4v3 weights (BSD-3-Clause, (c) 2021 Xintao Wang),
 > notice in backend/app/upscale/LICENSE-Real-ESRGAN. Demo clip: our own render (AGPL).
 
@@ -73,6 +73,7 @@ Re-run after changing dependencies. Review any license that is not permissive.
 | @emnapi/core | 2.0.0-beta.2 | MIT |
 | @emnapi/runtime | 2.0.0-beta.2 | MIT |
 | @emnapi/wasi-threads | 2.2.0 | MIT |
+| @fontsource-variable/geist | 5.2.8 | SIL Open Font License 1.1 (OFL-1.1) |
 | @napi-rs/wasm-runtime | 1.2.6 | MIT |
 | @tybys/wasm-util | 0.10.5 | MIT |
 | @types/react | 19.3.0 | MIT |

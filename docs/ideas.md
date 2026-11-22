@@ -50,3 +50,15 @@ P3 = keyinroq.
 - Rasmni jonlantirish, navbat va progress (fal Video Generator): Studio, SSE, adolatli navbat.
 - Endpoint bo'yicha rate limit (Mux namunasi): `ratelimit.py`, kunlik limit.
 - Bir nechta provayder (AI SDK Image Generator): provayder registri.
+
+## O'tkazib yuborilgan / Rad etilgan narsalar (PROMPT.md bo'yicha)
+
+Quyidagi funksiyalar va elementlar Aurevid arxitekturasi va mahsulot yo'nalishini ixcham hamda generative AI'ga yo'naltirilgan holda saqlash maqsadida ataylab o'tkazib yuborildi:
+
+1. **Effektlar va filtrlar studiyasi (Effects & Filters Studio):** Aurevid toza generativ AI vositasi hisoblanadi; 2D post-processing, sticker yoki Instagram-uslubidagi filtrlar qo'shilmadi.
+2. **Hamjamiyat ijtimoiy lentalari (Community / Social Feed):** Foydalanuvchining shaxsiy kutubxonasi (`/library`) va shaxsiy ijodiy xavfsizligini ta'minlash maqsadida umumiy feed va ijtimoiy tarmoq elementlari kiritilmadi.
+3. **Mustaqil Ovoz Studiyasi / Musiqa generatori (Standalone Audio Studio):** Aurevid video va rasm yaratishga yo'naltirilgan. Audio faqat video modellarining (masalan, Seedance, Wan) ajralmas atributi sifatida boshqariladi; alohida musiqa studiyasi ortiqcha yuk.
+4. **Mega menyu (Mega Menu Navigation):** Navigatsiya maksimal sodda va qulay (Landing, Create, Pricing, Library) 4 ta asosiy tugmadan iborat bo'lib qoldi; ko'p qavatli mega-menyular kiritilmadi.
+5. **Kuki rozilik banneri (Cookie Consent Banner):** Aurevid hech qanday uchinchi tomon kuzatuvchi yoki marketing kukilaridan foydalanmaydi (faqat birinchi tomon xavfsiz sessiya kukisi ishlatiladi), shuning uchun bezovta qiluvchi bannerlar qo'shilmadi.
+6. **Reklama va e'lonlar paneli (Promo / Announcement Top Bar):** Interfeysni qorong'u, chalg'itmaydigan Dark Studio uslubida saqlash uchun tepaga yopishgan qizil/sariq promo-bannerlar rad etildi.
+

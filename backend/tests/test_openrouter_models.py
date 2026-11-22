@@ -16,7 +16,7 @@ from app.providers.registry import enabled_providers, get_provider
 from app.worker import run_once
 from tests.conftest import csrf_headers
 
-KEY = "sk-or-v1-" + "k" * 40
+KEY = "mock-openrouter-key-" + "k" * 40
 CREDS = Credentials({"api_key": KEY}, "user")
 DEMO_MP4 = Path(__file__).resolve().parent.parent / "app" / "providers" / "media" / "demo.mp4"
 MP4 = DEMO_MP4.read_bytes()
