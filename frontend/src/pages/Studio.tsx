@@ -9,6 +9,7 @@ import {
   parseDirectorPlan,
   shouldUseStory,
 } from "../director";
+import { buildExpandRequest, readExpandedPrompt, type ExpandResponse } from "../expand";
 import { api, ApiError } from "../api";
 import { useAuth } from "../auth";
 import { Icon } from "../components/icons";
@@ -142,11 +143,11 @@ export default function Studio() {
   const [directorDuration, setDirectorDuration] = useState<number>(10);
   const [directorPlan, setDirectorPlan] = useState<DirectorPlan | null>(null);
   const [draftingPlan, setDraftingPlan] = useState(false);
-  const [draftError, setDraftError] = useState<string | null>(null);
+  const [draftError, setDraftError] = useState<unknown>(null);
 
   // Expand prompt state (P1)
   const [expandBusy, setExpandBusy] = useState(false);
-  const [expandError, setExpandError] = useState<string | null>(null);
+  const [expandError, setExpandError] = useState<unknown>(null);
   const [preExpandPrompt, setPreExpandPrompt] = useState<string | null>(null);
 
   const watchers = useRef(new Map<string, () => void>());
@@ -458,20 +459,21 @@ export default function Studio() {
     setDraftingPlan(true);
     setDraftError(null);
     try {
-      const res = await api<{ original: string; expanded: string }>("/api/prompt/expand", {
+      const res = await api<ExpandResponse>("/api/prompt/expand", {
         method: "POST",
-        body: {
-          prompt: directorIdea.trim(),
+        body: buildExpandRequest({
+          prompt: directorIdea,
           kind: "video",
-          duration_sec: directorDuration,
-          aspect_ratio: aspect,
-          has_audio: Boolean(model?.has_audio),
-        },
+          durationSec: directorDuration,
+          aspect,
+          hasAudio: Boolean(model?.has_audio),
+        }),
       });
-      const plan = parseDirectorPlan(res.expanded);
-      setDirectorPlan(plan);
+      const text = readExpandedPrompt(res);
+      if (!text) throw new ApiError("expand_empty", 502);
+      setDirectorPlan(parseDirectorPlan(text));
     } catch (err) {
-      setDraftError(err instanceof ApiError ? err.message : "Failed to draft plan");
+      setDraftError(err);
     } finally {
       setDraftingPlan(false);
     }
@@ -540,14 +542,22 @@ export default function Studio() {
     setExpandBusy(true);
     setExpandError(null);
     try {
-      const res = await api<{ original: string; expanded: string }>("/api/prompt/expand", {
+      const res = await api<ExpandResponse>("/api/prompt/expand", {
         method: "POST",
-        body: { prompt: prompt.trim(), kind: mode },
+        body: buildExpandRequest({
+          prompt,
+          kind: mode,
+          durationSec: mode === "video" ? (duration ?? model?.durations?.[0] ?? null) : null,
+          aspect,
+          hasAudio: Boolean(model?.has_audio),
+        }),
       });
+      const text = readExpandedPrompt(res);
+      if (!text) throw new ApiError("expand_empty", 502);
       setPreExpandPrompt(prompt);
-      setPrompt(res.expanded);
+      setPrompt(text.slice(0, 1000));
     } catch (err) {
-      setExpandError(err instanceof ApiError ? err.message : "Failed to expand prompt");
+      setExpandError(err);
     } finally {
       setExpandBusy(false);
     }
@@ -973,7 +983,7 @@ export default function Studio() {
                         {draftingPlan ? "Drafting plan..." : "Draft plan"}
                       </button>
                     </div>
-                    {draftError && <p className="mt-2 text-xs text-danger">{draftError}</p>}
+                    <ErrorText error={draftError} />
                   </div>
 
                   {/* Plan Card */}
@@ -1206,25 +1216,27 @@ export default function Studio() {
             {/* Prompt Actions Bar */}
             <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 border-t border-line/60 pt-2">
               <div className="flex flex-wrap items-center gap-1.5">
-                {/* Expand Prompt (P1) */}
+                {/* Expand Prompt (P1): only when an OpenRouter key (user or server) exists */}
+                {user?.expand_available && (
                 <button
                   type="button"
                   onClick={() => void handleExpandPrompt()}
                   disabled={!prompt.trim() || expandBusy}
                   className="inline-flex items-center gap-1 rounded-lg border border-accent/30 bg-accent/10 px-2.5 py-1 text-[11px] font-semibold text-accent transition hover:border-accent hover:bg-accent/20 disabled:cursor-not-allowed disabled:opacity-50"
-                  title="Expand prompt into a rich cinematic description"
+                  title={t("studio.expand")}
                 >
                   <Icon name="sparkle" size={12} className={expandBusy ? "animate-spin" : ""} />
-                  {expandBusy ? "Expanding..." : "Expand prompt"}
+                  {expandBusy ? t("studio.expanding") : t("studio.expand")}
                 </button>
+                )}
                 {preExpandPrompt !== null && (
                   <button
                     type="button"
                     onClick={handleUndoExpand}
                     className="inline-flex items-center gap-1 rounded-lg border border-line px-2 py-1 text-[11px] text-muted hover:text-ink transition"
-                    title="Undo prompt expansion"
+                    title={t("studio.expandUndo")}
                   >
-                    Undo
+                    {t("studio.expandUndo")}
                   </button>
                 )}
                 {isVideo && model?.has_audio && (
@@ -1240,7 +1252,7 @@ export default function Studio() {
               </div>
             </div>
 
-            {expandError && <p className="mt-2 text-[11px] text-danger">{expandError}</p>}
+            <ErrorText error={expandError} />
           </div>
 
           {/* Example prompt chips */}
@@ -1693,7 +1705,7 @@ export default function Studio() {
                     </span>
                     <h3 className="mt-3 text-base font-semibold text-ink">Choose AI Model</h3>
                     <p className="mt-1.5 text-xs text-muted leading-relaxed">
-                      Pick from Seedance 2.5, FLUX.1, Wan 2.1, Kling, or connect your own OpenRouter key. Fine-tune aspect ratio and resolution.
+                      Pick from Seedance, FLUX.1 or Wan, or connect your own OpenRouter key. Fine-tune aspect ratio and resolution.
                     </p>
                   </div>
                 </div>

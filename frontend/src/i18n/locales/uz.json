@@ -180,7 +180,10 @@
     "expand": "Promptni kengaytirish",
     "expanding": "Kengaytirilmoqda…",
     "expandUndo": "Ortga qaytarish",
-    "expandError": "Promptni kengaytirib bo'lmadi."
+    "expandError": "Promptni kengaytirib bo'lmadi.",
+    "prompt": "Prompt",
+    "searchModels": "Modellarni qidirish",
+    "featuredModels": "Tavsiya etilgan"
   },
   "job": {
     "queued": "Navbatda",
@@ -725,7 +728,8 @@
       "title": "Ishlayotgan modellar",
       "count": "{{count}} ta model"
     },
-    "create": "Yaratish"
+    "create": "Yaratish",
+    "sampleBadge": "Namuna"
   },
   "price": {
     "selection": "{{count}} kredit",

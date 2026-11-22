@@ -180,7 +180,10 @@
     "expand": "Расширить промпт",
     "expanding": "Расширяется…",
     "expandUndo": "Отменить",
-    "expandError": "Не удалось расширить промпт."
+    "expandError": "Не удалось расширить промпт.",
+    "prompt": "Промпт",
+    "searchModels": "Поиск моделей",
+    "featuredModels": "Рекомендуемые"
   },
   "job": {
     "queued": "В очереди",
@@ -725,7 +728,8 @@
       "title": "Работающие модели",
       "count": "Моделей: {{count}}"
     },
-    "create": "Создать"
+    "create": "Создать",
+    "sampleBadge": "Пример"
   },
   "price": {
     "selection": "{{count}} кр.",

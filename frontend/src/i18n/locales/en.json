@@ -180,7 +180,10 @@
     "expand": "Expand prompt",
     "expanding": "Expanding…",
     "expandUndo": "Undo",
-    "expandError": "Could not expand the prompt."
+    "expandError": "Could not expand the prompt.",
+    "prompt": "Prompt",
+    "searchModels": "Search models",
+    "featuredModels": "Featured"
   },
   "job": {
     "queued": "Queued",
@@ -725,7 +728,8 @@
       "title": "Live models",
       "count": "{{count}} models"
     },
-    "create": "Create"
+    "create": "Create",
+    "sampleBadge": "Sample"
   },
   "price": {
     "selection": "{{count}} credits",
