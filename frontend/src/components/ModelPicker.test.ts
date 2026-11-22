@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { describe, expect, it } from "vitest";
-import type { InactiveModel } from "../types";
-import { formatInactiveModelLink, shouldExpandInactive } from "./ModelPicker";
+import type { InactiveModel, ModelInfo } from "../types";
+import { formatInactiveModelLink, getModelFamily, shouldExpandInactive } from "./ModelPicker";
 
 describe("ModelPicker - Inactive models section logic", () => {
   it("is collapsed by default when active models exist", () => {
@@ -41,5 +41,33 @@ describe("ModelPicker - Inactive models section logic", () => {
     const link = formatInactiveModelLink(mockInactive);
     expect(link.path).toBe("/settings");
     expect(link.labelKey).toBe("studio.connectKey");
+  });
+});
+
+describe("ModelPicker - Family grouping logic", () => {
+  const baseModel: ModelInfo = {
+    id: "test",
+    label: "Test",
+    kind: "video",
+    license: "test",
+    commercial_use: "yes",
+    aspect_ratios: ["16:9"],
+    credit_cost: 10,
+    max_count: 1,
+    durations: [5],
+    accepts_image: true,
+    requires_image: false,
+    upscale_targets: [],
+    upscale_credits: {},
+  };
+
+  it("categorizes models into proper families", () => {
+    expect(getModelFamily({ ...baseModel, id: "bytedance/seedance-2-5", label: "Seedance 2.5" })).toBe("Seedance");
+    expect(getModelFamily({ ...baseModel, id: "black-forest-labs/flux-1-schnell", label: "FLUX.1 Schnell" })).toBe("FLUX");
+    expect(getModelFamily({ ...baseModel, id: "wan-video/wan-2-1", label: "Wan 2.1 Video" })).toBe("Wan");
+    expect(getModelFamily({ ...baseModel, id: "kwaivgi/kling-v1-5", label: "Kling 1.5" })).toBe("Kling");
+    expect(getModelFamily({ ...baseModel, id: "minimax/hailuo", label: "Minimax Hailuo" })).toBe("Minimax Hailuo");
+    expect(getModelFamily({ ...baseModel, id: "google/veo-2", label: "Google Veo 2" })).toBe("Google Veo");
+    expect(getModelFamily({ ...baseModel, id: "openai/gpt-4o", label: "GPT-4o Vision" })).toBe("OpenAI");
   });
 });
