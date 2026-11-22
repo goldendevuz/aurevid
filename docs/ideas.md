@@ -46,6 +46,7 @@ P3 = keyinroq.
 | 26 | **Runway Aleph-2 video modeli** | Video generatsiyasi; P2 da talab bo'yicha o'tkazib yuborildi. | OpenRouter runway/aleph-2 | P3 | S | Narx va parametrlari barqarorlashgach qayta baholash. |
 | 27 | ✅ **Foydalanuvchi ko'radigan matnlarni to'liq mahalliylashtirish (i18n sweep)** | Har bir foydalanuvchi ko'radigan matn en/uz/ru tillarida chiqishi, inglizcha hardcoded matn qolmasligi | Round 2 (Q1) | P1 | S | **Bajarildi (PR #62):** 171 ta matn en, uz, ru fayllariga ko'chirildi, `hardcoded.test.ts` AST testi joriy qilindi (allowlist <= 15 ta element). Ortiqcha `@fontsource/anton` va `@fontsource/kaushan-script` paketlari olib tashlandi. |
 | 28 | ✅ **Playwright E2E sinovlari va UI skrinshotlar quvuri** | UI regressiyalari, no-hscroll (gorizontal skroll yo'qligi), modal fokus trap va Esc boshqaruvi, generatsiya holatlari | Round 2 (Q2) | P1 | M | **Bajarildi (PR #63):** `@playwright/test@1.65.1` sozlandi (`no-hscroll.spec.ts`, `keyboard.spec.ts`, `states.spec.ts`, `screenshots.spec.ts`). 20 ta kanonik skrinshot (10 ekran × 2 o'lcham) olindi va `cmp` bilan tekshirildi. |
+| 29 | **Tier tanlovi boshqa modelni Seedance'ga almashtiradi (xato)** | 2026-11-23: Studio'da qo'lda Veo 3.1 Lite tanlanganda ham Draft/Standard/Publish/Premium tier Seedance Mini/Flash/2.5 ga o'tkazib yuboradi. Tier faqat Seedance uchun tayyor to'plam. | **Ochiq xato.** Yechim: tier faqat Seedance tanlanganda ko'rinsin, yoki boshqa model tanlansa yashirilsin/o'chirilsin; modelni jimgina almashtirmasin. |
 
 ## Allaqachon bor (raqiblarda ham bor, bizda ham)
 
