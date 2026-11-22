@@ -17,3 +17,6 @@ dist/
 *.db
 *.db-wal
 *.db-shm
+# playwright
+frontend/test-results/
+frontend/playwright-report/
