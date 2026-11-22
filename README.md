@@ -110,6 +110,17 @@ cd backend && uv run ruff check . && uv run pytest -q
 cd frontend && npm run typecheck && npm test && npm run build
 ```
 
+E2E testing and UI screenshots (requires running backend with `MOCK_PROVIDER_ENABLED=true` and frontend dev server):
+```bash
+cd frontend
+npm run e2e             # run Playwright responsive, keyboard, and state tests
+SHOTS=1 npm run e2e     # capture fresh canonical UI screenshots to docs/img/ui-v2/
+```
+
+*O'zbekcha:* E2E testlar va skrinshotlar (backend `MOCK_PROVIDER_ENABLED=true` va frontend dev serveri ishlab turganda):
+`npm run e2e` - barcha E2E sinovlarni (gorizontal aylantirish, klaviatura boshqaruvi, generatsiya holatlari) ishga tushiradi;
+`SHOTS=1 npm run e2e` - `docs/img/ui-v2/` papkasiga 10 ta asosiy sahifaning desktop (1440px) va mobil (390px) skrinshotlarini oladi.
+
 ## Architecture
 
 ```

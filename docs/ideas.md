@@ -44,6 +44,8 @@ P3 = keyinroq.
 | 24 | **Avatar/gapiruvchi bosh modellari (HeyGen)** | Rasm va audiodan gapiruvchi bosh yasash; P2 da o'tkazib yuborildi, chunki audio bilan sinxron gapirish alohida avatar quvurini talab qiladi. | OpenRouter heygen | P3 | M | Kelajakda alohida "Avatar" rejimi sifatida ko'rib chiqish. |
 | 25 | **Video-to-video tahrirlash va upscale (BFL flux-video-edit, flux-video-upscale)** | Mavjud videoni o'zgartirish; P2 da o'tkazib yuborildi, chunki Aurevid text-to-video va image-to-video ga yo'naltirilgan. | OpenRouter BFL | P3 | M | Post-production qatlami bilan birlashtirish mumkin. |
 | 26 | **Runway Aleph-2 video modeli** | Video generatsiyasi; P2 da talab bo'yicha o'tkazib yuborildi. | OpenRouter runway/aleph-2 | P3 | S | Narx va parametrlari barqarorlashgach qayta baholash. |
+| 27 | ✅ **Foydalanuvchi ko'radigan matnlarni to'liq mahalliylashtirish (i18n sweep)** | Har bir foydalanuvchi ko'radigan matn en/uz/ru tillarida chiqishi, inglizcha hardcoded matn qolmasligi | Round 2 (Q1) | P1 | S | **Bajarildi (PR #62):** 171 ta matn en, uz, ru fayllariga ko'chirildi, `hardcoded.test.ts` AST testi joriy qilindi (allowlist <= 15 ta element). Ortiqcha `@fontsource/anton` va `@fontsource/kaushan-script` paketlari olib tashlandi. |
+| 28 | ✅ **Playwright E2E sinovlari va UI skrinshotlar quvuri** | UI regressiyalari, no-hscroll (gorizontal skroll yo'qligi), modal fokus trap va Esc boshqaruvi, generatsiya holatlari | Round 2 (Q2) | P1 | M | **Bajarildi (PR #63):** `@playwright/test@1.65.1` sozlandi (`no-hscroll.spec.ts`, `keyboard.spec.ts`, `states.spec.ts`, `screenshots.spec.ts`). 20 ta kanonik skrinshot (10 ekran × 2 o'lcham) olindi va `cmp` bilan tekshirildi. |
 
 ## Allaqachon bor (raqiblarda ham bor, bizda ham)
 
