@@ -197,6 +197,8 @@ async def prepare_job(
     creds = await resolve_credentials(session, provider, user_id)
     if not provider.has_usable_credentials(creds):
         raise _bad("provider_key_required")
+    if model.commercial_use == "byok_only" and creds.source != "user":
+        raise _bad("provider_key_required")
     # What the provider really renders (not the Size label): what the UI shows and what we store.
     if publish:
         gen_w, gen_h = fit_long_side(body.aspect_ratio, model.publish_max_side or 1024)

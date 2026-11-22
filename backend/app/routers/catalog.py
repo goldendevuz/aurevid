@@ -23,8 +23,11 @@ async def list_providers(user: CurrentUser, session: Session):
     publish = publish_image_model()
     for provider in enabled_providers().values():
         creds = await resolve_credentials(session, provider, user.id)
-        data = provider.info.model_dump()
-        for m_out, m in zip(data["models"], provider.info.models, strict=True):
+        visible_models = [
+            m for m in provider.info.models if m.commercial_use == "yes" or creds.source == "user"
+        ]
+        data = provider.info.model_copy(update={"models": visible_models}).model_dump()
+        for m_out, m in zip(data["models"], visible_models, strict=True):
             m_out["upscale_targets"] = allowed_upscales(m)
             m_out["upscale_credits"] = {
                 t: UPSCALE_CREDITS.get(m.kind, {}).get(t, 0) for t in m_out["upscale_targets"]
@@ -82,7 +85,7 @@ async def public_models():
         }
         for provider in enabled_providers().values()
         for m in provider.info.models
-        if m.kind in ("image", "video")
+        if m.kind in ("image", "video") and m.commercial_use == "yes"
     ]
 
 
