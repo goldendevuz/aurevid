@@ -7,7 +7,9 @@ import Layout from "./components/Layout";
 import Admin from "./pages/Admin";
 import AuthPage from "./pages/Auth";
 import History from "./pages/History";
+import Library from "./pages/Library";
 import Marketing from "./pages/Marketing";
+import Pricing from "./pages/Pricing";
 import Settings from "./pages/Settings";
 import Studio from "./pages/Studio";
 import Terms from "./pages/Terms";
@@ -51,16 +53,21 @@ export default function App() {
           <Route path="/login" element={<GuestOnly><AuthPage mode="login" /></GuestOnly>} />
           <Route path="/register" element={<GuestOnly><AuthPage mode="register" /></GuestOnly>} />
           <Route path="/" element={<Landing />} />
-          {/* Generation lives at /create, not on the homepage. "/studio" is an alias; router state (remix, prefill) is kept. */}
           <Route path="/studio" element={<StudioRedirect />} />
           <Route path="/terms" element={<Terms />} />
+
+          {/* Publicly accessible within Layout */}
+          <Route element={<Layout />}>
+            <Route path="/pricing" element={<Pricing />} />
+            <Route path="/library" element={<Library />} />
+          </Route>
+
+          {/* Protected routes */}
           <Route element={<RequireAuth><Layout /></RequireAuth>}>
             <Route path="/create" element={<Studio />} />
             <Route path="/history" element={<History />} />
-            <Route path="/library" element={<History />} />
             <Route path="/marketing" element={<Marketing />} />
             <Route path="/credits" element={<UsagePage />} />
-            <Route path="/pricing" element={<UsagePage />} />
             <Route path="/usage" element={<Navigate to="/credits" replace />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/admin" element={<Admin />} />
