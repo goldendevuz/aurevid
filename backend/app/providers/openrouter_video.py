@@ -1,20 +1,8 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
-"""OpenRouter video generation (ByteDance Seedance), billed to the user's own OpenRouter key.
+"""OpenRouter video generation, billed to the user's own OpenRouter key.
 
-API (verified by the owner with a real run, 2026-11-22): ``POST /api/v1/videos`` answers 202 with
-``{id, polling_url, status}``; ``GET /api/v1/videos/{id}`` is polled until ``completed``,
-``failed``, ``cancelled`` or ``expired`` (a failed job is ``status: "failed"`` with an error
-message, not an HTTP error); the file comes from ``GET /api/v1/videos/{id}/content`` and needs the
-Authorization header, so it is downloaded here on the server and never handed to the browser.
-There is no cancel and no estimate endpoint. Failed jobs are not billed.
-
-Money safety:
-
-* A submit whose outcome we cannot know (timeout, dropped connection, 5xx) is **never retried**:
-  the job may exist and be billed. Only a clear 429 (not accepted) is retried, with backoff.
-* A poll that runs out of time is not retried either (the clip may still finish and be billed).
-* The key goes only to ``openrouter.ai``; the poll URL is built from the job id, not taken from
-  the response, so the response cannot redirect the key anywhere else.
+Supports ByteDance Seedance (commercially allowed) and extended BYOK-only models
+(Wan 3.0, HappyHorse, Grok 1.5, Hailuo, Veo 3.1, Runway Gen-4.5).
 """
 
 import asyncio
@@ -38,30 +26,62 @@ from app.providers.base import (
 
 BASE_URL = "https://openrouter.ai/api/v1"
 CREDITS_URL = "https://openrouter.ai/settings/credits"
+
+# Core Seedance models
 MINI = "bytedance/seedance-2.0-mini"
 FLASH = "bytedance/seedance-2.5-flash"
 PRO = "bytedance/seedance-2.5"
+SEEDANCE_20 = "bytedance/seedance-2.0"
+SEEDANCE_20_FAST = "bytedance/seedance-2.0-fast"
+
+# BYOK-only models
+WAN_30 = "alibaba/wan-3.0"
+WAN_30_PRIME = "alibaba/wan-3.0-prime"
+HAPPYHORSE_10 = "alibaba/happyhorse-1.0"
+HAPPYHORSE_11 = "alibaba/happyhorse-1.1"
+GROK_15 = "x-ai/grok-imagine-video-1.5"
+HAILUO_23 = "minimax/hailuo-2.3"
+VEO_31 = "google/veo-3.1"
+VEO_31_FAST = "google/veo-3.1-fast"
+VEO_31_LITE = "google/veo-3.1-lite"
+RUNWAY_GEN_45 = "runway/gen-4.5"
+
 POLL_SECONDS = 5.0
 SUBMIT_429_RETRIES = 3
 SUBMIT_429_BACKOFF = 2.0  # seconds, doubled each time
-MAX_POLL_FAILURES = 6  # consecutive transient poll errors tolerated (the job is already paid for)
+MAX_POLL_FAILURES = 6  # consecutive transient poll errors tolerated
 DOWNLOAD_TRIES = 3
-DEADLINE_MARGIN = 20  # finish before the worker's own timeout so we report a clear error
+DEADLINE_MARGIN = 20
 _ID_RE = re.compile(r"^[A-Za-z0-9_-]{1,128}$")
 _DETAIL_MAX = 160
 TERMINAL_FAILURES = {"failed", "cancelled", "expired"}
 
 # Price margin: the real run came back 5.6% above the label (864x496 for "480p"), so estimates
-# are shown ~7% high. USD per 1M video tokens (OpenRouter model list, 2026-11-22); a second of
-# video is width * height * 24 / 1024 tokens.
+# are shown ~7% high. USD per 1M video tokens; a second of video is width*height*24/1024 tokens.
 MARGIN = 1.07
 TOKEN_FPS = 24 / 1024
 USD_PER_M_TOKENS: dict[str, dict[str, float]] = {
     MINI: {"480p": 3.5, "720p": 3.5},
     FLASH: {"480p": 7.0, "720p": 7.0},
     PRO: {"480p": 10.7, "720p": 10.7, "1080p": 11.7},
+    SEEDANCE_20: {"480p": 7.0, "720p": 7.0, "1080p": 7.7, "4K": 4.0},
+    SEEDANCE_20_FAST: {"480p": 5.6, "720p": 5.6},
 }
-# Nominal sizes from OpenRouter's `supported_sizes` per model (real files can be a bit larger).
+
+# Per-second pricing for models billed as USD/second
+USD_PER_SECOND_MODELS: dict[str, dict[str, float]] = {
+    WAN_30: {"480p": 0.05, "720p": 0.10, "1080p": 0.20},
+    WAN_30_PRIME: {"480p": 0.068, "720p": 0.14, "1080p": 0.28},
+    HAPPYHORSE_10: {"720p": 0.0988, "1080p": 0.1694},
+    HAPPYHORSE_11: {"720p": 0.0988, "1080p": 0.1278},
+    GROK_15: {"480p": 0.08, "720p": 0.14, "1080p": 0.25},
+    HAILUO_23: {"1080p": 0.0817},
+    VEO_31: {"720p": 0.40, "1080p": 0.40, "4K": 0.60},
+    VEO_31_FAST: {"720p": 0.10, "1080p": 0.12, "4K": 0.30},
+    VEO_31_LITE: {"720p": 0.05, "1080p": 0.08},
+    RUNWAY_GEN_45: {"720p": 0.12},
+}
+
 _ORDER = ["1:1", "3:4", "9:16", "4:3", "16:9"]
 
 
@@ -78,12 +98,59 @@ _V25_SIZES = _sizes(
     ("720p", [(960, 960), (834, 1112), (720, 1280), (1112, 834), (1280, 720)]),
     ("1080p", [(1080, 1080), (1080, 1440), (1080, 1920), (1440, 1080), (1920, 1080)]),
 )
+_4K_SIZES = _sizes(
+    ("480p", [(480, 480), (480, 640), (480, 854), (640, 480), (854, 480)]),
+    ("720p", [(720, 720), (720, 960), (720, 1280), (960, 720), (1280, 720)]),
+    ("1080p", [(1080, 1080), (1080, 1440), (1080, 1920), (1440, 1080), (1920, 1080)]),
+    ("4K", [(2160, 2160), (2160, 2880), (2160, 3840), (2880, 2160), (3840, 2160)]),
+)
+_VEO_SIZES = _sizes(
+    ("720p", [(720, 720), (720, 960), (720, 1280), (960, 720), (1280, 720)]),
+    ("1080p", [(1080, 1080), (1080, 1440), (1080, 1920), (1440, 1080), (1920, 1080)]),
+    ("4K", [(2160, 2160), (2160, 2880), (2160, 3840), (2880, 2160), (3840, 2160)]),
+)
+_720_1080_SIZES = _sizes(
+    ("720p", [(720, 720), (720, 960), (720, 1280), (960, 720), (1280, 720)]),
+    ("1080p", [(1080, 1080), (1080, 1440), (1080, 1920), (1440, 1080), (1920, 1080)]),
+)
+_1080_ONLY = {
+    "1080p": {
+        "16:9": (1920, 1080),
+        "9:16": (1080, 1920),
+        "1:1": (1080, 1080),
+        "4:3": (1440, 1080),
+        "3:4": (1080, 1440),
+    }
+}
+_720_ONLY = {
+    "720p": {
+        "16:9": (1280, 720),
+        "9:16": (720, 1280),
+        "1:1": (720, 720),
+        "4:3": (960, 720),
+        "3:4": (720, 960),
+    }
+}
+
 _RATIOS = ["16:9", "9:16", "1:1", "4:3", "3:4"]
-_SIZES = {
+_SIZES: dict[str, dict[str, dict[str, tuple[int, int]]]] = {
     MINI: _MINI_SIZES,
     FLASH: {k: v for k, v in _V25_SIZES.items() if k != "1080p"},
     PRO: _V25_SIZES,
+    SEEDANCE_20: _4K_SIZES,
+    SEEDANCE_20_FAST: _MINI_SIZES,
+    WAN_30: _V25_SIZES,
+    WAN_30_PRIME: _V25_SIZES,
+    HAPPYHORSE_10: _720_1080_SIZES,
+    HAPPYHORSE_11: _720_1080_SIZES,
+    GROK_15: _V25_SIZES,
+    HAILUO_23: _1080_ONLY,
+    VEO_31: _VEO_SIZES,
+    VEO_31_FAST: _VEO_SIZES,
+    VEO_31_LITE: _720_1080_SIZES,
+    RUNWAY_GEN_45: _720_ONLY,
 }
+
 _LICENSE = "Proprietary hosted API (ByteDance Seedance via OpenRouter)"
 
 
@@ -92,7 +159,17 @@ def _http(timeout: float) -> httpx.AsyncClient:
     return httpx.AsyncClient(timeout=timeout, follow_redirects=False)
 
 
+def rendered_dim(d: int) -> int:
+    """Dimension rounded UP to the next multiple of 16 strictly above listed value."""
+    return ((d // 16) + 1) * 16
+
+
 def usd_per_second(model_id: str, resolution: str, aspect: str) -> float | None:
+    # 1. Per-second priced models
+    if model_id in USD_PER_SECOND_MODELS:
+        return USD_PER_SECOND_MODELS[model_id].get(resolution)
+
+    # 2. Token-priced models
     rate = USD_PER_M_TOKENS.get(model_id, {}).get(resolution)
     size = _SIZES.get(model_id, {}).get(resolution, {}).get(aspect)
     if rate is None or size is None:
@@ -123,22 +200,37 @@ def _clean(message: str, key: str = "") -> str:
     return message[:_DETAIL_MAX]
 
 
-def _model(model_id: str, label: str, credit_cost: int, extra: dict[str, int]) -> ModelInfo:
+def _model(
+    model_id: str,
+    label: str,
+    credit_cost: int,
+    extra: dict[str, int],
+    *,
+    commercial_use: str = "yes",
+    license_str: str = _LICENSE,
+    durations: list[int] | None = None,
+    has_audio: bool = True,
+    default_res: str | None = None,
+) -> ModelInfo:
     sizes = _SIZES[model_id]
+    resolutions = list(sizes)
+    # Default to cheapest resolution unless explicitly specified
+    if default_res is None:
+        default_res = resolutions[0]
     return ModelInfo(
         id=model_id,
         label=label,
         kind="video",
-        license=_LICENSE,
-        commercial_use="yes",  # BytePlus AI terms 2.1: you own the Output (MODEL_LICENSES.md)
+        license=license_str,
+        commercial_use=commercial_use,  # type: ignore[arg-type]
         aspect_ratios=_RATIOS,
         credit_cost=credit_cost,
         max_count=1,
-        durations=[5, 4, 8, 10],
+        durations=durations or [5, 4, 8, 10],
         accepts_image=True,  # first frame
-        has_audio=True,
-        resolutions=list(sizes),
-        default_resolution="720p",  # 1080p is always an explicit choice
+        has_audio=has_audio,
+        resolutions=resolutions,
+        default_resolution=default_res,
         resolution_credits=extra,
         resolution_sizes=sizes,
     )
@@ -154,9 +246,125 @@ class OpenRouterVideoProvider(ImageProvider):
         requires_key=True,
         track_quota=False,
         models=[
-            _model(MINI, "Seedance 2.0 Mini (OpenRouter)", 3, {"720p": 2}),
-            _model(FLASH, "Seedance 2.5 Flash (OpenRouter)", 6, {"720p": 2}),
-            _model(PRO, "Seedance 2.5 (OpenRouter)", 10, {"720p": 4, "1080p": 12}),
+            # Commercially allowed (BytePlus AI terms 2.1: you own the Output)
+            _model(MINI, "Seedance 2.0 Mini (OpenRouter)", 3, {"720p": 2}, default_res="720p"),
+            _model(FLASH, "Seedance 2.5 Flash (OpenRouter)", 6, {"720p": 2}, default_res="720p"),
+            _model(
+                PRO,
+                "Seedance 2.5 (OpenRouter)",
+                10,
+                {"720p": 4, "1080p": 12},
+                default_res="720p",
+            ),
+            _model(
+                SEEDANCE_20,
+                "Seedance 2.0 (OpenRouter)",
+                6,
+                {"720p": 2, "1080p": 6, "4K": 14},
+                durations=[5, 4, 6, 8, 10, 15],
+            ),
+            _model(
+                SEEDANCE_20_FAST,
+                "Seedance 2.0 Fast (OpenRouter)",
+                5,
+                {"720p": 2},
+                durations=[5, 4, 6, 8, 10, 15],
+            ),
+            # BYOK-only models (visible and usable only with the user's own key)
+            _model(
+                WAN_30,
+                "Wan 3.0 (OpenRouter)",
+                5,
+                {"720p": 5, "1080p": 15},
+                commercial_use="byok_only",
+                license_str="Proprietary hosted API (Alibaba Wan 3.0 via OpenRouter)",
+                durations=[5, 2, 3, 4, 6, 8, 10, 15],
+            ),
+            _model(
+                WAN_30_PRIME,
+                "Wan 3.0 Prime (OpenRouter)",
+                7,
+                {"720p": 7, "1080p": 21},
+                commercial_use="byok_only",
+                license_str="Proprietary hosted API (Alibaba Wan 3.0 via OpenRouter)",
+                durations=[5, 2, 3, 4, 6, 8, 10, 15],
+            ),
+            _model(
+                HAPPYHORSE_10,
+                "HappyHorse 1.0 (OpenRouter)",
+                10,
+                {"1080p": 7},
+                commercial_use="byok_only",
+                license_str="Proprietary hosted API (Alibaba HappyHorse via OpenRouter)",
+                durations=[5, 3, 4, 6, 8, 10, 15],
+                has_audio=False,
+            ),
+            _model(
+                HAPPYHORSE_11,
+                "HappyHorse 1.1 (OpenRouter)",
+                10,
+                {"1080p": 3},
+                commercial_use="byok_only",
+                license_str="Proprietary hosted API (Alibaba HappyHorse via OpenRouter)",
+                durations=[5, 3, 4, 6, 8, 10, 15],
+                has_audio=False,
+            ),
+            _model(
+                GROK_15,
+                "Grok Imagine Video 1.5 (OpenRouter)",
+                8,
+                {"720p": 6, "1080p": 17},
+                commercial_use="byok_only",
+                license_str="Proprietary hosted API (SpaceXSI/xAI Grok via OpenRouter)",
+                durations=[5, 2, 3, 4, 6, 8, 10, 15],
+            ),
+            _model(
+                HAILUO_23,
+                "Hailuo 2.3 (OpenRouter)",
+                8,
+                {},
+                commercial_use="byok_only",
+                license_str="Proprietary hosted API (MiniMax Hailuo via OpenRouter)",
+                durations=[6, 10],
+                has_audio=False,
+            ),
+            _model(
+                VEO_31,
+                "Veo 3.1 (OpenRouter)",
+                40,
+                {"1080p": 0, "4K": 20},
+                commercial_use="byok_only",
+                license_str="Proprietary hosted API (Google Veo 3.1 via OpenRouter)",
+                durations=[4, 6, 8],
+            ),
+            _model(
+                VEO_31_FAST,
+                "Veo 3.1 Fast (OpenRouter)",
+                10,
+                {"1080p": 2, "4K": 20},
+                commercial_use="byok_only",
+                license_str="Proprietary hosted API (Google Veo 3.1 via OpenRouter)",
+                durations=[4, 6, 8],
+            ),
+            _model(
+                VEO_31_LITE,
+                "Veo 3.1 Lite (OpenRouter)",
+                5,
+                {"1080p": 3},
+                commercial_use="byok_only",
+                license_str="Proprietary hosted API (Google Veo 3.1 via OpenRouter)",
+                durations=[4, 6, 8],
+            ),
+            _model(
+                RUNWAY_GEN_45,
+                "Runway Gen-4.5 (OpenRouter)",
+                12,
+                {},
+                commercial_use="byok_only",
+                license_str="Proprietary hosted API (Runway Gen-4.5 via OpenRouter)",
+                durations=[5, 2, 3, 4, 6, 8, 10],
+                has_audio=False,
+            ),
         ],
         notes="Billed in USD to your own OpenRouter key (about 14 cents for a 4 s 480p draft, "
         "about 3 dollars for 5 s of 1080p). The estimate is shown before you generate.",
@@ -188,6 +396,8 @@ class OpenRouterVideoProvider(ImageProvider):
         model = self.model(req.model)
         if req.kind != "video" or model is None:
             raise ProviderError("Unknown OpenRouter video model")
+        if model.commercial_use == "byok_only" and creds.source != "user":
+            raise ProviderError("This model requires your own OpenRouter key")
         resolution = req.resolution or model.default_resolution or model.resolutions[0]
         body: dict = {
             "model": req.model,
@@ -195,14 +405,18 @@ class OpenRouterVideoProvider(ImageProvider):
             "duration": req.duration_s or model.durations[0],
             "resolution": resolution,
             "aspect_ratio": req.aspect_ratio,
-            "generate_audio": True,
+            "generate_audio": model.has_audio,
         }
         if req.seed is not None:
             body["seed"] = req.seed
         if req.image:
             data_uri = "data:image/jpeg;base64," + base64.b64encode(req.image).decode()
             body["frame_images"] = [
-                {"type": "image_url", "image_url": {"url": data_uri}, "frame_type": "first_frame"}
+                {
+                    "type": "image_url",
+                    "image_url": {"url": data_uri},
+                    "frame_type": "first_frame",
+                }
             ]
         headers = {"Authorization": f"Bearer {key}"}
         settings = get_settings()

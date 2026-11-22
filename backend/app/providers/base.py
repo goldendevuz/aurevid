@@ -51,7 +51,7 @@ class ModelInfo(BaseModel):
     label: str
     kind: Literal["image", "video", "upscale"] = "image"
     license: str  # SPDX id or short name, see MODEL_LICENSES.md
-    commercial_use: Literal["yes", "no", "unclear"]
+    commercial_use: Literal["yes", "no", "unclear", "byok_only"]
     aspect_ratios: list[str]
     credit_cost: int  # credits per output (image or video)
     max_count: int = 4
