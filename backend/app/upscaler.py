@@ -25,7 +25,10 @@ from PIL import Image
 from app.config import get_settings
 
 MODEL_PATH = Path(__file__).resolve().parent / "upscale" / "realesr-general-x4v3.onnx"
-TARGET_LONG_SIDE = {"4k": 3840, "8k": 7680}
+TARGET_LONG_SIDE = {"2k": 2560, "4k": 3840, "8k": 7680}
+# "Publish quality": the network sees the real render (not a shrunken copy), capped so the work
+# stays bounded: <= 1280 px long side (44 tiles) for 2K, <= 1920 px (the 8K bound) for 4K.
+PUBLISH_NET_LONG = {"2k": 1280, "4k": 1920}
 TILE = 192
 PAD = 16  # context around each tile, hides seams
 
@@ -77,8 +80,14 @@ def target_size(size: tuple[int, int], target: str) -> tuple[int, int]:
     return max(1, round(w * scale)), max(1, round(h * scale))
 
 
-def upscale(img: Image.Image, target: str, timeout: float | None = None) -> Image.Image:
-    """Upscale so the long side reaches the target. Never downscales."""
+def upscale(
+    img: Image.Image, target: str, timeout: float | None = None, net_long: int | None = None
+) -> Image.Image:
+    """Upscale so the long side reaches the target. Never downscales.
+
+    `net_long` (publish quality): feed the network the source itself, shrunk only if its long side
+    exceeds this cap, then Lanczos the 4x result to the target size (supersampling keeps it crisp).
+    """
     final = target_size(img.size, target)
     if final[0] <= img.width:
         return img
@@ -86,6 +95,9 @@ def upscale(img: Image.Image, target: str, timeout: float | None = None) -> Imag
     alpha = img.getchannel("A") if img.mode == "RGBA" else None
     # Bounded work: the network always gets exactly final/4 (resized up or down with Lanczos).
     base = (max(1, round(final[0] / 4)), max(1, round(final[1] / 4)))
+    if net_long is not None:
+        shrink = min(1.0, net_long / max(img.size))
+        base = (max(1, round(img.width * shrink)), max(1, round(img.height * shrink)))
     rgb = img.convert("RGB")
     if rgb.size != base:
         rgb = rgb.resize(base, Image.Resampling.LANCZOS)

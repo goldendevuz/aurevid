@@ -145,7 +145,24 @@
       "creditsHint": "This generation costs more credits than you have left. Top up to keep creating.",
       "creditsCta": "Get credits",
       "errorTitle": "Something went wrong"
-    }
+    },
+    "res_2k": "2K",
+    "fixedSizeHint": "This model always makes {{size}}, so the Size setting does not apply.",
+    "outputSize": "Output size",
+    "publishQuality": "Publish quality",
+    "publishTarget": "Delivered size",
+    "publishHint": "Renders at {{gen}} with the best free model that allows commercial use, then upscales it to {{final}} on our server (free, one image at a time, can take a few minutes). You get the upscaled file only.",
+    "noPublishModel": "Publish quality needs a free image model that allows commercial use; none is available right now.",
+    "videoQuality": "Video quality",
+    "tier_draft": "Draft",
+    "tier_standard": "Standard",
+    "tier_publish": "Publish",
+    "tier_premium": "Premium",
+    "tierHint_draft": "Draft: 480p, to check an idea cheaply. Not sharp enough to publish.",
+    "tierHint_standard": "Standard: 720p with Seedance Mini. Costs cents.",
+    "tierHint_publish": "Publish: 720p with Seedance 2.5 Flash, better motion and detail.",
+    "tierHint_premium": "Premium: 1080p with Seedance 2.5, the sharpest and the most expensive.",
+    "premiumWarning": "Premium 1080p costs about {{amount}} per clip, billed to your OpenRouter key."
   },
   "job": {
     "queued": "Queued",
@@ -186,7 +203,12 @@
     "editHint": "Creates a new image with FLUX.2 klein; the original stays as it is.",
     "editSubmit": "Edit image",
     "altText": "Description (alt text)",
-    "copyAltText": "Copy description"
+    "copyAltText": "Copy description",
+    "draft": "Draft",
+    "draftTitle": "Under 720p for video or under 1024 px for images: fine for review, too small to publish. Use Publish quality or a Publish video tier.",
+    "publishChip": "Publish quality",
+    "billed": "billed {{amount}}",
+    "estimated": "est. {{amount}}"
   },
   "history": {
     "title": "History",
@@ -366,7 +388,10 @@
     "stitch_failed": "The clips could not be joined. Your scenes are safe: try joining again.",
     "scene_not_failed": "Only a failed scene can be retried.",
     "story_not_stitchable": "This video cannot be joined again right now.",
-    "job_in_story": "This clip is a scene of a multi-scene video. Delete the whole video instead."
+    "job_in_story": "This clip is a scene of a multi-scene video. Delete the whole video instead.",
+    "quality_unsupported": "Publish quality is not available for this model.",
+    "resolution_unsupported": "This resolution is not supported by the model.",
+    "server_key_draft_only": "The free allowance only covers the 480p draft. Add your own OpenRouter key for 720p and 1080p."
   },
   "admin": {
     "title": "Admin panel",
@@ -684,7 +709,8 @@
     "selection_zero": "Free",
     "selectionMany": "{{count}} credits ({{n}} × {{each}})",
     "freeShare": "runs on the Aurevid key: free within your share",
-    "free": "free share"
+    "free": "free share",
+    "usdEstimate": "≈ {{amount}} billed to your key"
   },
   "tools": {
     "label": "Tool",

@@ -70,6 +70,7 @@ class ModalVideoProvider(ImageProvider):
                 license="Apache-2.0",
                 commercial_use="yes",
                 aspect_ratios=list(_SIZES),
+                fixed_dimensions=_SIZES,  # 480p-class: the Size choice has no effect
                 credit_cost=5,
                 max_count=1,
                 durations=[5, 3],
@@ -82,6 +83,7 @@ class ModalVideoProvider(ImageProvider):
                 license="LTX-2 Community License (free below USD 10M annual revenue)",
                 commercial_use="unclear",  # conditional licence: the registry hides it
                 aspect_ratios=list(_LTX_SIZES),
+                fixed_dimensions=_LTX_SIZES,
                 credit_cost=10,
                 max_count=1,
                 durations=[5, 3],

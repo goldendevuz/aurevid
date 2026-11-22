@@ -42,11 +42,17 @@ Uzbek, Russian.
 |---|---|---|---|
 | Cloudflare Workers AI (FLUX.1 schnell, FLUX.2 klein 4B incl. edit with text; Apache-2.0; plus alt text and voice prompts) | Yes, daily free allocation | Cloudflare account ID + API token (server-wide or per user) | Yes |
 | fal.ai (FLUX.1 schnell image; Wan 2.2 video and image-to-video, Apache-2.0) | **Paid** (user's own key) | fal.ai key | Yes (BYOK only) |
+| OpenRouter (ByteDance Seedance 2.0 Mini, 2.5 Flash, 2.5: 480p to 1080p video, with audio) | **Paid** in USD from your own OpenRouter key (cents for a 720p clip; the estimate shows before you generate) | OpenRouter key | Yes (BYOK only; see [MODEL_LICENSES.md](MODEL_LICENSES.md)) |
 | Modal (your own Wan 2.2 TI2V-5B on a Modal GPU, Apache-2.0; see `deploy/modal/`) | **Paid** from your Modal credit | Modal token | Yes (BYOK only) |
 | GPU worker (Wan 2.2 TI2V-5B on **your own** NVIDIA GPU, Apache-2.0; see `deploy/gpu-worker/`) | **Free** for users (0 credits; you pay only electricity) | `GPU_WORKER_TOKEN` + a GPU machine with 24 GB VRAM | **No** (off until the token is set) |
 | Pollinations | Yes, anonymous | nothing | **No**: its terms could not be verified, see [MODEL_LICENSES.md](MODEL_LICENSES.md) |
 | Offline demo (image + short video clip) | Yes | nothing | Dev only |
 
+> **Publishable output.** Wan on Modal / the GPU worker makes 832x480 (480p-class) clips and the app
+> marks such results **Draft**. For sharper work use the video quality tiers (Draft 480p, Standard 720p,
+> Publish 720p, Premium 1080p, Seedance via your OpenRouter key) and, for images, **Publish quality**
+> (FLUX.2 klein at 1920 px, then the free local upscaler to 2K or 4K).
+>
 > **Video has no free provider.** We found no hosted video API with a verifiable free tier (see
 > MODEL_LICENSES.md). Video uses the user's own key on fal.ai (about $0.15 per 5 s clip for
 > Wan 2.2 5B at the time of writing) or Modal; development uses the offline demo clip.

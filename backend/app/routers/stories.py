@@ -97,6 +97,7 @@ async def create_story(
                 size=body.size,
                 count=1,
                 duration=stories.SCENE_SECONDS,
+                resolution=body.resolution,
             )
             # Same validation and limits as POST /api/jobs. Scenes already flushed in this
             # transaction count towards the daily limit, queue admission and free share.
@@ -167,6 +168,7 @@ async def retry_scene(story_id: str, user: CurrentUser, session: Session, index:
             size=params.get("size", "large"),
             count=1,
             duration=stories.SCENE_SECONDS,
+            resolution=params.get("resolution"),
         ),
     )
     job.story_id, job.scene_index = story.id, index

@@ -88,6 +88,9 @@ def check_prompt(v: str) -> str:
 check_prompt_text = check_prompt  # name used by the edit/voice schemas
 
 
+Resolution = Literal["480p", "720p", "1080p"]
+
+
 class JobCreateIn(_In):
     prompt: str = Field(min_length=3)
     provider: str = Field(max_length=32)
@@ -99,7 +102,9 @@ class JobCreateIn(_In):
     seed: int | None = Field(default=None, ge=0, le=2**31 - 1)
     duration: int | None = Field(default=None, ge=1, le=20)  # video seconds
     image_asset_id: str | None = Field(default=None, max_length=32)  # image-to-video start frame
-    upscale: UpscaleTarget | None = None  # final resolution: 4K or 8K
+    upscale: UpscaleTarget | None = None  # final resolution: 2K, 4K or 8K (images; video 4K/8K)
+    resolution: Resolution | None = None  # video models with a resolution parameter
+    quality: Literal["standard", "publish"] = "standard"  # "publish": best free model + upscale
 
     @field_validator("prompt")
     @classmethod
@@ -114,6 +119,7 @@ class StoryCreateIn(_In):
     model: str = Field(max_length=64)
     aspect_ratio: AspectRatio = "16:9"
     size: SizeName = "large"
+    resolution: Resolution | None = None
     scenes: list[str] = Field(min_length=2, max_length=4)
     title: str | None = Field(default=None, max_length=80)
 

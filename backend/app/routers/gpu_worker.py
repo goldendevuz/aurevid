@@ -175,6 +175,8 @@ async def complete(job_id: str, file: UploadFile, session: Session):
         await session.rollback()
         delete_stored(stored.storage_key, stored.preview_key)
         raise HTTPException(status.HTTP_409_CONFLICT, detail={"code": "not_running"})
+    # The clip's own size replaces the expected one (what the UI shows is what the file is).
+    job.params = {**(job.params or {}), "width": stored.width, "height": stored.height}
     session.add(
         Asset(
             user_id=job.user_id,

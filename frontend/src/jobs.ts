@@ -64,6 +64,8 @@ export function retryJob(job: Job): Promise<Job> {
       duration: video ? (p.duration ?? null) : null,
       image_asset_id: p.image_asset_id ?? null,
       upscale: p.upscale ?? null,
+      ...(p.resolution ? { resolution: p.resolution } : {}),
+      ...(p.quality ? { quality: p.quality } : {}),
     },
   });
 }

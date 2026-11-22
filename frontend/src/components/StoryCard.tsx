@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { isDraft } from "../quality";
 import { storyProgress, storySeconds, storyTitle } from "../stories";
 import type { Scene, Story } from "../types";
 import { Icon } from "./icons";
@@ -115,7 +116,13 @@ export default function StoryCard({ story, index = 0, ...handlers }: Handlers & 
             style={{ aspectRatio: story.final.width && story.final.height ? story.final.width / story.final.height : ratio }}
             aria-label={t("story.final")}
           />
-          <p className="mt-1.5 text-[11px] tabular-nums text-muted">{t("story.duration", { count: storySeconds(story) })} · {t("price.selection", { count: story.cost })}</p>
+          <p className="mt-1.5 flex flex-wrap items-center gap-x-2 text-[11px] tabular-nums text-muted">
+            <span>{story.final.width}×{story.final.height}</span>
+            {isDraft(story.final.mime, story.final.width, story.final.height) && (
+              <span className="rounded-full bg-accent-3/15 px-2 py-0.5 font-semibold text-accent-3" title={t("job.draftTitle")}>{t("job.draft")}</span>
+            )}
+            <span>{t("story.duration", { count: storySeconds(story) })} · {t("price.selection", { count: story.cost })}</span>
+          </p>
         </div>
       )}
 

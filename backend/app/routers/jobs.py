@@ -11,14 +11,19 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 
-from app import db
+from app import db, upscaler
 from app.config import get_settings
 from app.deps import CurrentUser, Session, not_found
 from app.images import delete_stored
 from app.models import Asset, Job, JobStatus, ModerationEvent, new_id
 from app.moderation import moderator
-from app.providers.base import UPSCALE_CREDITS, dimensions
-from app.providers.registry import allowed_upscales, get_provider, resolve_credentials
+from app.providers.base import UPSCALE_CREDITS, fit_long_side, output_dimensions
+from app.providers.registry import (
+    allowed_upscales,
+    get_provider,
+    publish_image_model,
+    resolve_credentials,
+)
 from app.ratelimit import hit
 from app.schemas import AssetOut, FacetOut, JobCreateIn, JobFacetsOut, JobOut
 from app.services import allowance, credits, queue, quota
@@ -152,6 +157,33 @@ async def prepare_job(
     if body.upscale and body.upscale not in allowed_upscales(model):
         raise _bad("upscale_unsupported")
 
+    resolution = None
+    if model.resolutions:
+        resolution = body.resolution or model.default_resolution or model.resolutions[0]
+        if resolution not in model.resolutions:
+            raise _bad("resolution_unsupported")
+    elif body.resolution:
+        raise _bad("resolution_unsupported")
+
+    # "Publish quality": the best free, commercially allowed image model at its largest size,
+    # then the local upscaler. One image at a time (CPU and free-share bounds).
+    publish = body.quality == "publish"
+    upscale = body.upscale
+    if publish:
+        chosen = publish_image_model()
+        if (
+            model.kind != "image"
+            or body.image_asset_id
+            or chosen is None
+            or (provider.info.id, model.id) != (chosen[0].info.id, chosen[1].id)
+        ):
+            raise _bad("quality_unsupported")
+        if body.count != 1:
+            raise _bad("count_too_high")
+        upscale = upscale or "2k"
+        if upscale not in ("2k", "4k"):
+            raise _bad("upscale_unsupported")
+
     if body.image_asset_id:
         if not model.accepts_image:
             raise _bad("image_input_unsupported")
@@ -165,13 +197,29 @@ async def prepare_job(
     creds = await resolve_credentials(session, provider, user_id)
     if not provider.has_usable_credentials(creds):
         raise _bad("provider_key_required")
+    # What the provider really renders (not the Size label): what the UI shows and what we store.
+    if publish:
+        gen_w, gen_h = fit_long_side(body.aspect_ratio, model.publish_max_side or 1024)
+    else:
+        gen_w, gen_h = output_dimensions(model, body.aspect_ratio, body.size, resolution)
+    width, height = gen_w, gen_h
+    if (
+        model.kind == "image"
+        and upscale
+        and upscaler.target_size((gen_w, gen_h), upscale)[0] > gen_w
+    ):
+        width, height = upscaler.target_size((gen_w, gen_h), upscale)
+    weight = provider.quota_weight(model.id, gen_w, gen_h) if model.kind == "image" else 1
     if creds.source == "server":
         # The owner's key is shared: each user gets a fair free share (services/allowance.py).
+        if not provider.server_allows(model.id, resolution):
+            raise _bad("server_key_draft_only")
+        needed = body.count * weight
         if provider.info.id in allowance.LIFETIME_PROVIDERS:
-            if body.count > await allowance.monthly_left(session, provider.info.id):
+            if needed > await allowance.monthly_left(session, provider.info.id):
                 raise _bad("free_month_used", status.HTTP_429_TOO_MANY_REQUESTS)
         left = await allowance.server_left(session, provider, user_id)
-        if left is not None and body.count > left:
+        if left is not None and needed > left:
             raise _bad("free_share_used", status.HTTP_429_TOO_MANY_REQUESTS)
     if provider.info.track_quota:
         q = await quota.view(
@@ -201,12 +249,15 @@ async def prepare_job(
     await check_daily_limit(session, user_id)
     await queue.admit(session, user_id)
 
-    width, height = dimensions(body.aspect_ratio, body.size)
     job_id = new_id()
-    per_output = model.credit_cost
-    if body.upscale:
-        per_output += UPSCALE_CREDITS[model.kind][body.upscale]
+    per_output = model.credit_cost + model.resolution_credits.get(resolution or "", 0)
+    if upscale:
+        per_output += UPSCALE_CREDITS[model.kind][upscale]
     cost = per_output * body.count
+    estimated_usd = None
+    if resolution and duration:
+        rate = provider.usd_per_second(model.id, resolution, body.aspect_ratio)
+        estimated_usd = round(rate * duration, 4) if rate is not None else None
     job = Job(
         id=job_id,
         user_id=user_id,
@@ -222,13 +273,20 @@ async def prepare_job(
         params={
             "aspect_ratio": body.aspect_ratio,
             "size": body.size,
+            # Expected real output size; the worker replaces it with the file's own size.
             "width": width,
             "height": height,
+            "gen_width": gen_w,  # what the provider is asked for (before any upscaling)
+            "gen_height": gen_h,
             "seed": body.seed,
             "duration": duration,
             "image_asset_id": body.image_asset_id,
-            "upscale": body.upscale,
+            "upscale": upscale,
             "final_prompt": final_prompt,
+            **({"resolution": resolution} if resolution else {}),
+            **({"quality": "publish"} if publish else {}),
+            **({"quota_weight": weight} if weight > 1 else {}),
+            **({"estimated_usd": estimated_usd} if estimated_usd is not None else {}),
         },
     )
     return job

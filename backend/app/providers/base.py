@@ -10,11 +10,11 @@ from pydantic import BaseModel
 
 AspectRatio = Literal["1:1", "16:9", "9:16", "4:3", "3:4"]
 SizeName = Literal["small", "medium", "large"]
-UpscaleTarget = Literal["4k", "8k"]
+UpscaleTarget = Literal["2k", "4k", "8k"]
 
 # Extra credits per output for reaching 4K / 8K (CPU time for images, paid upscaler for video).
 UPSCALE_CREDITS: dict[str, dict[str, int]] = {
-    "image": {"4k": 1, "8k": 3},
+    "image": {"2k": 1, "4k": 1, "8k": 3},
     "video": {"4k": 4, "8k": 10},
 }
 
@@ -35,6 +35,17 @@ def dimensions(aspect: str, size: str) -> tuple[int, int]:
     return int(w * scale) // 64 * 64, int(h * scale) // 64 * 64
 
 
+def fit_long_side(aspect: str, long_side: int) -> tuple[int, int]:
+    """Largest size of this aspect ratio whose long side is `long_side` (multiples of 64, the
+    ratio kept as closely as that grid allows). Used by "Publish quality" images."""
+    w, h = ASPECT_DIMENSIONS[aspect]
+    scale = long_side / max(w, h)
+    return tuple(  # type: ignore[return-value]
+        long_side if side == max(w, h) else max(64, round(side * scale / 64) * 64)
+        for side in (w, h)
+    )
+
+
 class ModelInfo(BaseModel):
     id: str
     label: str
@@ -49,6 +60,30 @@ class ModelInfo(BaseModel):
     requires_image: bool = False
     has_audio: bool = False  # video only: the model generates a soundtrack / speech
     upscale_targets: list[str] = []  # video: provider-side upscaling; images use the local upscaler
+    # Models that ignore the Size choice produce exactly this (width, height) per aspect ratio.
+    # The job stores it, so what the UI shows is what the file really is.
+    fixed_dimensions: dict[str, tuple[int, int]] = {}
+    # Video models with a resolution parameter (first / default_resolution = the cheap default):
+    resolutions: list[str] = []
+    default_resolution: str | None = None
+    resolution_credits: dict[str, int] = {}  # extra credits on top of credit_cost, per resolution
+    # Nominal output size per resolution and aspect ratio (the real file may be a little larger).
+    resolution_sizes: dict[str, dict[str, tuple[int, int]]] = {}
+    # Image "Publish quality": the largest long side the model renders natively. A model is
+    # publish-capable only when this is set (and it is free to use and commercially allowed).
+    publish_max_side: int | None = None
+
+
+def output_dimensions(
+    model: ModelInfo, aspect: str, size: str, resolution: str | None = None
+) -> tuple[int, int]:
+    """The real (nominal for resolution-based video) output size of one result."""
+    if resolution and resolution in model.resolution_sizes:
+        sizes = model.resolution_sizes[resolution]
+        return sizes.get(aspect) or next(iter(sizes.values()))
+    if aspect in model.fixed_dimensions:
+        return model.fixed_dimensions[aspect]
+    return dimensions(aspect, size)
 
 
 class ProviderInfo(BaseModel):
@@ -87,6 +122,7 @@ class GenerationRequest:
     image: bytes | None = field(default=None, repr=False)  # JPEG start frame (image-to-video)
     upscale: str | None = None  # "4k" | "8k" (video adapters handle it themselves)
     workdir: Path | None = None  # where adapters may stream large downloads
+    resolution: str | None = None  # video: "480p" | "720p" | "1080p" for models that take one
 
 
 @dataclass
@@ -94,6 +130,7 @@ class GeneratedMedia:
     data: bytes
     mime: str
     path: Path | None = None  # large results are streamed to disk instead of held in memory
+    meta: dict = field(default_factory=dict)  # what the provider reported, e.g. {"usd_cost": 0.14}
 
 
 GeneratedImage = GeneratedMedia  # backwards-compatible name
@@ -123,6 +160,22 @@ class ImageProvider(ABC):
 
     def has_usable_credentials(self, creds: Credentials) -> bool:
         return not self.info.requires_key or creds.source != "none"
+
+    def quota_weight(self, model_id: str, width: int, height: int) -> int:
+        """How many "outputs" of the daily free share one result of this size uses (>= 1).
+
+        Providers that bill by pixels (Cloudflare Neurons) override this, so a big image cannot
+        use several times its share of a free allocation.
+        """
+        return 1
+
+    def server_allows(self, model_id: str, resolution: str | None) -> bool:
+        """May the owner's (server) key run this model/resolution? Paid providers restrict it."""
+        return True
+
+    def usd_per_second(self, model_id: str, resolution: str, aspect: str) -> float | None:
+        """Estimated USD per second of video (margin included), None when not priced per second."""
+        return None
 
     @abstractmethod
     async def generate(self, req: GenerationRequest, creds: Credentials) -> GeneratedMedia: ...

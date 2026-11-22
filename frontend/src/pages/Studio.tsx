@@ -12,7 +12,8 @@ import ResultPanel from "../components/ResultPanel";
 import VoiceButton from "../components/VoiceButton";
 import { Badge, Button, EmptyState, ErrorText, Segmented } from "../components/ui";
 import StoryCard from "../components/StoryCard";
-import { onFreeShare, priceOf } from "../pricing";
+import { defaultResolution, onFreeShare, priceOf } from "../pricing";
+import { VIDEO_TIERS, activeTier, estimatedUsd, expectedDimensions, ignoresSize, isDraft, resolutionClass, sizeText, usdLabel, type TierId } from "../quality";
 import { MAX_SCENES, MIN_SCENES, STORY_SCENE_SECONDS, addScene, canSubmitStory, removeScene, storyCapable, storyPrice, trimScenes } from "../stories";
 import { useStories } from "../useStories";
 import type { Asset, Job, ModelInfo, Preset, Provider, Story } from "../types";
@@ -80,7 +81,10 @@ export default function Studio() {
   const [count, setCount] = useState(1);
   const [duration, setDuration] = useState<number | null>(null);
   const [startImage, setStartImage] = useState<Asset | null>(null);
-  const [resolution, setResolution] = useState<"native" | "4k" | "8k">("native");
+  const [resolution, setResolution] = useState<"native" | "2k" | "4k" | "8k">("native");
+  const [videoRes, setVideoRes] = useState<string | null>(null); // Seedance resolution (480p/720p/1080p)
+  const [publish, setPublish] = useState(false); // image "Publish quality"
+  const [publishTarget, setPublishTarget] = useState<"2k" | "4k">("2k");
   const [wantAspect, setWantAspect] = useState<string | null>(null);
   const [presetId, setPresetId] = useState<string>("");
   const [picking, setPicking] = useState(false);
@@ -178,7 +182,11 @@ export default function Studio() {
   const hasStoryModels = useMemo(() => providers.some((p) => p.models.some(storyCapable)), [providers]);
   const multiWanted = mode === "video" && sceneMode === "multi" && hasStoryModels;
   const choices = useMemo(
-    () => providers.flatMap((p) => p.models.filter((m) => m.kind === mode && (!multiWanted || storyCapable(m))).map((m) => ({ p, m }))),
+    () =>
+      providers
+        .flatMap((p) => p.models.filter((m) => m.kind === mode && (!multiWanted || storyCapable(m))).map((m) => ({ p, m })))
+        // Our own Modal Wan GPU clips are 480p-class drafts: listed, but never first.
+        .sort((a, b) => Number(a.p.id === "modal_video") - Number(b.p.id === "modal_video")),
     [providers, mode, multiWanted],
   );
   const selected = choices.find(({ p, m }) => `${p.id}|${m.id}` === modelKey);
@@ -188,7 +196,9 @@ export default function Studio() {
   // Keep a valid model selected for the mode (prefer available, and image-capable when animating).
   useEffect(() => {
     if (selected || choices.length === 0) return;
+    const standard = mode === "video" ? choices.find(({ p, m }) => p.available && activeTier(p.id, m.id, defaultResolution(m)) === "standard") : undefined;
     const pick =
+      standard ??
       (wantAspect
         ? choices.find(({ p, m }) => p.available && m.aspect_ratios.includes(wantAspect) && (!startImage || m.accepts_image))
         : undefined) ??
@@ -196,7 +206,13 @@ export default function Studio() {
       choices.find(({ p }) => p.available) ??
       choices[0];
     setModelKey(`${pick.p.id}|${pick.m.id}`);
-  }, [choices, selected, startImage, wantAspect]);
+  }, [choices, selected, startImage, wantAspect, mode]);
+
+  // A model with a resolution parameter always has a valid one selected (cheap default, never 1080p).
+  useEffect(() => {
+    if (model?.resolutions?.length && (!videoRes || !model.resolutions.includes(videoRes))) setVideoRes(defaultResolution(model));
+    if (!model?.resolutions?.length && videoRes) setVideoRes(null);
+  }, [model, videoRes]);
 
   // Compare and recipe tools work on image models; recipes animate with an image-capable video model.
   const imageChoices = useMemo(
@@ -211,6 +227,10 @@ export default function Studio() {
     () => compareKeys.map((k) => imageChoices.find(({ p, m }) => `${p.id}|${m.id}` === k)).filter((c) => c !== undefined),
     [compareKeys, imageChoices],
   );
+  useEffect(() => {
+    if (publish && model && !model.publish_quality) setPublish(false); // another model was picked
+  }, [publish, model]);
+  const publishChoice = imageChoices.find(({ m }) => m.publish_quality);
   const videoChoice = animateChoices.find(({ p, m }) => `${p.id}|${m.id}` === videoKey);
   useEffect(() => {
     if (tool === "recipe" && !videoChoice && animateChoices.length > 0) {
@@ -242,7 +262,7 @@ export default function Studio() {
   }, [model, resolution]);
 
   const upscaleAsset = useCallback(
-    async (asset: Asset, target: "4k" | "8k") => {
+    async (asset: Asset, target: "2k" | "4k" | "8k") => {
       setError(null);
       try {
         const job = await api<Job>(`/api/assets/${asset.id}/upscale`, { method: "POST", body: { target } });
@@ -284,7 +304,11 @@ export default function Studio() {
     setCount(video ? 1 : Math.max(1, job.count));
     setPresetId(job.preset_id ?? "");
     setDuration(video ? (job.params.duration ?? null) : null);
-    setResolution(job.params.upscale ?? "native");
+    const publishJob = job.params.quality === "publish";
+    setPublish(publishJob);
+    if (publishJob && (job.params.upscale === "2k" || job.params.upscale === "4k")) setPublishTarget(job.params.upscale);
+    setResolution(publishJob ? "native" : (job.params.upscale ?? "native"));
+    setVideoRes(job.params.resolution ?? null);
     setStartImage(null);
     setModelKey(`${job.provider}|${job.model}`); // falls back to a valid model if it is gone
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -405,7 +429,7 @@ export default function Studio() {
       const story = await api<Story>("/api/stories", {
         method: "POST",
         headers: { "Idempotency-Key": crypto.randomUUID() },
-        body: { provider: provider.id, model: model.id, aspect_ratio: aspect, size, scenes: trimScenes(scenePrompts) },
+        body: { provider: provider.id, model: model.id, aspect_ratio: aspect, size, scenes: trimScenes(scenePrompts), ...(videoRes ? { resolution: videoRes } : {}) },
       });
       trackStory(story);
       setFocusStoryId(story.id);
@@ -437,11 +461,13 @@ export default function Studio() {
           model: model.id,
           aspect_ratio: aspect,
           size,
-          count: video ? 1 : count,
+          count: video || publishOn ? 1 : count,
           preset_id: presetId || null,
           duration: video ? duration : null,
           image_asset_id: video && startImage && model.accepts_image ? startImage.id : null,
-          upscale: resolution === "native" ? null : resolution,
+          upscale: publishOn ? publishTarget : resolution === "native" ? null : resolution,
+          ...(publishOn ? { quality: "publish" } : {}),
+          ...(video && videoRes ? { resolution: videoRes } : {}),
         },
       });
       upsertJob(job);
@@ -461,8 +487,31 @@ export default function Studio() {
   const multi = multiWanted && storyCapable(model);
   const sceneCount = scenePrompts.length;
   // Upfront price of exactly what will be sent (same formula as the backend).
-  const price = priceOf(model, isVideo ? 1 : count, resolution);
-  const storyCost = storyPrice(model, sceneCount);
+  const publishOn = publish && !isVideo && single && Boolean(model?.publish_quality);
+  const price = priceOf(model, isVideo || publishOn ? 1 : count, publishOn ? publishTarget : resolution, isVideo ? videoRes : null);
+  const storyCost = storyPrice(model, sceneCount, videoRes);
+  const sizeIgnored = ignoresSize(model) || publishOn;
+  const outSize = expectedDimensions(model, { aspect, size, resolution: videoRes, publish: publishOn, upscale: publishOn ? publishTarget : resolution });
+  const outKind = isVideo ? "video/mp4" : "image/webp";
+  const outDraft = outSize ? isDraft(outKind, outSize[0], outSize[1]) : false;
+  const usdOne = isVideo ? estimatedUsd(model, videoRes, aspect, multi ? STORY_SCENE_SECONDS : duration) : null;
+  const usd = usdOne === null ? null : usdOne * (multi ? sceneCount : 1);
+  const usdText = usd === null ? null : usdLabel(usd);
+  const tier: TierId | null = isVideo ? activeTier(provider?.id, model?.id, videoRes) : null;
+  const tierChoices = isVideo ? VIDEO_TIERS.map((t) => ({ tier: t, choice: choices.find(({ p, m }) => p.id === t.provider && m.id === t.model) })).filter((x) => x.choice) : [];
+  const pickTier = (id: TierId) => {
+    const t = VIDEO_TIERS.find((x) => x.id === id)!;
+    setModelKey(`${t.provider}|${t.model}`);
+    setVideoRes(t.resolution);
+  };
+  const togglePublish = (on: boolean) => {
+    setPublish(on);
+    if (on && publishChoice) {
+      setModelKey(`${publishChoice.p.id}|${publishChoice.m.id}`);
+      setCount(1);
+      setResolution("native");
+    }
+  };
   const total = multi
     ? storyCost.total
     : activeTool === "compare"
@@ -609,6 +658,17 @@ export default function Studio() {
                 { value: "multi", label: <span className="flex items-center gap-1.5"><Icon name="layers" size={15} />{t("story.multi")}</span> },
               ]}
             />
+          </div>
+        )}
+        {isVideo && tierChoices.length > 0 && (
+          <div className="mb-3 flex flex-col items-center gap-1.5">
+            <Segmented
+              label={t("studio.videoQuality")}
+              value={(tier ?? "") as TierId}
+              onChange={pickTier}
+              options={tierChoices.map(({ tier: x }) => ({ value: x.id, label: t(`studio.tier_${x.id}`) }))}
+            />
+            {tier && <p className="max-w-md text-center text-[11px] text-muted">{t(`studio.tierHint_${tier}`)}</p>}
           </div>
         )}
         {!isVideo && (
@@ -835,15 +895,25 @@ export default function Studio() {
               </select>
             </label>
 
-            <label className={chip}>
-              <Icon name="expand" size={15} className="text-muted" />
-              <span className="sr-only">{t("studio.size")}</span>
-              <select value={size} onChange={(e) => setSize(e.target.value as typeof size)} className={selectChip}>
-                {SIZES.map((x) => (
-                  <option key={x} value={x}>{t(`studio.size_${x}`)}</option>
-                ))}
-              </select>
-            </label>
+            {sizeIgnored && outSize ? (
+              <span className={`${chip} font-mono tabular-nums`} title={t("studio.outputSize")}>
+                <Icon name="expand" size={15} className="text-muted" />
+                <span className="sr-only">{t("studio.outputSize")}: </span>
+                {sizeText(outSize[0], outSize[1])}
+                {resolutionClass(outKind, outSize[0], outSize[1]) ? ` · ${resolutionClass(outKind, outSize[0], outSize[1])}` : ""}
+                {outDraft && <Badge tone="paid">{t("job.draft")}</Badge>}
+              </span>
+            ) : (
+              <label className={chip}>
+                <Icon name="expand" size={15} className="text-muted" />
+                <span className="sr-only">{t("studio.size")}</span>
+                <select value={size} onChange={(e) => setSize(e.target.value as typeof size)} className={selectChip}>
+                  {SIZES.map((x) => (
+                    <option key={x} value={x}>{t(`studio.size_${x}`)}</option>
+                  ))}
+                </select>
+              </label>
+            )}
 
             {multi ? (
               <span className={chip}>
@@ -861,7 +931,7 @@ export default function Studio() {
                 </select>
               </label>
             ) : (
-              single && <label className={chip}>
+              single && !publishOn && <label className={chip}>
                 <Icon name="layers" size={15} className="text-muted" />
                 <span className="sr-only">{t("studio.count")}</span>
                 <select value={count} onChange={(e) => setCount(Number(e.target.value))} className={selectChip}>
@@ -872,7 +942,31 @@ export default function Studio() {
               </label>
             )}
 
-            {single && !multi && model && model.upscale_targets.length > 0 && (
+            {activeTool === "single" && !isVideo && publishChoice && (
+              <button
+                type="button"
+                aria-pressed={publishOn}
+                onClick={() => togglePublish(!publishOn)}
+                className={`${chip} ${publishOn ? "border-white/60 bg-white/10" : ""}`}
+              >
+                <Icon name="sparkle" size={15} className={publishOn ? "text-accent" : "text-muted"} />
+                {t("studio.publishQuality")}
+              </button>
+            )}
+
+            {publishOn && (
+              <label className={chip}>
+                <Icon name="wand" size={15} className="text-muted" />
+                <span className="sr-only">{t("studio.publishTarget")}</span>
+                <select value={publishTarget} onChange={(e) => setPublishTarget(e.target.value as typeof publishTarget)} className={selectChip}>
+                  {(["2k", "4k"] as const).map((r) => (
+                    <option key={r} value={r}>{t(`studio.res_${r}`)}</option>
+                  ))}
+                </select>
+              </label>
+            )}
+
+            {single && !multi && !publishOn && model && model.upscale_targets.length > 0 && (
               <label className={chip}>
                 <Icon name="wand" size={15} className="text-muted" />
                 <span className="sr-only">{t("studio.resolution")}</span>
@@ -899,6 +993,9 @@ export default function Studio() {
               <span className="font-mono font-medium text-ink/90">
                 {multi ? t("story.cost", { count: total, n: sceneCount, each: storyCost.each }) : price.count > 1 && single ? t("price.selectionMany", { count: total, n: price.count, each: price.each }) : t("studio.cost", { count: total })}
               </span>
+              {usdText && (
+                <span className="font-mono font-medium text-ink/90" title={usdText.exact}> · {t("price.usdEstimate", { amount: usdText.short })}</span>
+              )}
               {single && onFreeShare(provider) && <span className="text-ok"> · {t("price.freeShare")}</span>} · <span className="font-mono tabular-nums">{t("studio.chars", { count: prompt.length, max: MAX_PROMPT })}</span>
             </p>
             {single && provider && model && (
@@ -914,6 +1011,23 @@ export default function Studio() {
             )}
           </div>
           {isVideo && <p className="px-2 pt-2 text-[11px] text-muted">{t("studio.videoWait")}</p>}
+          {sizeIgnored && !publishOn && outDraft && (
+            <p className="px-2 pt-2 text-[11px] text-accent-3">{t("job.draftTitle")}</p>
+          )}
+          {ignoresSize(model) && outSize && !model?.resolutions?.length && (
+            <p className="px-2 pt-2 text-[11px] text-muted">{t("studio.fixedSizeHint", { size: sizeText(outSize[0], outSize[1]) })}</p>
+          )}
+          {publishOn && outSize && (
+            <p className="px-2 pt-2 text-[11px] text-muted">
+              {t("studio.publishHint", {
+                gen: sizeText(...(expectedDimensions(model, { aspect, size, publish: true }) ?? outSize)),
+                final: sizeText(outSize[0], outSize[1]),
+              })}
+            </p>
+          )}
+          {isVideo && videoRes === "1080p" && usdText && (
+            <p role="status" className="px-2 pt-2 text-[11px] font-medium text-accent-3">{t("studio.premiumWarning", { amount: usdText.short })}</p>
+          )}
           {multi && <p className="px-2 pt-2 text-[11px] text-muted">{t("story.hint", { seconds: STORY_SCENE_SECONDS })}</p>}
           {isVideo && model?.has_audio && (
             <p className="flex flex-wrap items-center gap-x-2 gap-y-1 px-2 pt-2 text-[11px] text-muted">

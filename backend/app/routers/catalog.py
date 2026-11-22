@@ -5,7 +5,12 @@ from fastapi import APIRouter
 
 from app.deps import CurrentUser, Session
 from app.providers.base import UPSCALE_CREDITS
-from app.providers.registry import allowed_upscales, enabled_providers, resolve_credentials
+from app.providers.registry import (
+    allowed_upscales,
+    enabled_providers,
+    publish_image_model,
+    resolve_credentials,
+)
 from app.services import allowance, quota
 from app.services.presets import load_presets
 
@@ -15,6 +20,7 @@ router = APIRouter(prefix="/api", tags=["catalog"])
 @router.get("/providers")
 async def list_providers(user: CurrentUser, session: Session):
     out = []
+    publish = publish_image_model()
     for provider in enabled_providers().values():
         creds = await resolve_credentials(session, provider, user.id)
         data = provider.info.model_dump()
@@ -22,6 +28,21 @@ async def list_providers(user: CurrentUser, session: Session):
             m_out["upscale_targets"] = allowed_upscales(m)
             m_out["upscale_credits"] = {
                 t: UPSCALE_CREDITS.get(m.kind, {}).get(t, 0) for t in m_out["upscale_targets"]
+            }
+            # "Publish quality" runs on exactly one model: the best free, commercial one.
+            m_out["publish_quality"] = publish is not None and (
+                publish[0].info.id,
+                publish[1].id,
+            ) == (
+                provider.info.id,
+                m.id,
+            )
+            # Estimated USD per second of video, per resolution and aspect ratio (margin included).
+            m_out["usd_per_second"] = {
+                res: {a: provider.usd_per_second(m.id, res, a) for a in m.resolution_sizes[res]}
+                for res in m.resolutions
+                if provider.usd_per_second(m.id, res, next(iter(m.resolution_sizes[res])))
+                is not None
             }
         data["available"] = provider.has_usable_credentials(creds)
         data["key_source"] = creds.source  # "server" | "user" | "none"; never the key itself
