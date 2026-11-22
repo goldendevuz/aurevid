@@ -50,7 +50,79 @@ and layouts were designed for Aurevid and do not copy any other product's artwor
   toggles, labelled icon-only buttons, `prefers-reduced-motion` respected.
 - **Charts:** series colours stay a CVD-safe gold/blue pair, separate from the brand gradient.
 
-## Neon Coast (v3, current, temporary)
+## Aurevid Dark Studio (v4, current)
+
+> **Direction:** "dark studio": quiet, neutral, premium; colour appears only where it means something.
+> Replaces Neon Coast. Removes hot-pink/orange/teal neon accents, the Anton poster display font,
+> Kaushan script and the blueprint grid/scenery. Headings use Geist 600 with tight tracking (-0.02em);
+> numbers use tabular figures (`font-variant-numeric: tabular-nums`).
+
+### 1. Palette & Surface Tokens
+| Token | Value | Role |
+|---|---|---|
+| `--bg` | `#09090b` | Page background (near-black, slightly cool) |
+| `--surface-1` | `#111113` | Panels, cards, modal backings |
+| `--surface-2` | `#17171a` | Inputs, tiles, secondary controls |
+| `--surface-3` | `#1f1f23` | Hover states, raised elements |
+| `--border` | `rgb(255 255 255 / 0.08)` | Subtle component borders |
+| `--border-strong` | `rgb(255 255 255 / 0.16)` | Active/focus component borders |
+| `--text` | `#f4f4f5` | Primary body text and headings |
+| `--text-2` | `#a1a1aa` | Secondary labels, descriptions |
+| `--text-3` | `#6b6b74` | Tertiary labels, captions, timestamps |
+| `--accent` | `#c8ff2e` | Primary CTA, active nav indicator, focus ring, selected state ONLY |
+| `--accent-ink` | `#0b0f00` | Text on accent |
+| `--info` | `#6aa8ff` | Informational links, chips |
+| `--success` | `#4ade80` | Success states, ready badges |
+| `--warning` | `#fbbf24` | Warning banners, rate alerts |
+| `--danger` | `#f87171` | Error states, destructive actions |
+
+### 2. Radii & Elevation
+- `--radius-sm`: `8px` (chips, compact buttons, badges)
+- `--radius-md`: `12px` (buttons, input tiles, popovers)
+- `--radius-lg`: `16px` (cards, panels)
+- `--radius-xl`: `24px` (modals, sheets)
+- `--shadow-pop`: `0 12px 40px rgb(0 0 0 / 0.5)`
+
+### 3. Typography
+- `--font-sans`: `"Geist Variable"`, `"Geist"`, system-ui, sans-serif
+- `--font-mono`: `"JetBrains Mono Variable"`, `"JetBrains Mono"`, ui-monospace
+- Headings: Geist 600, tight tracking (`-0.02em`), sizes on a 12/14/16/20/28/40/56 scale
+- Body: 14–15px
+- Numbers: `font-variant-numeric: tabular-nums` for all numbers (credits, costs, timers, counters)
+
+### 4. Buttons & Interaction
+- **Primary button ("Generate"):** solid accent button (`--accent`, `#c8ff2e`) with a 2px lower lip (`box-shadow: inset 0 -2px 0 rgb(0 0 0 / 0.28)`); pressing removes the lip (`translateY(1px)` and flat shadow).
+- **Secondary button:** surface-2 (`#17171a`) with 1px border.
+- **Ghost button:** transparent with muted text, hover background surface-2.
+- **Focus ring:** 2px solid `--accent`. Disabled: 50% opacity.
+- **Motion:** 120–180ms ease-out for hover/press, 220ms for popovers/modals; respects `prefers-reduced-motion`.
+
+### 5. Logo Mark & Favicon
+A clean geometric "A" mark in `--accent` (`#c8ff2e`) on `--bg` (`#09090b`) background, matching the favicon.
+
+### 6. Light Theme Tokens (Archived for future reference)
+```css
+/*
+:root[data-theme="light"] {
+  --bg: #fafafa;
+  --surface-1: #ffffff;
+  --surface-2: #f4f4f5;
+  --surface-3: #e4e4e7;
+  --border: rgb(0 0 0 / 0.08);
+  --border-strong: rgb(0 0 0 / 0.16);
+  --text: #09090b;
+  --text-2: #71717a;
+  --text-3: #a1a1aa;
+  --accent: #18181b;
+  --accent-ink: #ffffff;
+  --info: #2563eb;
+  --success: #16a34a;
+  --warning: #d97706;
+  --danger: #dc2626;
+}
+*/
+```
+
 
 > **Status:** a temporary production theme that follows the current synthwave/coastal-night trend.
 > A full redesign may replace it next month. Earlier directions are archived in git and can be
