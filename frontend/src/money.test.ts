@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { describe, expect, it } from "vitest";
-import { formatSom, isSafePayUrl, pricePerCredit } from "./money";
+import { formatCents, formatSom, isSafePayUrl, pricePerCredit } from "./money";
 
 describe("formatSom", () => {
   it("groups thousands with spaces", () => {
@@ -13,6 +13,19 @@ describe("formatSom", () => {
     expect(pricePerCredit(15000, 100)).toBe("150");
     expect(pricePerCredit(39000, 300)).toBe("130");
     expect(pricePerCredit(10000, 3)).toBe("3 333,3");
+  });
+});
+
+describe("formatCents", () => {
+  it("shows cents with approx when under 1 dollar", () => {
+    expect(formatCents(0.3241).short).toBe("≈ 32¢");
+    expect(formatCents(0.3241).exact).toBe("$0.3241");
+    expect(formatCents(0.001).short).toBe("≈ 1¢");
+    expect(formatCents(0.999).short).toBe("≈ 100¢");
+  });
+  it("shows dollars with approx when at or above 1 dollar", () => {
+    expect(formatCents(1.24).short).toBe("≈ $1.24");
+    expect(formatCents(3.04).short).toBe("≈ $3.04");
   });
 });
 

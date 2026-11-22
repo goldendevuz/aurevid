@@ -15,7 +15,7 @@ export interface ModelInfo {
   label: string;
   kind: "image" | "video" | "upscale";
   license: string;
-  commercial_use: "yes" | "no" | "unclear";
+  commercial_use: "yes" | "no" | "unclear" | "byok_only";
   aspect_ratios: string[];
   credit_cost: number;
   max_count: number;

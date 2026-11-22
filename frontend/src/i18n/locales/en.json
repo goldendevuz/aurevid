@@ -54,6 +54,7 @@
     "commercial_yes": "Commercial use allowed",
     "commercial_no": "Non-commercial only",
     "commercial_unclear": "Commercial use: check terms",
+    "commercial_byok_only": "Check the model's terms",
     "aspect": "Aspect ratio",
     "size": "Size",
     "size_small": "Small",

@@ -54,6 +54,7 @@
     "commercial_yes": "Tijoriy foydalanishga ruxsat bor",
     "commercial_no": "Faqat notijoriy",
     "commercial_unclear": "Tijoriy foydalanish: shartlarni tekshiring",
+    "commercial_byok_only": "Model shartlarini tekshiring",
     "aspect": "Nisbat",
     "size": "O'lcham",
     "size_small": "Kichik",
