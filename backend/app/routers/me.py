@@ -36,8 +36,12 @@ router = APIRouter(prefix="/api/me", tags=["me"])
 
 
 @router.get("", response_model=UserOut)
-async def get_me(user: CurrentUser):
-    return user
+async def get_me(user: CurrentUser, session: Session):
+    from app.routers.prompt import has_expand_key
+
+    out = UserOut.model_validate(user)
+    out.expand_available = await has_expand_key(session, user.id)
+    return out
 
 
 @router.patch("", response_model=UserOut)

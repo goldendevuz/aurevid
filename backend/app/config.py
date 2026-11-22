@@ -104,6 +104,7 @@ class Settings(BaseSettings):
     openrouter_monthly_cap: int = 0  # all users together, per UTC month, on the owner's key
     fal_video_upscale_enabled: bool = False  # Topaz: output terms unclear
     mock_provider_enabled: bool = False
+    expand_model: str = "anthropic/claude-haiku-5.5"  # LLM for /api/prompt/expand
     upscaler_enabled: bool = True  # local Real-ESRGAN (CPU) for 4K/8K images
     upscaler_timeout_seconds: int = 300  # hard stop per image (checked between tiles)
     upscaler_threads: int = 0  # 0 = all cores but one (keeps the API responsive)

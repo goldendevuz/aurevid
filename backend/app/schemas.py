@@ -49,6 +49,7 @@ class UserOut(BaseModel):
     is_admin: bool
     credit_balance: int
     created_at: UTCDateTime
+    expand_available: bool = False
 
 
 class UpdateMeIn(_In):
