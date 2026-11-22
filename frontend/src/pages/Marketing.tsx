@@ -238,9 +238,9 @@ export default function Marketing() {
             <div>
               <Label htmlFor="mk-lang">{t("marketing.copyLanguage")}</Label>
               <select id="mk-lang" value={form.language} onChange={(e) => setForm({ ...form, language: e.target.value })} className={inputClass}>
-                <option value="uz">O'zbekcha</option>
-                <option value="ru">Русский</option>
-                <option value="en">English</option>
+                <option value="uz">{t("marketing.langUz")}</option>
+                <option value="ru">{t("marketing.langRu")}</option>
+                <option value="en">{t("marketing.langEn")}</option>
               </select>
             </div>
             <div>

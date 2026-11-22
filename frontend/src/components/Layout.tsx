@@ -112,7 +112,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
           </div>
 
           {/* Centre: Desktop Links */}
-          <nav aria-label="Main" className="hidden items-center gap-6 md:flex">
+          <nav aria-label={t("nav.mainNav")} className="hidden items-center gap-6 md:flex">
             {navLinks.map((item) => (
               <NavLink
                 key={item.to}
@@ -159,7 +159,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
                     type="button"
                     onClick={() => setAvatarOpen((v) => !v)}
                     aria-expanded={avatarOpen}
-                    aria-label="User menu"
+                    aria-label={t("nav.userMenu")}
                     className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-surface-2 text-xs font-semibold text-text transition hover:bg-surface-3 hover:border-border-strong"
                   >
                     {user.email ? user.email.slice(0, 2).toUpperCase() : <Icon name="settings" size={15} />}
@@ -252,7 +252,7 @@ export default function Layout({ children }: { children?: ReactNode }) {
 
       {/* Mobile Fixed Bottom Tab Bar (<1024px) */}
       <nav
-        aria-label="Mobile Navigation"
+        aria-label={t("nav.mobileNav")}
         className="fixed inset-x-0 bottom-0 z-40 flex items-center justify-around border-t border-border bg-bg/95 px-2 pb-[max(0.6rem,env(safe-area-inset-bottom))] pt-1 backdrop-blur-xl md:hidden overflow-x-hidden"
       >
         <NavLink
@@ -341,14 +341,14 @@ export function Footer({ clearTabBar = false }: { clearTabBar?: boolean }) {
           </Link>
           {SOURCE_URL ? (
             <a href={SOURCE_URL} rel="noopener noreferrer" target="_blank" className="hover:text-text transition">
-              GitHub ↗
+              {t("nav.github", { defaultValue: "GitHub ↗" })}
             </a>
           ) : (
-            <span>AGPL-3.0</span>
+            <span>{t("nav.licenseShort", { defaultValue: "AGPL-3.0" })}</span>
           )}
         </div>
         <div className="flex items-center gap-3">
-          <span>License AGPL-3.0</span>
+          <span>{t("nav.license")}</span>
           <span>·</span>
           <LanguageSelect />
         </div>

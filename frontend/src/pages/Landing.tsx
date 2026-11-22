@@ -112,18 +112,18 @@ export default function Landing() {
       <header className="sticky top-0 z-30 border-b border-line bg-surface-1/80 backdrop-blur-md">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
           <Logo />
-          <nav aria-label="Main navigation" className="hidden items-center gap-1 md:flex">
+          <nav aria-label={t("landing.navAria")} className="hidden items-center gap-1 md:flex">
             <Link to="/create" className="rounded-full px-3.5 py-1.5 text-sm font-medium text-muted hover:text-ink hover:bg-surface-2 transition">
-              Create
+              {t("landing.navCreate")}
             </Link>
             <Link to="/pricing" className="rounded-full px-3.5 py-1.5 text-sm font-medium text-muted hover:text-ink hover:bg-surface-2 transition">
-              Pricing
+              {t("landing.navPricing")}
             </Link>
             <a href="#how" className="rounded-full px-3.5 py-1.5 text-sm font-medium text-muted hover:text-ink hover:bg-surface-2 transition">
-              How it works
+              {t("landing.navHow")}
             </a>
             <a href="#samples" className="rounded-full px-3.5 py-1.5 text-sm font-medium text-muted hover:text-ink hover:bg-surface-2 transition">
-              Showcase
+              {t("landing.navShowcase")}
             </a>
           </nav>
           <div className="flex items-center gap-2.5">
@@ -134,18 +134,18 @@ export default function Landing() {
                   to="/create"
                   className="rounded-full bg-accent px-4 py-1.5 text-xs font-semibold text-accent-ink hover:bg-accent/90 transition"
                 >
-                  Open Studio
+                  {t("landing.openStudio")}
                 </Link>
               ) : (
                 <>
                   <Link to="/login" className="whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium text-muted hover:text-ink transition">
-                    Sign in
+                    {t("landing.signIn")}
                   </Link>
                   <Link
                     to="/register"
                     className="whitespace-nowrap rounded-full bg-accent px-4 py-1.5 text-xs font-semibold text-accent-ink hover:bg-accent/90 transition"
                   >
-                    Get Started
+                    {t("landing.getStarted")}
                   </Link>
                 </>
               )
@@ -159,16 +159,16 @@ export default function Landing() {
         <section className="relative px-4 pb-16 pt-12 sm:px-6 sm:pb-24 sm:pt-20 text-center max-w-5xl mx-auto">
           <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-line bg-surface-1 px-3.5 py-1 text-xs font-semibold text-accent">
             <Icon name="sparkle" size={13} />
-            Next-Generation Creative AI Studio
+            {t("landing.heroBadge")}
           </div>
 
           <h1 className="text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.05]">
-            Transform Imagination Into <br className="hidden sm:inline" />
-            <span className="text-accent">Cinematic Video & Images</span>
+            {t("landing.heroTitle1")} <br className="hidden sm:inline" />
+            <span className="text-accent">{t("landing.heroTitle2")}</span>
           </h1>
 
           <p className="mt-4 max-w-2xl mx-auto text-base sm:text-lg text-muted">
-            The multi-provider AI studio for image and video: Seedance, FLUX and Wan under one unified, privacy-first interface, with prices shown in cents.
+            {t("landing.heroSub")}
           </p>
 
           {/* Prompt Entry Input (redirects to /create with text prefilled) */}
@@ -179,19 +179,19 @@ export default function Landing() {
                 type="text"
                 value={heroPrompt}
                 onChange={(e) => setHeroPrompt(e.target.value)}
-                placeholder="Describe your scene (e.g. A cybernetic tiger walking in neon rain...)"
+                placeholder={t("landing.promptPh")}
                 className="w-full bg-transparent px-3 py-2 text-sm text-ink placeholder:text-muted/60 focus:outline-none"
               />
               <button
                 type="submit"
                 className="shrink-0 rounded-xl bg-accent px-5 py-2.5 text-xs font-semibold text-accent-ink hover:bg-accent/90 transition flex items-center gap-1.5"
               >
-                <span>Generate</span>
+                <span>{t("landing.generate")}</span>
                 <span aria-hidden>→</span>
               </button>
             </div>
             <p className="mt-2 text-[11px] text-muted">
-              Press enter or click generate to open the studio with your prompt ready.
+              {t("landing.promptHint")}
             </p>
           </form>
 
@@ -207,14 +207,14 @@ export default function Landing() {
                   <Icon name="image" size={20} />
                 </span>
                 <h3 className="mt-3 text-base font-semibold text-ink group-hover:text-accent transition">
-                  Image Generation
+                  {t("landing.cardImageTitle")}
                 </h3>
                 <p className="mt-1 text-xs text-muted leading-relaxed">
-                  Ultra-sharp stills with FLUX.1 Schnell, Dev & Pro. Instant 4K upscaling and multi-image compare.
+                  {t("landing.cardImageDesc")}
                 </p>
               </div>
               <span className="mt-4 text-xs font-medium text-accent flex items-center gap-1">
-                Start with Image <span aria-hidden>→</span>
+                {t("landing.cardImageAction")} <span aria-hidden>→</span>
               </span>
             </Link>
 
@@ -228,14 +228,14 @@ export default function Landing() {
                   <Icon name="video" size={20} />
                 </span>
                 <h3 className="mt-3 text-base font-semibold text-ink group-hover:text-accent transition">
-                  Video Clips
+                  {t("landing.cardVideoTitle")}
                 </h3>
                 <p className="mt-1 text-xs text-muted leading-relaxed">
-                  Cinematic text-to-video & image-to-video with Seedance and Wan, and native audio support.
+                  {t("landing.cardVideoDesc")}
                 </p>
               </div>
               <span className="mt-4 text-xs font-medium text-accent flex items-center gap-1">
-                Start with Video <span aria-hidden>→</span>
+                {t("landing.cardVideoAction")} <span aria-hidden>→</span>
               </span>
             </Link>
 
@@ -249,14 +249,14 @@ export default function Landing() {
                   <Icon name="layers" size={20} />
                 </span>
                 <h3 className="mt-3 text-base font-semibold text-ink group-hover:text-accent transition">
-                  Multi-Scene Stories
+                  {t("landing.cardStoriesTitle")}
                 </h3>
                 <p className="mt-1 text-xs text-muted leading-relaxed">
-                  Chain sequential video clips into coherent short films with automated stitching and director planning.
+                  {t("landing.cardStoriesDesc")}
                 </p>
               </div>
               <span className="mt-4 text-xs font-medium text-accent flex items-center gap-1">
-                Build a Story <span aria-hidden>→</span>
+                {t("landing.cardStoriesAction")} <span aria-hidden>→</span>
               </span>
             </Link>
           </div>
@@ -265,7 +265,7 @@ export default function Landing() {
         {/* MODEL MARQUEE STRIP */}
         <section className="border-y border-line bg-surface-1/40 py-6">
           <p className="text-center text-xs font-semibold uppercase tracking-wider text-muted mb-4">
-            Unified access to world-class generative models
+            {t("landing.marqueeCaption")}
           </p>
           <ModelMarquee />
         </section>
@@ -274,11 +274,11 @@ export default function Landing() {
         <section id="samples" className="px-4 py-20 sm:px-6 max-w-7xl mx-auto">
           <div className="text-center max-w-2xl mx-auto mb-12">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface-1 px-3 py-0.5 text-xs font-semibold text-muted">
-              Showcase
+              {t("landing.showcaseBadge")}
             </span>
-            <h2 className="mt-2 text-3xl sm:text-4xl font-bold tracking-tight">Crafted With Aurevid</h2>
+            <h2 className="mt-2 text-3xl sm:text-4xl font-bold tracking-tight">{t("landing.showcaseTitle")}</h2>
             <p className="mt-2 text-sm text-muted">
-              Explore authentic outputs generated across our multi-provider video and image pipelines.
+              {t("landing.showcaseDesc")}
             </p>
           </div>
 
@@ -309,7 +309,7 @@ export default function Landing() {
                   </span>
                 </div>
                 <div className="p-3.5">
-                  <h4 className="text-xs font-semibold text-ink">{sample.title}</h4>
+                  <h4 className="text-xs font-semibold text-ink">{t(`landing.sample_${sample.id}_title`, { defaultValue: sample.title })}</h4>
                   <p className="mt-1 line-clamp-2 text-[11px] text-muted leading-relaxed">
                     "{sample.prompt}"
                   </p>
@@ -318,7 +318,7 @@ export default function Landing() {
                     onClick={() => navigate("/create", { state: { prefill: { prompt: sample.prompt, aspect: sample.aspect } } })}
                     className="mt-2 text-[11px] font-medium text-accent hover:underline flex items-center gap-1"
                   >
-                    <span>Use this prompt</span>
+                    <span>{t("landing.usePrompt")}</span>
                     <span aria-hidden>→</span>
                   </button>
                 </div>
@@ -331,29 +331,29 @@ export default function Landing() {
         <section id="how" className="border-t border-line bg-surface-1/30 px-4 py-20 sm:px-6">
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-12">
-              <span className="text-xs font-semibold uppercase tracking-wider text-accent">Simple 3-Step Workflow</span>
-              <h2 className="mt-2 text-3xl font-bold tracking-tight">How Aurevid Works</h2>
+              <span className="text-xs font-semibold uppercase tracking-wider text-accent">{t("landing.howStepWorkflow")}</span>
+              <h2 className="mt-2 text-3xl font-bold tracking-tight">{t("landing.howTitle")}</h2>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
               <div className="rounded-2xl border border-line bg-surface-1 p-6">
                 <span className="rounded-lg bg-surface-3 px-2.5 py-1 font-mono text-xs font-bold text-accent">01</span>
-                <h3 className="mt-4 text-base font-semibold text-ink">Type an Idea or Upload</h3>
+                <h3 className="mt-4 text-base font-semibold text-ink">{t("landing.step1Title")}</h3>
                 <p className="mt-2 text-xs text-muted leading-relaxed">
-                  Input a short prompt or reference frame. Use our built-in Expand prompt engine for instant cinematic enrichment.
+                  {t("landing.step1Desc")}
                 </p>
               </div>
               <div className="rounded-2xl border border-line bg-surface-1 p-6">
                 <span className="rounded-lg bg-surface-3 px-2.5 py-1 font-mono text-xs font-bold text-accent">02</span>
-                <h3 className="mt-4 text-base font-semibold text-ink">Select Frontier AI Model</h3>
+                <h3 className="mt-4 text-base font-semibold text-ink">{t("landing.step2Title")}</h3>
                 <p className="mt-2 text-xs text-muted leading-relaxed">
-                  Choose from Seedance, FLUX and Wan, or bring your own OpenRouter key to pay provider rates directly.
+                  {t("landing.step2Desc")}
                 </p>
               </div>
               <div className="rounded-2xl border border-line bg-surface-1 p-6">
                 <span className="rounded-lg bg-surface-3 px-2.5 py-1 font-mono text-xs font-bold text-accent">03</span>
-                <h3 className="mt-4 text-base font-semibold text-ink">Download & Upscale</h3>
+                <h3 className="mt-4 text-base font-semibold text-ink">{t("landing.step3Title")}</h3>
                 <p className="mt-2 text-xs text-muted leading-relaxed">
-                  Watch live streaming generation, upscale directly to 4K, animate stills to video clips, and download water-mark free.
+                  {t("landing.step3Desc")}
                 </p>
               </div>
             </div>
@@ -365,11 +365,11 @@ export default function Landing() {
           <div className="max-w-3xl mx-auto rounded-3xl border border-line bg-surface-1 p-8 sm:p-10">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface-2 px-3 py-1 text-xs font-semibold text-accent mb-3">
               <Icon name="shield" size={14} />
-              Open Source & Self-Hostable
+              {t("landing.osBadge")}
             </span>
-            <h2 className="text-2xl sm:text-3xl font-bold">100% Free and Open Source Under AGPL-3.0</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold">{t("landing.osTitle")}</h2>
             <p className="mt-2 text-sm text-muted max-w-xl mx-auto">
-              Run Aurevid on your own servers with Docker, connect local GPU backends, or use our cloud platform with no lock-in.
+              {t("landing.osDesc")}
             </p>
             <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
               <a
@@ -379,13 +379,13 @@ export default function Landing() {
                 className="inline-flex items-center gap-2 rounded-xl bg-surface-2 border border-line px-4 py-2 text-xs font-semibold text-ink hover:border-white/30 transition"
               >
                 <Icon name="star" size={14} className="text-accent" />
-                Star on GitHub
+                {t("landing.starGithub")}
               </a>
               <Link
                 to="/create"
                 className="inline-flex items-center gap-2 rounded-xl bg-accent px-4 py-2 text-xs font-semibold text-accent-ink hover:bg-accent/90 transition"
               >
-                Try Online Now
+                {t("landing.tryOnline")}
               </Link>
             </div>
           </div>
