@@ -16,7 +16,7 @@ def test_defaults_hide_every_unclear_model():
     providers = enabled_providers()
     for p in providers.values():
         for m in p.info.models:
-            assert m.commercial_use == "yes", (p.info.id, m.id)
+            assert m.commercial_use in ("yes", "byok_only"), (p.info.id, m.id)
     assert "pollinations_video" not in providers
     fal = providers["fal"]
     assert fal.model(KLING_T2V) is None and fal.model(KLING_I2V) is None

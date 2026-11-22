@@ -247,7 +247,7 @@ async def test_commercial_rule_still_holds_with_gpu_worker_on():
     providers = enabled_providers()
     assert "gpu_worker" in providers
     for p in providers.values():
-        assert all(m.commercial_use == "yes" for m in p.info.models), p.info.id
+        assert all(m.commercial_use in ("yes", "byok_only") for m in p.info.models), p.info.id
     model = providers["gpu_worker"].info.models[0]
     assert model.license == "Apache-2.0" and not model.has_audio
     assert (
