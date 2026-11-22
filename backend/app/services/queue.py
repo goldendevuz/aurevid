@@ -4,9 +4,9 @@
 Goals: the server never takes on more than it can finish, one user cannot starve the others, and
 heavy CPU work (local AI upscaling) never runs more than ``cpu_job_concurrency`` at a time.
 
-* Admission (at job creation): at most ``max_active_jobs_per_user`` queued+running jobs per user
-  and ``max_queue_length`` queued jobs overall. Beyond that the API answers 429/503 with
-  Retry-After instead of letting the backlog grow without bound.
+* Admission (at job creation): at most ``max_queue_length`` queued jobs overall. Beyond that the
+  API answers 503 with Retry-After instead of letting the backlog grow without bound. There is no
+  per-user cap: the fair order below keeps one user from starving the others.
 * Fair order: round-robin across users. Each user's queued jobs get a rank (1st, 2nd, ...) and
   running jobs count against it, so the next job always comes from the user who has the least
   work in flight. Ties go to the oldest job.
@@ -89,19 +89,6 @@ async def load(
 async def admit(session: AsyncSession, user_id: str) -> None:
     """Refuse new work early instead of letting the backlog grow without bound."""
     s = get_settings()
-    active = (
-        await session.execute(
-            select(func.count(Job.id)).where(
-                Job.user_id == user_id, Job.status.in_([JobStatus.queued, JobStatus.running])
-            )
-        )
-    ).scalar_one()
-    if active >= s.max_active_jobs_per_user:
-        raise HTTPException(
-            status.HTTP_429_TOO_MANY_REQUESTS,
-            detail={"code": "too_many_active_jobs", "limit": s.max_active_jobs_per_user},
-            headers={"Retry-After": "30"},
-        )
     queued = (
         await session.execute(select(func.count(Job.id)).where(Job.status == JobStatus.queued))
     ).scalar_one()

@@ -120,14 +120,7 @@ async def test_daily_limit_covers_all_scenes(alice):
     assert (await create(alice, scenes=SCENES[:2])).status_code == 201
 
 
-async def test_active_job_cap_is_not_bypassed(alice):
-    # Default cap is 3 queued+running jobs per user: a 4-scene story must be refused whole.
-    assert get_settings().max_active_jobs_per_user == 3
-    before = await counts()
-    r = await create(alice, scenes=[*SCENES, "the lantern at midnight"])
-    assert r.status_code == 429 and r.json()["detail"]["code"] == "too_many_active_jobs"
-    assert await counts() == before
-    get_settings().max_active_jobs_per_user = 4  # an operator raising the cap enables 4 scenes
+async def test_four_scene_story_has_no_active_job_cap(alice):
     async with db.session_factory()() as s:
         from app.models import User
 
