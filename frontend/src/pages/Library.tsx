@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
@@ -10,6 +11,7 @@ import { useStories } from "../useStories";
 import type { Job } from "../types";
 
 export default function Library() {
+  const { t } = useTranslation();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<"all" | "image" | "video" | "story" | "favorites">("all");
@@ -69,7 +71,7 @@ export default function Library() {
   };
 
   const handleBulkDelete = async () => {
-    if (!window.confirm(`Delete ${selectedIds.length} items from your library?`)) return;
+    if (!window.confirm(t("library.deleteConfirm", { count: selectedIds.length }))) return;
     for (const id of selectedIds) {
       try {
         await api(`/api/jobs/${id}`, { method: "DELETE" });
@@ -87,24 +89,24 @@ export default function Library() {
       {/* Top Header & Toolbar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Media Library</h1>
-          <p className="text-xs text-muted mt-1">Browse, filter, and export all your completed images and videos.</p>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{t("library.title")}</h1>
+          <p className="text-xs text-muted mt-1">{t("library.subtitle")}</p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           {selectionMode ? (
             <>
-              <span className="text-xs font-mono text-muted mr-1">{selectedIds.length} selected</span>
+              <span className="text-xs font-mono text-muted mr-1">{t("library.selectedCount", { count: selectedIds.length })}</span>
               <Button size="sm" disabled={selectedIds.length === 0} onClick={handleBulkDownload}>
                 <Icon name="download" size={13} />
-                Download
+                {t("common.download")}
               </Button>
               <Button size="sm" variant="danger" disabled={selectedIds.length === 0} onClick={() => void handleBulkDelete()}>
                 <Icon name="trash" size={13} />
-                Delete
+                {t("common.delete")}
               </Button>
               <Button size="sm" variant="ghost" onClick={() => { setSelectionMode(false); setSelectedIds([]); }}>
-                Cancel
+                {t("common.cancel")}
               </Button>
             </>
           ) : (
@@ -114,13 +116,13 @@ export default function Library() {
                 onClick={() => setSelectionMode(true)}
                 className="rounded-xl border border-line bg-surface-1 px-3 py-1.5 text-xs font-medium text-muted hover:text-ink hover:border-white/20 transition"
               >
-                Select Mode
+                {t("library.selectMode")}
               </button>
               <button
                 type="button"
                 onClick={() => setIsListView((v) => !v)}
                 className="grid h-8 w-8 place-items-center rounded-xl border border-line bg-surface-1 text-muted hover:text-ink transition"
-                title={isListView ? "Grid view" : "List view"}
+                title={isListView ? t("library.gridView") : t("library.listView")}
               >
                 <Icon name={isListView ? "layers" : "image"} size={14} />
               </button>
@@ -150,24 +152,24 @@ export default function Library() {
 
       {/* Library Grid / List Content */}
       {loading ? (
-        <div className="py-20 text-center text-sm text-muted">Loading your media assets...</div>
+        <div className="py-20 text-center text-sm text-muted">{t("library.loading")}</div>
       ) : items.length === 0 ? (
         <div className="py-20 text-center max-w-md mx-auto">
           <div className="grid h-12 w-12 place-items-center rounded-2xl bg-surface-2 text-muted mx-auto mb-3">
             <Icon name="image" size={24} />
           </div>
-          <h3 className="text-lg font-semibold text-ink">No Media Found</h3>
+          <h3 className="text-lg font-semibold text-ink">{t("library.noMedia")}</h3>
           <p className="mt-1 text-xs text-muted leading-relaxed">
             {filter === "all"
-              ? "You haven't generated any images or videos yet. Start creating in the studio!"
-              : `No assets match the "${filter}" filter.`}
+              ? t("library.emptyAll")
+              : t("library.emptyFilter", { filter })}
           </p>
           <Link
             to="/create"
             className="mt-5 inline-flex items-center gap-1.5 rounded-full bg-accent px-4 py-2 text-xs font-semibold text-accent-ink hover:bg-accent/90 transition"
           >
             <Icon name="sparkle" size={14} />
-            Go to Studio
+            {t("library.goToStudio")}
           </Link>
         </div>
       ) : (

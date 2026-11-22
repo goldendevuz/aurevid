@@ -234,7 +234,7 @@ export default function ModelPicker({
                 type="button"
                 onClick={() => setQuery("")}
                 className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-ink"
-                aria-label="Clear search"
+                aria-label={t("common.clearSearch")}
               >
                 <Icon name="close" size={14} />
               </button>
@@ -287,7 +287,7 @@ export default function ModelPicker({
                             <Icon name="check" size={12} strokeWidth={3} />
                           </span>
                         ) : (
-                          <Badge tone="live">TOP</Badge>
+                          <Badge tone="live">{t("models.top")}</Badge>
                         )}
                       </div>
                       <div>
@@ -300,7 +300,7 @@ export default function ModelPicker({
                       </div>
                       <div className="mt-3 flex items-center justify-between border-t border-line/60 pt-2 text-[11px]">
                         <span className="font-mono text-ink/90">{price.text}</span>
-                        {price.freeShare && <span className="text-ok">Free</span>}
+                        {price.freeShare && <span className="text-ok">{t("studio.free")}</span>}
                       </div>
                     </button>
                   );
@@ -321,7 +321,7 @@ export default function ModelPicker({
                   onClick={() => setQuery("")}
                   className="mt-2 text-xs text-accent hover:underline"
                 >
-                  Clear search
+                  {t("common.clearSearch")}
                 </button>
               )}
             </div>
@@ -371,7 +371,7 @@ export default function ModelPicker({
                             <Badge tone={p.tier === "free" ? "free" : "paid"}>
                               {p.tier === "free" ? t("studio.free") : t("studio.paid")}
                             </Badge>
-                            {m.commercial_use === "byok_only" && <Badge tone="muted">BYOK</Badge>}
+                            {m.commercial_use === "byok_only" && <Badge tone="muted">{t("models.byok")}</Badge>}
                           </div>
                           {/* Spec chips */}
                           <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[10px] text-muted">
@@ -388,12 +388,12 @@ export default function ModelPicker({
                             )}
                             {m.has_audio && (
                               <span className="rounded bg-accent/10 px-1.5 py-0.5 text-accent font-medium">
-                                ♪ Audio
+                                {t("models.audio")}
                               </span>
                             )}
                             {m.accepts_image && (
                               <span className="rounded bg-surface-3 px-1.5 py-0.5">
-                                Img
+                                {t("models.imageInput")}
                               </span>
                             )}
                           </div>

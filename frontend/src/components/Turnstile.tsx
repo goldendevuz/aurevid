@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Cloudflare Turnstile widget. Rendered only when VITE_TURNSTILE_SITE_KEY is set.
 import { useEffect, useRef, useState, useCallback } from "react";
@@ -34,6 +35,7 @@ const ERROR_DESCRIPTIONS: Record<string, string> = {
 };
 
 export default function Turnstile({ onToken }: { onToken: (token: string) => void }) {
+  const { t } = useTranslation();
   const ref = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | undefined>(undefined);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -120,7 +122,7 @@ export default function Turnstile({ onToken }: { onToken: (token: string) => voi
             onClick={resetWidget}
             className="underline hover:text-ink text-[11px] whitespace-nowrap"
           >
-            Retry
+            {t("common.retry")}
           </button>
         </div>
       )}

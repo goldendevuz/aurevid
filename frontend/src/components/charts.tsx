@@ -154,7 +154,7 @@ export function Heatmap({ rows, columnLabel }: { rows: { cohort: string; size: n
       <table className="w-full border-separate border-spacing-[2px] text-[11px] tabular-nums">
         <thead>
           <tr className="text-muted">
-            <th className="px-2 text-left font-normal">Cohort</th>
+            <th className="px-2 text-left font-normal">{"Cohort"}</th>
             <th className="px-2 text-right font-normal">n</th>
             {Array.from({ length: cols }).map((_, i) => (
               <th key={i} className="px-1 font-normal">{columnLabel(i)}</th>

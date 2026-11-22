@@ -830,7 +830,7 @@ export default function Studio() {
                   ...(hasStoryModels
                     ? [{ value: "multi" as const, label: <span className="flex items-center gap-1.5"><Icon name="layers" size={15} />{t("story.multi")}</span> }]
                     : []),
-                  { value: "director" as const, label: <span className="flex items-center gap-1.5"><Icon name="sparkle" size={15} />Director</span> },
+                  { value: "director" as const, label: <span className="flex items-center gap-1.5"><Icon name="sparkle" size={15} />{t("director.tab")}</span> },
                 ]}
               />
             )}
@@ -852,14 +852,14 @@ export default function Studio() {
           {multi && (
             <div className="mt-4 flex flex-col gap-2 rounded-2xl border border-line bg-surface-2 p-3">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-ink">Story scenes ({scenePrompts.length})</span>
+                <span className="font-semibold text-ink">{t("story.label")} ({scenePrompts.length})</span>
                 {scenePrompts.length < MAX_SCENES && (
                   <button
                     type="button"
                     onClick={() => setScenePrompts(addScene(scenePrompts))}
                     className="text-xs text-accent hover:underline font-medium"
                   >
-                    + Add scene
+                    {t("story.add")}
                   </button>
                 )}
               </div>
@@ -894,7 +894,7 @@ export default function Studio() {
           {/* Compare tool configuration */}
           {activeTool === "compare" && !isVideo && (
             <div className="mt-4 rounded-2xl border border-line bg-surface-2 p-3 text-xs">
-              <p className="font-semibold text-ink">Select models to compare (2 to {MAX_COMPARE})</p>
+              <p className="font-semibold text-ink">{t("compare.selectPrompt", { max: MAX_COMPARE })}</p>
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {imageChoices.map(({ p, m }) => {
                   const key = `${p.id}|${m.id}`;
@@ -924,16 +924,16 @@ export default function Studio() {
                   <div className="mx-auto mb-2.5 grid h-10 w-10 place-items-center rounded-xl bg-accent/15 text-accent">
                     <Icon name="sparkle" size={20} />
                   </div>
-                  <h3 className="text-sm font-semibold text-ink">Director Flow</h3>
+                  <h3 className="text-sm font-semibold text-ink">{t("director.title")}</h3>
                   <p className="mt-1.5 text-xs text-muted leading-relaxed">
-                    Director mode requires AI prompt expansion to decompose your vision into cinematic beats. Connect your OpenRouter key to unlock Director mode.
+                    {t("director.hint")}
                   </p>
                   <div className="mt-4">
                     <Link
                       to="/account"
                       className="inline-flex items-center gap-1.5 rounded-xl bg-accent px-3.5 py-2 text-xs font-semibold text-black transition hover:opacity-90"
                     >
-                      Connect OpenRouter key
+                      {t("director.connectKey")}
                     </Link>
                   </div>
                 </div>
@@ -944,7 +944,7 @@ export default function Studio() {
                     <div className="flex items-center justify-between text-xs text-muted mb-2">
                       <label htmlFor="director-idea" className="font-semibold text-ink flex items-center gap-1.5">
                         <Icon name="sparkle" size={14} className="text-accent" />
-                        Direct your scene
+                        {t("director.directScene")}
                       </label>
                       <div className="flex items-center gap-1 bg-surface-3 p-0.5 rounded-lg border border-line">
                         {[5, 10, 15].map((d) => (
@@ -968,11 +968,11 @@ export default function Studio() {
                       rows={3}
                       value={directorIdea}
                       onChange={(e) => setDirectorIdea(e.target.value)}
-                      placeholder="Type your story or concept (e.g. A solitary explorer discovers an ancient crystalline monolith glowing inside an ice cave)..."
+                      placeholder={t("director.ideaPlaceholder")}
                       className="w-full resize-none bg-transparent text-sm leading-relaxed text-ink placeholder:text-muted/50 focus:outline-none"
                     />
                     <div className="mt-2.5 flex items-center justify-between border-t border-line/60 pt-2">
-                      <span className="text-[11px] text-muted">Generates beats, look & audio</span>
+                      <span className="text-[11px] text-muted">{t("director.subhint")}</span>
                       <button
                         type="button"
                         onClick={() => void handleDraftPlan()}
@@ -994,20 +994,20 @@ export default function Studio() {
                           <span className="grid h-6 w-6 place-items-center rounded-lg bg-accent/20 text-accent font-mono text-xs font-bold">
                             🎬
                           </span>
-                          <h4 className="text-xs font-bold uppercase tracking-wider text-accent">Director Plan</h4>
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-accent">{t("director.planTitle")}</h4>
                         </div>
                         <button
                           type="button"
                           onClick={() => setDirectorPlan(null)}
                           className="text-[11px] text-muted hover:text-ink transition"
                         >
-                          Discard
+                          {t("director.discard")}
                         </button>
                       </div>
 
                       {/* Opening frame */}
                       <div className="mb-3">
-                        <label className="text-[10px] font-semibold uppercase tracking-wider text-muted">Opening Frame</label>
+                        <label className="text-[10px] font-semibold uppercase tracking-wider text-muted">{t("director.openingFrame")}</label>
                         <textarea
                           rows={2}
                           value={directorPlan.openingFrame}
@@ -1018,7 +1018,7 @@ export default function Studio() {
 
                       {/* Beats */}
                       <div className="mb-3 flex flex-col gap-2">
-                        <label className="text-[10px] font-semibold uppercase tracking-wider text-muted">Timeline Beats ({directorPlan.beats.length})</label>
+                        <label className="text-[10px] font-semibold uppercase tracking-wider text-muted">{t("director.beats")} ({directorPlan.beats.length})</label>
                         {directorPlan.beats.map((beat, idx) => (
                           <div key={idx} className="rounded-xl border border-line/80 bg-surface-3/80 p-2 text-xs">
                             <div className="flex items-center justify-between mb-1">
@@ -1050,7 +1050,7 @@ export default function Studio() {
 
                       {/* Look */}
                       <div className="mb-3">
-                        <label className="text-[10px] font-semibold uppercase tracking-wider text-muted">Look & Cinematography</label>
+                        <label className="text-[10px] font-semibold uppercase tracking-wider text-muted">{t("director.lookTitle")}</label>
                         <input
                           type="text"
                           value={directorPlan.look}
@@ -1062,12 +1062,12 @@ export default function Studio() {
                       {/* Audio */}
                       {(directorPlan.audio !== undefined || model?.has_audio) && (
                         <div className="mb-3">
-                          <label className="text-[10px] font-semibold uppercase tracking-wider text-muted">Soundscape & Audio</label>
+                          <label className="text-[10px] font-semibold uppercase tracking-wider text-muted">{t("director.soundTitle")}</label>
                           <input
                             type="text"
                             value={directorPlan.audio ?? ""}
                             onChange={(e) => setDirectorPlan({ ...directorPlan, audio: e.target.value })}
-                            placeholder="Atmospheric sound, soundtrack, drone..."
+                            placeholder={t("director.soundPlaceholder")}
                             className="mt-1 w-full rounded-xl border border-line bg-surface-3 p-2 text-xs text-ink focus:border-accent/60 focus:outline-none"
                           />
                         </div>
@@ -1076,7 +1076,7 @@ export default function Studio() {
                       {/* Cost Line & Approve Button */}
                       <div className="mt-3.5 border-t border-line/80 pt-3">
                         <div className="flex items-center justify-between text-xs text-muted mb-2 font-mono">
-                          <span>Cost estimate:</span>
+                          <span>{t("director.costEstimate")}:</span>
                           <span className="font-semibold text-ink">
                             {usdText?.short ? `≈ ${usdText.short}` : `${total} credits`}
                             {model && ` with ${model.label}`}
@@ -1102,14 +1102,14 @@ export default function Studio() {
           {isVideo && !multi && (
             <div className="mt-4 flex flex-col gap-2">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-ink">Reference frames</span>
+                <span className="font-semibold text-ink">{t("studio.referenceFrames")}</span>
                 {startImage && (
                   <button
                     type="button"
                     onClick={() => { setStartImage(null); setEndImage(null); }}
                     className="text-[11px] text-muted hover:text-danger transition"
                   >
-                    Clear all
+                    {t("studio.clearAll")}
                   </button>
                 )}
               </div>
@@ -1134,7 +1134,7 @@ export default function Studio() {
                 >
                   {startImage ? (
                     <div className="relative h-full w-full">
-                      <img src={startImage.preview_url || startImage.url} alt="Start frame" className="h-20 w-full rounded-xl object-cover" />
+                      <img src={startImage.preview_url || startImage.url} alt={t("studio.startFrame")} className="h-20 w-full rounded-xl object-cover" />
                       <button
                         type="button"
                         onClick={() => setStartImage(null)}
@@ -1142,12 +1142,12 @@ export default function Studio() {
                       >
                         <Icon name="close" size={11} />
                       </button>
-                      <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1 py-0.5 text-[9px] font-mono text-ink">Start</span>
+                      <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1 py-0.5 text-[9px] font-mono text-ink">{t("studio.start")}</span>
                     </div>
                   ) : (
                     <label className="flex cursor-pointer flex-col items-center gap-1">
                       <Icon name="image" size={18} className="text-muted" />
-                      <span className="text-[11px] font-medium text-ink">Start frame</span>
+                      <span className="text-[11px] font-medium text-ink">{t("studio.startFrame")}</span>
                       <span className="text-[9px] text-muted">{uploading ? "Uploading..." : "Click or drop"}</span>
                       <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && void handleFileUpload(e.target.files[0], false)} className="sr-only" />
                     </label>
@@ -1162,7 +1162,7 @@ export default function Studio() {
                 >
                   {endImage ? (
                     <div className="relative h-full w-full">
-                      <img src={endImage.preview_url || endImage.url} alt="End frame" className="h-20 w-full rounded-xl object-cover" />
+                      <img src={endImage.preview_url || endImage.url} alt={t("studio.endFrame")} className="h-20 w-full rounded-xl object-cover" />
                       <button
                         type="button"
                         onClick={() => setEndImage(null)}
@@ -1170,13 +1170,13 @@ export default function Studio() {
                       >
                         <Icon name="close" size={11} />
                       </button>
-                      <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1 py-0.5 text-[9px] font-mono text-ink">End</span>
+                      <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1 py-0.5 text-[9px] font-mono text-ink">{t("studio.end")}</span>
                     </div>
                   ) : (
                     <label className="flex cursor-pointer flex-col items-center gap-1">
                       <Icon name="image" size={18} className="text-muted/60" />
-                      <span className="text-[11px] font-medium text-muted">End frame</span>
-                      <span className="text-[9px] text-muted">Optional</span>
+                      <span className="text-[11px] font-medium text-muted">{t("studio.endFrame")}</span>
+                      <span className="text-[9px] text-muted">{t("common.optional")}</span>
                       <input type="file" accept="image/*" onChange={(e) => e.target.files?.[0] && void handleFileUpload(e.target.files[0], true)} className="sr-only" />
                     </label>
                   )}
@@ -1246,7 +1246,7 @@ export default function Studio() {
                     className="inline-flex items-center gap-1 rounded-lg border border-line bg-surface-3 px-2 py-1 text-[11px] text-muted hover:text-accent transition"
                   >
                     <Icon name="sound" size={12} />
-                    Audio
+                    {t("studio.audio")}
                   </button>
                 )}
               </div>
@@ -1275,10 +1275,10 @@ export default function Studio() {
           {presets.length > 0 && !multi && (
             <div className="mt-3">
               <div className="flex items-center justify-between text-xs text-muted mb-1.5">
-                <span className="font-medium text-muted">Presets</span>
+                <span className="font-medium text-muted">{t("studio.presets")}</span>
                 {presetId && (
                   <button type="button" onClick={() => setPresetId("")} className="text-[11px] text-accent hover:underline">
-                    Clear
+                    {t("common.clear")}
                   </button>
                 )}
               </div>
@@ -1320,7 +1320,7 @@ export default function Studio() {
                         {provider.tier === "free" ? t("studio.free") : t("studio.paid")}
                       </Badge>
                     )}
-                    {model?.commercial_use === "byok_only" && <Badge tone="muted">BYOK</Badge>}
+                    {model?.commercial_use === "byok_only" && <Badge tone="muted">{t("models.byok")}</Badge>}
                   </div>
                   <p className="truncate text-[11px] text-muted">
                     {provider?.name || "Select AI Model"} · {onFreeShare(provider) ? "Free" : usdText?.short ? `≈ ${usdText.short}` : `${price.total} credits`}
@@ -1328,7 +1328,7 @@ export default function Studio() {
                 </div>
               </div>
               <span className="rounded-lg border border-line bg-surface-1 px-2.5 py-1 text-[11px] font-medium text-muted group-hover:border-accent/40 group-hover:text-ink transition shrink-0">
-                Change
+                {t("common.change")}
               </span>
             </button>
           </div>
@@ -1342,7 +1342,7 @@ export default function Studio() {
                 onClick={() => setActivePopover((v) => (v === "aspect" ? null : "aspect"))}
                 className="flex w-full flex-col gap-1 rounded-2xl border border-line bg-surface-2 p-2.5 text-left transition hover:border-white/20"
               >
-                <span className="text-[10px] font-medium uppercase tracking-wider text-muted">Aspect Ratio</span>
+                <span className="text-[10px] font-medium uppercase tracking-wider text-muted">{t("studio.aspectRatio")}</span>
                 <span className="flex items-center gap-1.5 text-xs font-semibold text-ink">
                   <Icon name="ratio" size={14} className="text-accent" />
                   {aspect}
@@ -1387,7 +1387,7 @@ export default function Studio() {
                   onClick={() => setActivePopover((v) => (v === "duration" ? null : "duration"))}
                   className="flex w-full flex-col gap-1 rounded-2xl border border-line bg-surface-2 p-2.5 text-left transition hover:border-white/20"
                 >
-                  <span className="text-[10px] font-medium uppercase tracking-wider text-muted">Duration</span>
+                  <span className="text-[10px] font-medium uppercase tracking-wider text-muted">{t("studio.duration")}</span>
                   <span className="flex items-center gap-1.5 text-xs font-semibold text-ink">
                     <Icon name="clock" size={14} className="text-accent" />
                     {duration ? `${duration}s` : "Default"}
@@ -1409,7 +1409,7 @@ export default function Studio() {
                             duration === d ? "bg-accent/15 text-accent" : "text-muted hover:bg-surface-2 hover:text-ink"
                           }`}
                         >
-                          <span>{d} seconds</span>
+                          <span>{d} {t("studio.seconds")}</span>
                           {duration === d && <Icon name="check" size={13} />}
                         </button>
                       ))}
@@ -1419,9 +1419,9 @@ export default function Studio() {
               </div>
             ) : (
               <div className="flex flex-col gap-1 rounded-2xl border border-line bg-surface-2 p-2.5">
-                <span className="text-[10px] font-medium uppercase tracking-wider text-muted">Outputs</span>
+                <span className="text-[10px] font-medium uppercase tracking-wider text-muted">{t("studio.outputs")}</span>
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-ink">{count}× image</span>
+                  <span className="text-xs font-semibold text-ink">{count} {t("studio.timesImage")}</span>
                   <div className="flex items-center gap-1">
                     <button
                       type="button"
@@ -1452,12 +1452,12 @@ export default function Studio() {
                 onClick={() => setActivePopover((v) => (v === "resolution" ? null : "resolution"))}
                 className="flex w-full flex-col gap-1 rounded-2xl border border-line bg-surface-2 p-2.5 text-left transition hover:border-white/20"
               >
-                <span className="text-[10px] font-medium uppercase tracking-wider text-muted">Resolution</span>
+                <span className="text-[10px] font-medium uppercase tracking-wider text-muted">{t("studio.resolution")}</span>
                 <span className="flex items-center gap-1.5 text-xs font-semibold text-ink">
                   <Icon name="wand" size={14} className="text-accent" />
                   {isVideo ? videoRes || "Auto" : resolution === "native" ? "Native" : resolution.toUpperCase()}
                   {((isVideo && videoRes === "480p") || outDraft) && (
-                    <span className="rounded bg-accent-3/20 px-1 py-0.2 text-[9px] font-bold text-accent-3">Draft</span>
+                    <span className="rounded bg-accent-3/20 px-1 py-0.2 text-[9px] font-bold text-accent-3">{t("studio.draft")}</span>
                   )}
                 </span>
               </button>
@@ -1479,7 +1479,7 @@ export default function Studio() {
                             }`}
                           >
                             <span>{r}</span>
-                            {r === "480p" && <span className="text-[10px] text-accent-3">Draft</span>}
+                            {r === "480p" && <span className="text-[10px] text-accent-3">{t("studio.draft")}</span>}
                             {videoRes === r && <Icon name="check" size={13} />}
                           </button>
                         ))
@@ -1507,7 +1507,7 @@ export default function Studio() {
             {/* Quality Tier Tile (Video) or Publish Quality (Image) */}
             {isVideo && tierChoices.length > 0 ? (
               <div className="flex flex-col gap-1 rounded-2xl border border-line bg-surface-2 p-2.5">
-                <span className="text-[10px] font-medium uppercase tracking-wider text-muted">Tier</span>
+                <span className="text-[10px] font-medium uppercase tracking-wider text-muted">{t("studio.tier")}</span>
                 <select
                   value={(tier ?? "") as TierId}
                   onChange={(e) => pickTier(e.target.value as TierId)}
@@ -1522,7 +1522,7 @@ export default function Studio() {
               </div>
             ) : publishChoice ? (
               <div className="flex items-center justify-between rounded-2xl border border-line bg-surface-2 p-2.5">
-                <span className="text-[10px] font-medium uppercase tracking-wider text-muted">Publish 2K</span>
+                <span className="text-[10px] font-medium uppercase tracking-wider text-muted">{t("studio.publish2k")}</span>
                 <button
                   type="button"
                   aria-pressed={publishOn}
@@ -1536,8 +1536,8 @@ export default function Studio() {
               </div>
             ) : (
               <div className="flex flex-col gap-1 rounded-2xl border border-line bg-surface-2 p-2.5 opacity-60">
-                <span className="text-[10px] font-medium uppercase tracking-wider text-muted">Quality</span>
-                <span className="text-xs font-semibold text-ink">Standard</span>
+                <span className="text-[10px] font-medium uppercase tracking-wider text-muted">{t("studio.quality")}</span>
+                <span className="text-xs font-semibold text-ink">{t("studio.standard")}</span>
               </div>
             )}
           </div>
@@ -1567,7 +1567,7 @@ export default function Studio() {
             <div className="mt-2.5 flex items-center justify-between text-[11px] text-muted">
               <span className="font-mono">
                 {usdText ? t("price.usdEstimate", { amount: usdText.short }) : `${total} credits`}
-                {onFreeShare(provider) && <span className="ml-1 text-ok">· Free</span>}
+                {onFreeShare(provider) && <span className="ml-1 text-ok">· {t("studio.free")}</span>}
               </span>
               {provider && <QuotaLine provider={provider} />}
             </div>
@@ -1582,12 +1582,12 @@ export default function Studio() {
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4 mb-5">
             <div className="flex items-center gap-2">
               <Segmented
-                label="Canvas views"
+                label={t("studio.canvasViews")}
                 value={canvasTab}
                 onChange={setCanvasTab}
                 options={[
-                  { value: "history", label: <span className="flex items-center gap-1.5"><Icon name="history" size={15} />History ({recent.length})</span> },
-                  { value: "how-it-works", label: <span className="flex items-center gap-1.5"><Icon name="sparkle" size={15} />How it works</span> },
+                  { value: "history", label: <span className="flex items-center gap-1.5"><Icon name="history" size={15} />{t("studio.historyCount")} ({recent.length})</span> },
+                  { value: "how-it-works", label: <span className="flex items-center gap-1.5"><Icon name="sparkle" size={15} />{t("studio.howItWorks")}</span> },
                 ]}
               />
             </div>
@@ -1601,10 +1601,10 @@ export default function Studio() {
                   onChange={(e) => setHistoryFilter(e.target.value as typeof historyFilter)}
                   className="rounded-xl border border-line bg-surface-2 px-3 py-1.5 text-xs text-muted hover:text-ink focus:outline-none"
                 >
-                  <option value="all">All types</option>
-                  <option value="image">Images</option>
-                  <option value="video">Videos</option>
-                  <option value="favorites">Favorites</option>
+                  <option value="all">{t("studio.filterAllTypes")}</option>
+                  <option value="image">{t("studio.filterImages")}</option>
+                  <option value="video">{t("studio.filterVideos")}</option>
+                  <option value="favorites">{t("studio.filterFavorites")}</option>
                 </select>
 
                 {/* Grid Density Slider / Button */}
@@ -1641,9 +1641,9 @@ export default function Studio() {
           {compareRun && compareRun.length > 0 && (
             <div className="mb-6 rounded-2xl border border-line bg-surface-2/60 p-4">
               <div className="mb-3 flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-ink">Compare Results</h3>
+                <h3 className="text-sm font-semibold text-ink">{t("compare.resultsTitle")}</h3>
                 <button type="button" onClick={() => setCompareRun(null)} className="text-xs text-muted hover:text-ink">
-                  Close
+                  {t("common.close")}
                 </button>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -1661,7 +1661,7 @@ export default function Studio() {
                       </div>
                       <figcaption className="mt-2 text-[11px]">
                         <p className="truncate font-semibold text-ink">{c.label}</p>
-                        <p className="text-muted">{c.cost} credits</p>
+                        <p className="text-muted">{c.cost} {t("common.creditsUnit")}</p>
                       </figcaption>
                     </figure>
                   );
@@ -1676,11 +1676,11 @@ export default function Studio() {
             <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
               <span className="mb-3 inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3.5 py-1 text-xs font-semibold text-accent">
                 <Icon name="sparkle" size={13} />
-                Studio Quickstart
+                {t("studio.quickstartTitle")}
               </span>
-              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">Create AI Videos & Images in Seconds</h2>
+              <h2 className="text-3xl sm:text-4xl font-bold tracking-tight">{t("studio.quickstartSubtitle")}</h2>
               <p className="mt-2 max-w-lg text-sm text-muted">
-                Turn your imagination into high-fidelity generative media with leading OpenRouter and frontier AI models.
+                {t("studio.quickstartDesc")}
               </p>
 
               <div className="mt-8 grid gap-4 sm:grid-cols-3 max-w-4xl w-full text-left">
@@ -1688,11 +1688,11 @@ export default function Studio() {
                 <div className="rounded-2xl border border-line bg-surface-2/60 p-5 flex flex-col justify-between">
                   <div>
                     <span className="rounded-lg bg-surface-3 px-2 py-0.5 font-mono text-[11px] font-semibold text-accent">
-                      STEP 1
+                      {t("studio.step1")}
                     </span>
-                    <h3 className="mt-3 text-base font-semibold text-ink">Describe or Upload</h3>
+                    <h3 className="mt-3 text-base font-semibold text-ink">{t("studio.step1Title")}</h3>
                     <p className="mt-1.5 text-xs text-muted leading-relaxed">
-                      Type your scene prompt or upload a reference starting image. Use "Expand prompt" for instant cinematic enhancement.
+                      {t("studio.step1Desc")}
                     </p>
                   </div>
                 </div>
@@ -1701,11 +1701,11 @@ export default function Studio() {
                 <div className="rounded-2xl border border-line bg-surface-2/60 p-5 flex flex-col justify-between">
                   <div>
                     <span className="rounded-lg bg-surface-3 px-2 py-0.5 font-mono text-[11px] font-semibold text-accent">
-                      STEP 2
+                      {t("studio.step2")}
                     </span>
-                    <h3 className="mt-3 text-base font-semibold text-ink">Choose AI Model</h3>
+                    <h3 className="mt-3 text-base font-semibold text-ink">{t("studio.step2Title")}</h3>
                     <p className="mt-1.5 text-xs text-muted leading-relaxed">
-                      Pick from Seedance, FLUX.1 or Wan, or connect your own OpenRouter key. Fine-tune aspect ratio and resolution.
+                      {t("studio.step2Desc")}
                     </p>
                   </div>
                 </div>
@@ -1714,11 +1714,11 @@ export default function Studio() {
                 <div className="rounded-2xl border border-line bg-surface-2/60 p-5 flex flex-col justify-between">
                   <div>
                     <span className="rounded-lg bg-surface-3 px-2 py-0.5 font-mono text-[11px] font-semibold text-accent">
-                      STEP 3
+                      {t("studio.step3")}
                     </span>
-                    <h3 className="mt-3 text-base font-semibold text-ink">Generate & Enhance</h3>
+                    <h3 className="mt-3 text-base font-semibold text-ink">{t("studio.step3Title")}</h3>
                     <p className="mt-1.5 text-xs text-muted leading-relaxed">
-                      Hit Generate. Watch live rendering in your canvas, then upscale to 4K, animate images into clips, or download.
+                      {t("studio.step3Desc")}
                     </p>
                   </div>
                 </div>
@@ -1770,8 +1770,8 @@ export default function Studio() {
             >
               <Icon name="close" size={16} />
             </button>
-            <h2 className="text-xl font-bold">Credits Needed</h2>
-            <p className="mt-1 text-xs text-muted">Purchase credit packs to continue generating high-resolution videos and images.</p>
+            <h2 className="text-xl font-bold">{t("studio.creditsNeeded")}</h2>
+            <p className="mt-1 text-xs text-muted">{t("studio.creditsNeededDesc")}</p>
             <div className="mt-4">
               <BuyCredits onPaid={() => { setShowBuyCredits(false); void reload(); }} />
             </div>
